@@ -1,0 +1,26 @@
+-- INSERT INTO public.phone_number
+-- ("type", "number")
+-- VALUES(1, '02126711342');
+--
+-- INSERT INTO public.phone_number
+-- ("type", "number")
+-- VALUES(0, '09121612377');
+--
+-- INSERT INTO public.address
+-- (city, postal_code, province, "text")
+-- VALUES('Tehran', '1101214', 'Tehran', 'Warsaw St.');
+--
+-- INSERT INTO public.address
+-- (city, postal_code, province, "text")
+-- VALUES('Tehran', '1101215', 'Tehran', 'Almas St.');
+--
+-- INSERT INTO public.company
+-- (company_address_id, phone_number_id, company_name)
+-- VALUES(1, 1, 'الماس');
+--
+--
+-- INSERT INTO public.store
+-- (address_id, company_id, phone_number_id, store_name)
+-- VALUES(2, 1,2, 'Webiste');
+--
+-- commit;

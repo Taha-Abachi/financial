@@ -1,0 +1,1 @@
+copy D:\Positron\Projects\f2\financial\build\libs\financial-0.0.1-SNAPSHOT.jar financial-0.0.1-SNAPSHOT.jar

@@ -1,0 +1,35 @@
+name: pars-credit
+
+services:
+  backend:
+    container_name: credit-backend
+    image: pars/creditapp:latest
+#    build: backend
+    ports:
+      - 8082:8082
+    environment:
+      - POSTGRES_DB=credit
+    depends_on:
+      - credit-db
+    networks:
+      - spring-pars
+  credit-db:
+    container_name: credit-postgres
+    image: postgres
+    #    secrets:
+    #      - db-password
+    volumes:
+      - ../db-data:/var/lib/postgresql/data
+    networks:
+      - spring-pars
+    environment:
+      - POSTGRES_DB=credit
+      - POSTGRES_USER=pars
+      - POSTGRES_PASSWORD=srap
+    ports:
+      - "5432:5432"
+    restart: always
+
+networks:
+  spring-pars:
+    driver: bridge
