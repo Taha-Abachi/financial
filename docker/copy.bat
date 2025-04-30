@@ -1,1 +1,1 @@
-copy D:\Positron\Projects\f2\financial\build\libs\financial-0.0.1-SNAPSHOT.jar financial-0.0.1-SNAPSHOT.jar
+pscp -P 9011 -pw ihcabaahat@1A ..\build\libs\financial-0.0.1-SNAPSHOT.jar root@194.60.231.247:/home/taha/creditapp

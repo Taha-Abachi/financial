@@ -7,7 +7,19 @@ public class RandomStringGenerator {
     private static final String UPPERCASE_LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     private static final String UPPERCASE_LETTERS_AND_NUMBERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     private static final String NUMBERS = "0123456789";
+    private static final String HEX_UPPERCASE_LETTERS = "0123456789ABCDEF";
     private static final Random random = new Random();
+
+    /**
+     * Generates a random hexadecimal uppercase string of the specified length.
+     *
+     * @param length The length of the random uppercase string.
+     * @return A random hexadecimal uppercase string.
+     */
+    public static String generateRandomHexString(int length) {
+        return generateRandomString(HEX_UPPERCASE_LETTERS, length);
+    }
+
 
     /**
      * Generates a random uppercase string of the specified length.

@@ -45,6 +45,8 @@ public class CreditApplication {
 //        s.append(";\r\n");
 //        System.out.println(s);
 
+        System.out.println(RandomStringGenerator.generateRandomHexString(32));
+
         SpringApplication.run(CreditApplication.class, args);
         String[] strs = new String[]{
                 "TELKZWCWUCP64JQE",
@@ -54,7 +56,7 @@ public class CreditApplication {
         };
         ApiKeyEncryption crypt = new ApiKeyEncryption();
         crypt.setAlgorithm("AES/GCM/NoPadding");
-        crypt.setSecretKey("0123456789ABCDEF0123456789ABCDEF");
+        crypt.setSecretKey("969382DCD1578F69B1C983AE0A18397E");
         for (String str : strs) {
             System.out.println(crypt.encrypt(str));
         }
