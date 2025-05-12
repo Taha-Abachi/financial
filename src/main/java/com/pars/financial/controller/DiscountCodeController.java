@@ -2,6 +2,8 @@ package com.pars.financial.controller;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,6 +20,8 @@ import com.pars.financial.service.DiscountCodeService;
 @RequestMapping("/api/v1/discountcode")
 public class DiscountCodeController {
 
+    private static final Logger logger = LoggerFactory.getLogger(DiscountCodeController.class);
+
     private final DiscountCodeService codeService;
 
     public DiscountCodeController(DiscountCodeService codeService) {
@@ -26,17 +30,21 @@ public class DiscountCodeController {
 
     @GetMapping("/{code}")
     public GenericResponse<DiscountCodeDto> discountCode(@PathVariable String code) {
+        logger.info("GET /api/v1/discountcode/{} called", code);
         GenericResponse<DiscountCodeDto> response = new GenericResponse<>();
         var dto = codeService.getDiscountCode(code);
         if(dto == null){
+            logger.warn("Discount code not found for code {}", code);
             response.status = -1;
             response.message = "Discount code not found";
         }
+        response.data = dto;
         return response;
     }
 
     @PostMapping("/issue")
     public GenericResponse<DiscountCodeDto> issueDiscountCode(@RequestBody DiscountCodeIssueRequest discountCodeDto) {
+        logger.info("POST /api/v1/discountcode/issue called with request: {}", discountCodeDto);
         GenericResponse<DiscountCodeDto> response = new GenericResponse<>();
         var dto = codeService.generate(discountCodeDto);
         response.data = dto;
@@ -45,6 +53,7 @@ public class DiscountCodeController {
 
     @PostMapping("/issuelist")
     public GenericResponse<List<DiscountCodeDto>> redeemDiscountCode(@RequestBody DiscountCodeIssueRequest discountCodeDto) {
+        logger.info("POST /api/v1/discountcode/issuelist called with request: {}", discountCodeDto);
         GenericResponse<List<DiscountCodeDto>> response = new GenericResponse<>();
         response.data = codeService.generateList(discountCodeDto);
         return response;
