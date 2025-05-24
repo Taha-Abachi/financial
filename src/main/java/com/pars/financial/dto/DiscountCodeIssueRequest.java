@@ -6,4 +6,5 @@ public class DiscountCodeIssueRequest {
     public long remainingValidityPeriod;
     public long maxDiscountAmount;
     public long minimumBillAmount;
+    public int usageLimit = 1;
 }

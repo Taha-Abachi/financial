@@ -73,6 +73,12 @@ public class DiscountCodeTransactionService {
             throw new ValidationException("Discount already used.");
         }
         
+        if (code.getCurrentUsageCount() >= code.getUsageLimit()) {
+            logger.warn("Discount code usage limit reached: {} (current: {}, limit: {})", 
+                dto.code, code.getCurrentUsageCount(), code.getUsageLimit());
+            throw new ValidationException("Discount code usage limit reached.");
+        }
+        
         if (code.getMinimumBillAmount() > 0 && dto.originalAmount < code.getMinimumBillAmount()) {
             logger.warn("Original amount {} is less than minimum bill amount {} for discount code: {}", 
                 dto.originalAmount, code.getMinimumBillAmount(), dto.code);
@@ -122,7 +128,8 @@ public class DiscountCodeTransactionService {
         var savedTransaction = transactionRepository.save(transaction);
 
         code.setRedeemDate(LocalDateTime.now());
-        code.setUsed(true);
+        code.setUsed(code.getCurrentUsageCount() + 1 >= code.getUsageLimit());
+        code.setCurrentUsageCount(code.getCurrentUsageCount() + 1);
         codeRepository.save(code);
 
         logger.info("Successfully processed redeem transaction: {}, discount amount: {}", 
@@ -181,7 +188,8 @@ public class DiscountCodeTransactionService {
         var code = transaction.getDiscountCode();
         if(trxType == TransactionType.Confirmation) {
             logger.debug("Marking discount code {} as used", code.getCode());
-            code.setUsed(true);
+            code.setUsed(code.getCurrentUsageCount() + 1 >= code.getUsageLimit());
+            code.setCurrentUsageCount(code.getCurrentUsageCount() + 1);
             code.setActive(true);
             code.setRedeemDate(LocalDateTime.now());
         }
@@ -189,6 +197,7 @@ public class DiscountCodeTransactionService {
             logger.debug("Marking discount code {} as available", code.getCode());
             code.setUsed(false);
             code.setActive(true);
+            code.setCurrentUsageCount(Math.max(0, code.getCurrentUsageCount() - 1));
         }
         codeRepository.save(code);
 

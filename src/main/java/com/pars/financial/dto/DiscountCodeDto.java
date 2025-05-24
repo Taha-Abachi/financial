@@ -8,6 +8,8 @@ public class DiscountCodeDto {
     public int percentage;
     public long maxDiscountAmount;
     public long minimumBillAmount;
+    public int usageLimit;
+    public int currentUsageCount;
     public LocalDateTime issueDate;
     public long remainingValidityPeriod;
     public boolean used;

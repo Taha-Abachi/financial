@@ -21,6 +21,8 @@ public class DiscountCodeMapper {
         dto.remainingValidityPeriod = valDays >= 0 ? valDays : 0;
         dto.maxDiscountAmount = code.getMaxDiscountAmount();
         dto.minimumBillAmount = code.getMinimumBillAmount();
+        dto.usageLimit = code.getUsageLimit();
+        dto.currentUsageCount = code.getCurrentUsageCount();
         dto.percentage = code.getPercentage();
         dto.used = code.isUsed();
         dto.active = code.isActive();

@@ -27,6 +27,8 @@ public class DiscountCode {
     private int percentage;
     private long maxDiscountAmount = 0;
     private long minimumBillAmount = 0;
+    private int usageLimit = 1;
+    private int currentUsageCount = 0;
 
     private LocalDateTime issueDate;
     private LocalDate expiryDate;
@@ -91,6 +93,22 @@ public class DiscountCode {
 
     public void setMinimumBillAmount(long minimumBillAmount) {
         this.minimumBillAmount = minimumBillAmount;
+    }
+
+    public int getUsageLimit() {
+        return usageLimit;
+    }
+
+    public void setUsageLimit(int usageLimit) {
+        this.usageLimit = usageLimit;
+    }
+
+    public int getCurrentUsageCount() {
+        return currentUsageCount;
+    }
+
+    public void setCurrentUsageCount(int currentUsageCount) {
+        this.currentUsageCount = currentUsageCount;
     }
 
     public LocalDateTime getIssueDate() {
