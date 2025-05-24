@@ -1,16 +1,20 @@
 package com.pars.financial.configuration;
 
+import java.util.Collections;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.pars.financial.repository.ApiUserRepository;
 import com.pars.financial.security.ApiKeyAuthFilter;
 import com.pars.financial.security.RateLimitFilter;
+import com.pars.financial.security.SecurityContextFilter;
 import com.pars.financial.utils.ApiKeyEncryption;
 
 @Configuration
@@ -28,9 +32,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .addFilterBefore(new SecurityContextFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new RateLimitFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new ApiKeyAuthFilter(apiUserRepository, apiKeyEncryption), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
+                        // Swagger UI and OpenAPI endpoints
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                        // API endpoints
                         .requestMatchers("/api/v1/customer").hasRole("ADMIN")
                         .requestMatchers("/api/v1/store").hasRole("ADMIN")
                         .requestMatchers("/api/v1/giftcard/issue*").hasRole("ADMIN")
@@ -43,10 +51,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/giftcard/transaction/checkStatus/").hasAnyRole("ADMIN", "API_USER")
                         .anyRequest().permitAll()
                 )
+                .anonymous(anonymous -> anonymous
+                    .authorities(Collections.singletonList(new SimpleGrantedAuthority("ROLE_ANONYMOUS")))
+                )
                 .csrf(AbstractHttpConfigurer::disable)
                 .headers(headers -> headers
                     .contentSecurityPolicy(csp -> csp
-                        .policyDirectives("default-src 'self'")
+                        .policyDirectives("default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';")
                     )
                 );
         return http.build();
