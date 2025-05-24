@@ -26,6 +26,7 @@ public class DiscountCode {
     private Long serialNo;
     private int percentage;
     private long maxDiscountAmount = 0;
+    private long minimumBillAmount = 0;
 
     private LocalDateTime issueDate;
     private LocalDate expiryDate;
@@ -82,6 +83,14 @@ public class DiscountCode {
 
     public void setMaxDiscountAmount(long maxDiscountAmount) {
         this.maxDiscountAmount = maxDiscountAmount;
+    }
+
+    public long getMinimumBillAmount() {
+        return minimumBillAmount;
+    }
+
+    public void setMinimumBillAmount(long minimumBillAmount) {
+        this.minimumBillAmount = minimumBillAmount;
     }
 
     public LocalDateTime getIssueDate() {

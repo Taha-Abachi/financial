@@ -30,9 +30,9 @@ public class DiscountCodeService {
         this.mapper = mapper;
     }
 
-    private DiscountCode issueDiscountCode(int percentage, long validityPeriod, long maxDiscountAmount) {
-        logger.debug("Issuing new discount code with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}", 
-            percentage, validityPeriod, maxDiscountAmount);
+    private DiscountCode issueDiscountCode(int percentage, long validityPeriod, long maxDiscountAmount, long minimumBillAmount) {
+        logger.debug("Issuing new discount code with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}, minimumBillAmount: {}", 
+            percentage, validityPeriod, maxDiscountAmount, minimumBillAmount);
         var code = new DiscountCode();
         code.setIssueDate(LocalDateTime.now());
         code.setExpiryDate(LocalDate.now().plusDays(validityPeriod));
@@ -40,25 +40,26 @@ public class DiscountCodeService {
         code.setSerialNo(random.nextLong(100000000L));
         code.setPercentage(percentage);
         code.setMaxDiscountAmount(maxDiscountAmount);
+        code.setMinimumBillAmount(minimumBillAmount);
         logger.debug("Created discount code: {}", code.getCode());
         return code;
     }
 
     public DiscountCodeDto generate(DiscountCodeIssueRequest dto) {
-        logger.info("Generating new discount code with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}", 
-            dto.percentage, dto.remainingValidityPeriod, dto.maxDiscountAmount);
-        var discountCode = issueDiscountCode(dto.percentage, dto.remainingValidityPeriod, dto.maxDiscountAmount);
+        logger.info("Generating new discount code with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}, minimumBillAmount: {}", 
+            dto.percentage, dto.remainingValidityPeriod, dto.maxDiscountAmount, dto.minimumBillAmount);
+        var discountCode = issueDiscountCode(dto.percentage, dto.remainingValidityPeriod, dto.maxDiscountAmount, dto.minimumBillAmount);
         var savedCode = codeRepository.save(discountCode);
         logger.info("Generated discount code: {}", savedCode.getCode());
         return mapper.getFrom(savedCode);
     }
 
     public List<DiscountCodeDto> generateList(DiscountCodeIssueRequest request) {
-        logger.info("Generating {} discount codes with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}", 
-            request.count, request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount);
+        logger.info("Generating {} discount codes with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}, minimumBillAmount: {}", 
+            request.count, request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount);
         var ls = new ArrayList<DiscountCode>();
         for (var i = 0; i < request.count; i++) {
-            ls.add(issueDiscountCode(request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount));
+            ls.add(issueDiscountCode(request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount));
         }
         var savedCodes = codeRepository.saveAll(ls);
         logger.info("Generated {} discount codes successfully", request.count);

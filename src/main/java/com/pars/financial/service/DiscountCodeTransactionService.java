@@ -73,6 +73,12 @@ public class DiscountCodeTransactionService {
             throw new ValidationException("Discount already used.");
         }
         
+        if (code.getMinimumBillAmount() > 0 && dto.originalAmount < code.getMinimumBillAmount()) {
+            logger.warn("Original amount {} is less than minimum bill amount {} for discount code: {}", 
+                dto.originalAmount, code.getMinimumBillAmount(), dto.code);
+            throw new ValidationException("Original amount is less than minimum bill amount required.");
+        }
+        
         var transaction = transactionRepository.findByClientTransactionIdAndTrxType(dto.clientTransactionId, TransactionType.Redeem);
         if(transaction != null){
             logger.warn("Duplicate client transaction ID: {}", dto.clientTransactionId);
