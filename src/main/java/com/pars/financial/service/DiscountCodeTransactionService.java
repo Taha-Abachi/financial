@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.pars.financial.dto.DiscountCodeTransactionDto;
 import com.pars.financial.entity.ApiUser;
 import com.pars.financial.entity.DiscountCodeTransaction;
+import com.pars.financial.enums.DiscountType;
 import com.pars.financial.enums.TransactionType;
 import com.pars.financial.exception.CustomerNotFoundException;
 import com.pars.financial.exception.ValidationException;
@@ -109,11 +110,19 @@ public class DiscountCodeTransactionService {
             }
         }
 
-        var discount = (long) (code.getPercentage() * dto.originalAmount / 100);
-        if(code.getMaxDiscountAmount() > 0) {
-            discount = Math.min(discount, code.getMaxDiscountAmount());
+        var discount = 0L;
+        if (code.getDiscountType() == DiscountType.CONSTANT) {
+            // Use constant discount amount
+            discount = code.getConstantDiscountAmount();
+            logger.debug("Using constant discount amount: {}", discount);
+        } else {
+            // Calculate percentage-based discount
+            discount = (long) (code.getPercentage() * dto.originalAmount / 100);
+            if(code.getMaxDiscountAmount() > 0) {
+                discount = Math.min(discount, code.getMaxDiscountAmount());
+            }
+            logger.debug("Calculated percentage-based discount amount: {} ({}% of {})", discount, code.getPercentage(), dto.originalAmount);
         }
-        logger.debug("Calculated discount amount: {} ({}% of {})", discount, code.getPercentage(), dto.originalAmount);
 
         transaction = new DiscountCodeTransaction();
         transaction.setDiscountCode(code);

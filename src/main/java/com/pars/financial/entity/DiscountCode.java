@@ -3,8 +3,12 @@ package com.pars.financial.entity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import com.pars.financial.enums.DiscountType;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -27,8 +31,13 @@ public class DiscountCode {
     private int percentage;
     private long maxDiscountAmount = 0;
     private long minimumBillAmount = 0;
+    private long constantDiscountAmount = 0;
     private int usageLimit = 1;
     private int currentUsageCount = 0;
+
+    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "varchar(20) NOT NULL DEFAULT 'PERCENTAGE'")
+    private DiscountType discountType = DiscountType.PERCENTAGE;
 
     private LocalDateTime issueDate;
     private LocalDate expiryDate;
@@ -95,6 +104,14 @@ public class DiscountCode {
         this.minimumBillAmount = minimumBillAmount;
     }
 
+    public long getConstantDiscountAmount() {
+        return constantDiscountAmount;
+    }
+
+    public void setConstantDiscountAmount(long constantDiscountAmount) {
+        this.constantDiscountAmount = constantDiscountAmount;
+    }
+
     public int getUsageLimit() {
         return usageLimit;
     }
@@ -141,5 +158,13 @@ public class DiscountCode {
 
     public void setActive(boolean active) {
         isActive = active;
+    }
+
+    public DiscountType getDiscountType() {
+        return discountType;
+    }
+
+    public void setDiscountType(DiscountType discountType) {
+        this.discountType = discountType;
     }
 }
