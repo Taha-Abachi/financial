@@ -1,11 +1,12 @@
 package com.pars.financial.mapper;
 
-import com.pars.financial.dto.GiftCardDto;
-import com.pars.financial.entity.GiftCard;
-import org.springframework.stereotype.Component;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.springframework.stereotype.Component;
+
+import com.pars.financial.dto.GiftCardDto;
+import com.pars.financial.entity.GiftCard;
 
 @Component
 public class GiftCardMapper {
@@ -27,7 +28,7 @@ public class GiftCardMapper {
     }
 
     public List<GiftCardDto> getFrom(List<GiftCard> gcList) {
-        List<GiftCardDto> dtos = new ArrayList<GiftCardDto>();
+        List<GiftCardDto> dtos = new ArrayList<>();
         for (var i = 0; i < gcList.size(); i++) {
             dtos.add(getFrom(gcList.get(i)));
         }

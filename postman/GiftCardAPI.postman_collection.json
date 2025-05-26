@@ -1,0 +1,847 @@
+{
+	"info": {
+		"_postman_id": "b1c2d3e4-f5g6-7890-hijk-lm1234567890",
+		"name": "Gift Card API",
+		"description": "Collection for managing gift cards and their transactions",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Gift Card Management",
+			"item": [
+				{
+					"name": "Get All Gift Cards",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/all",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "giftcard", "all"]
+						},
+						"description": "Get a list of all gift cards"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "GET",
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/giftcard/all"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "",
+								"data": [
+									{
+										"serialNo": "GC12345678",
+										"balance": 1000,
+										"remainingValidityPeriod": 30,
+										"expiryDate": "2024-04-20",
+										"realAmount": 1000,
+										"isActive": true,
+										"isBlocked": false,
+										"isAnonymous": true
+									}
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Get Gift Card by Serial Number",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/GC12345678",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "giftcard", "GC12345678"]
+						},
+						"description": "Get details of a specific gift card by serial number"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "GET",
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/giftcard/GC12345678"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "",
+								"data": {
+									"id": 1,
+									"serialNo": "GC12345678",
+									"identifier": 12345678,
+									"realAmount": 1000,
+									"initialAmount": 1000,
+									"balance": 1000,
+									"issueDate": "2024-03-20",
+									"expiryDate": "2024-04-20",
+									"lastUsed": "2024-03-20T10:00:00",
+									"isActive": true,
+									"blocked": false,
+									"storeLimited": false
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Get Gift Card by Identifier",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/identifier/12345678",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "giftcard", "identifier", "12345678"]
+						},
+						"description": "Get details of a specific gift card by identifier"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "GET",
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/giftcard/identifier/12345678"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "",
+								"data": {
+									"id": 1,
+									"serialNo": "GC12345678",
+									"identifier": 12345678,
+									"realAmount": 1000,
+									"initialAmount": 1000,
+									"balance": 1000,
+									"issueDate": "2024-03-20",
+									"expiryDate": "2024-04-20",
+									"lastUsed": "2024-03-20T10:00:00",
+									"isActive": true,
+									"blocked": false,
+									"storeLimited": false
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Issue Single Gift Card",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"realAmount\": 1000,\n    \"balance\": 1000,\n    \"remainingValidityPeriod\": 30\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/issue",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "giftcard", "issue"]
+						},
+						"description": "Create a single gift card"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"realAmount\": 1000,\n    \"balance\": 1000,\n    \"remainingValidityPeriod\": 30\n}"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "",
+								"data": {
+									"serialNo": "GC12345678",
+									"balance": 1000,
+									"remainingValidityPeriod": 30,
+									"expiryDate": "2024-04-20",
+									"realAmount": 1000,
+									"isActive": true,
+									"isBlocked": false,
+									"isAnonymous": true
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Issue Multiple Gift Cards",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"realAmount\": 1000,\n    \"balance\": 1000,\n    \"remainingValidityPeriod\": 30,\n    \"count\": 5\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/issuelist",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "giftcard", "issuelist"]
+						},
+						"description": "Create multiple gift cards at once"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"realAmount\": 1000,\n    \"balance\": 1000,\n    \"remainingValidityPeriod\": 30,\n    \"count\": 5\n}"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "",
+								"data": [
+									{
+										"serialNo": "GC12345678",
+										"balance": 1000,
+										"remainingValidityPeriod": 30,
+										"expiryDate": "2024-04-20",
+										"realAmount": 1000,
+										"isActive": true,
+										"isBlocked": false,
+										"isAnonymous": true
+									}
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Limit Gift Card to Stores",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"storeIds\": [1, 2, 3]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/GC12345678/limit-stores",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "giftcard", "GC12345678", "limit-stores"]
+						},
+						"description": "Limit a gift card to specific stores"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"storeIds\": [1, 2, 3]\n}"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "",
+								"data": null
+							}
+						}
+					]
+				},
+				{
+					"name": "Remove Store Limitation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/GC12345678/remove-store-limitation",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "giftcard", "GC12345678", "remove-store-limitation"]
+						},
+						"description": "Remove store limitations from a gift card"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/giftcard/GC12345678/remove-store-limitation"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "",
+								"data": null
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Gift Card Transactions",
+			"item": [
+				{
+					"name": "Debit Gift Card",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"clientTransactionId\": \"TRX123\",\n    \"amount\": 100,\n    \"giftCardSerialNo\": \"GC12345678\",\n    \"storeId\": 1,\n    \"phoneNo\": \"1234567890\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/transaction/debit",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "giftcard", "transaction", "debit"]
+						},
+						"description": "Debit a gift card for a transaction"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"clientTransactionId\": \"TRX123\",\n    \"amount\": 100,\n    \"giftCardSerialNo\": \"GC12345678\",\n    \"storeId\": 1,\n    \"phoneNo\": \"1234567890\"\n}"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "",
+								"data": {
+									"transactionId": "550e8400-e29b-41d4-a716-446655440000",
+									"clientTransactionId": "TRX123",
+									"amount": 100,
+									"balanceBefore": 1000,
+									"trxType": "Debit",
+									"trxDate": "2024-03-20T10:00:00",
+									"storeId": 1,
+									"storeName": "Store 1",
+									"phoneNo": "1234567890"
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Confirm Transaction",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"clientTransactionId\": \"TRX123\",\n    \"amount\": 100,\n    \"giftCardSerialNo\": \"GC12345678\",\n    \"transactionId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/transaction/confirm",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "giftcard", "transaction", "confirm"]
+						},
+						"description": "Confirm a gift card transaction"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"clientTransactionId\": \"TRX123\",\n    \"amount\": 100,\n    \"giftCardSerialNo\": \"GC12345678\",\n    \"transactionId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "",
+								"data": {
+									"transactionId": "550e8400-e29b-41d4-a716-446655440000",
+									"clientTransactionId": "TRX123",
+									"amount": 100,
+									"balanceBefore": 900,
+									"trxType": "Confirmation",
+									"trxDate": "2024-03-20T10:00:00",
+									"storeId": 1,
+									"storeName": "Store 1",
+									"phoneNo": "1234567890"
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Reverse Transaction",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"clientTransactionId\": \"TRX123\",\n    \"amount\": 100,\n    \"giftCardSerialNo\": \"GC12345678\",\n    \"transactionId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/transaction/reverse",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "giftcard", "transaction", "reverse"]
+						},
+						"description": "Reverse a gift card transaction"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"clientTransactionId\": \"TRX123\",\n    \"amount\": 100,\n    \"giftCardSerialNo\": \"GC12345678\",\n    \"transactionId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "",
+								"data": {
+									"transactionId": "550e8400-e29b-41d4-a716-446655440000",
+									"clientTransactionId": "TRX123",
+									"amount": 100,
+									"balanceBefore": 900,
+									"trxType": "Reversal",
+									"trxDate": "2024-03-20T10:00:00",
+									"storeId": 1,
+									"storeName": "Store 1",
+									"phoneNo": "1234567890"
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Refund Transaction",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"clientTransactionId\": \"TRX123\",\n    \"amount\": 100,\n    \"giftCardSerialNo\": \"GC12345678\",\n    \"transactionId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/transaction/refund",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "giftcard", "transaction", "refund"]
+						},
+						"description": "Refund a gift card transaction"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"clientTransactionId\": \"TRX123\",\n    \"amount\": 100,\n    \"giftCardSerialNo\": \"GC12345678\",\n    \"transactionId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "",
+								"data": {
+									"transactionId": "550e8400-e29b-41d4-a716-446655440000",
+									"clientTransactionId": "TRX123",
+									"amount": 100,
+									"balanceBefore": 900,
+									"trxType": "Refund",
+									"trxDate": "2024-03-20T10:00:00",
+									"storeId": 1,
+									"storeName": "Store 1",
+									"phoneNo": "1234567890"
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Check Transaction Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/transaction/checkStatus/TRX123",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "giftcard", "transaction", "checkStatus", "TRX123"]
+						},
+						"description": "Check the status of a transaction"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "GET",
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/giftcard/transaction/checkStatus/TRX123"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "",
+								"data": {
+									"transactionId": "550e8400-e29b-41d4-a716-446655440000",
+									"clientTransactionId": "TRX123",
+									"amount": 100,
+									"balanceBefore": 1000,
+									"trxType": "Debit",
+									"trxDate": "2024-03-20T10:00:00",
+									"storeId": 1,
+									"storeName": "Store 1",
+									"phoneNo": "1234567890"
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Get Transaction",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/transaction/550e8400-e29b-41d4-a716-446655440000",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "giftcard", "transaction", "550e8400-e29b-41d4-a716-446655440000"]
+						},
+						"description": "Get details of a specific transaction"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "GET",
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/giftcard/transaction/550e8400-e29b-41d4-a716-446655440000"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "",
+								"data": {
+									"transactionId": "550e8400-e29b-41d4-a716-446655440000",
+									"clientTransactionId": "TRX123",
+									"amount": 100,
+									"balanceBefore": 1000,
+									"trxType": "Debit",
+									"trxDate": "2024-03-20T10:00:00",
+									"storeId": 1,
+									"storeName": "Store 1",
+									"phoneNo": "1234567890"
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Get Transaction History",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/transaction/list/GC12345678",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "giftcard", "transaction", "list", "GC12345678"]
+						},
+						"description": "Get transaction history for a gift card"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "GET",
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/giftcard/transaction/list/GC12345678"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "",
+								"data": [
+									{
+										"transactionId": "550e8400-e29b-41d4-a716-446655440000",
+										"clientTransactionId": "TRX123",
+										"amount": 100,
+										"balanceBefore": 1000,
+										"trxType": "Debit",
+										"trxDate": "2024-03-20T10:00:00",
+										"storeId": 1,
+										"storeName": "Store 1",
+										"phoneNo": "1234567890"
+									}
+								]
+							}
+						}
+					]
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "your-jwt-token-here",
+			"type": "string"
+		}
+	]
+} 

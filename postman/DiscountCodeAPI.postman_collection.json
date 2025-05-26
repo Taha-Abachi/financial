@@ -1,0 +1,799 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+		"name": "Discount Code API",
+		"description": "Collection for managing discount codes and their transactions",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Discount Code Management",
+			"item": [
+				{
+					"name": "Get Discount Code",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discountcode/ABC123",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "discountcode", "ABC123"]
+						},
+						"description": "Get details of a specific discount code"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "GET",
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/discountcode/ABC123"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "",
+								"data": {
+									"code": "ABC123",
+									"serialNo": 123456,
+									"percentage": 10,
+									"maxDiscountAmount": 1000,
+									"minimumBillAmount": 500,
+									"constantDiscountAmount": 0,
+									"discountType": "PERCENTAGE",
+									"usageLimit": 1,
+									"currentUsageCount": 0,
+									"remainingValidityPeriod": 30,
+									"used": false,
+									"active": true,
+									"issueDate": "2024-03-20T10:00:00",
+									"redeemDate": null
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Issue Single Discount Code",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"percentage\": 10,\n    \"remainingValidityPeriod\": 30,\n    \"maxDiscountAmount\": 1000,\n    \"minimumBillAmount\": 500,\n    \"constantDiscountAmount\": 0,\n    \"discountType\": \"PERCENTAGE\",\n    \"usageLimit\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discountcode/issue",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "discountcode", "issue"]
+						},
+						"description": "Create a single discount code"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"percentage\": 10,\n    \"remainingValidityPeriod\": 30,\n    \"maxDiscountAmount\": 1000,\n    \"minimumBillAmount\": 500,\n    \"constantDiscountAmount\": 0,\n    \"discountType\": \"PERCENTAGE\",\n    \"usageLimit\": 1\n}"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "",
+								"data": {
+									"code": "ABC123",
+									"serialNo": 123456,
+									"percentage": 10,
+									"maxDiscountAmount": 1000,
+									"minimumBillAmount": 500,
+									"constantDiscountAmount": 0,
+									"discountType": "PERCENTAGE",
+									"usageLimit": 1,
+									"currentUsageCount": 0,
+									"remainingValidityPeriod": 30,
+									"used": false,
+									"active": true,
+									"issueDate": "2024-03-20T10:00:00",
+									"redeemDate": null
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Issue Multiple Discount Codes",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"count\": 5,\n    \"percentage\": 10,\n    \"remainingValidityPeriod\": 30,\n    \"maxDiscountAmount\": 1000,\n    \"minimumBillAmount\": 500,\n    \"constantDiscountAmount\": 0,\n    \"discountType\": \"PERCENTAGE\",\n    \"usageLimit\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discountcode/issuelist",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "discountcode", "issuelist"]
+						},
+						"description": "Create multiple discount codes at once"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"count\": 5,\n    \"percentage\": 10,\n    \"remainingValidityPeriod\": 30,\n    \"maxDiscountAmount\": 1000,\n    \"minimumBillAmount\": 500,\n    \"constantDiscountAmount\": 0,\n    \"discountType\": \"PERCENTAGE\",\n    \"usageLimit\": 1\n}"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "",
+								"data": [
+									{
+										"code": "ABC123",
+										"serialNo": 123456,
+										"percentage": 10,
+										"maxDiscountAmount": 1000,
+										"minimumBillAmount": 500,
+										"constantDiscountAmount": 0,
+										"discountType": "PERCENTAGE",
+										"usageLimit": 1,
+										"currentUsageCount": 0,
+										"remainingValidityPeriod": 30,
+										"used": false,
+										"active": true,
+										"issueDate": "2024-03-20T10:00:00",
+										"redeemDate": null
+									}
+								]
+							}
+						}
+					]
+				},
+				{
+					"name": "Deactivate Discount Code",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"code\": \"ABC123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discountcode/deactivate",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "discountcode", "deactivate"]
+						},
+						"description": "Deactivate a discount code"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"code\": \"ABC123\"\n}"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "Discount code deactivated successfully",
+								"data": null
+							}
+						}
+					]
+				},
+				{
+					"name": "Reactivate Discount Code",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"code\": \"ABC123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discountcode/reactivate",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "discountcode", "reactivate"]
+						},
+						"description": "Reactivate a deactivated discount code"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"code\": \"ABC123\"\n}"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "Discount code reactivated successfully",
+								"data": null
+							}
+						}
+					]
+				},
+				{
+					"name": "List Discount Codes",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discountcode/list?page=0&size=10&sort=issueDate,desc",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "discountcode", "list"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								},
+								{
+									"key": "sort",
+									"value": "issueDate,desc"
+								}
+							]
+						},
+						"description": "Get a paginated list of discount codes"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "GET",
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/discountcode/list?page=0&size=10&sort=issueDate,desc"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "",
+								"data": {
+									"content": [
+										{
+											"code": "ABC123",
+											"serialNo": 123456,
+											"percentage": 10,
+											"maxDiscountAmount": 1000,
+											"minimumBillAmount": 500,
+											"constantDiscountAmount": 0,
+											"discountType": "PERCENTAGE",
+											"usageLimit": 1,
+											"currentUsageCount": 0,
+											"remainingValidityPeriod": 30,
+											"used": false,
+											"active": true,
+											"issueDate": "2024-03-20T10:00:00",
+											"redeemDate": null
+										}
+									],
+									"pageable": {
+										"pageNumber": 0,
+										"pageSize": 10,
+										"sort": {
+											"sorted": true,
+											"unsorted": false,
+											"empty": false
+										},
+										"offset": 0,
+										"paged": true,
+										"unpaged": false
+									},
+									"totalElements": 1,
+									"totalPages": 1,
+									"last": true,
+									"size": 10,
+									"number": 0,
+									"sort": {
+										"sorted": true,
+										"unsorted": false,
+										"empty": false
+									},
+									"numberOfElements": 1,
+									"first": true,
+									"empty": false
+								}
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Discount Code Transactions",
+			"item": [
+				{
+					"name": "Redeem Discount Code",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"code\": \"ABC123\",\n    \"originalAmount\": 1000,\n    \"storeId\": 1,\n    \"phoneNo\": \"1234567890\",\n    \"clientTransactionId\": \"TRX123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discountcode/transaction/redeem",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "discountcode", "transaction", "redeem"]
+						},
+						"description": "Redeem a discount code for a transaction"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"code\": \"ABC123\",\n    \"originalAmount\": 1000,\n    \"storeId\": 1,\n    \"phoneNo\": \"1234567890\",\n    \"clientTransactionId\": \"TRX123\"\n}"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "",
+								"data": {
+									"code": "ABC123",
+									"transactionId": "550e8400-e29b-41d4-a716-446655440000",
+									"originalAmount": 1000,
+									"discountAmount": 100,
+									"percentage": 10,
+									"maxDiscountAmount": 1000,
+									"trxType": "Redeem",
+									"trxDate": "2024-03-20T10:00:00",
+									"storeId": 1,
+									"clientTransactionId": "TRX123",
+									"storeName": "Store 1",
+									"phoneNo": "1234567890"
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Confirm Transaction",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"transactionId\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"clientTransactionId\": \"TRX123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discountcode/transaction/confirm",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "discountcode", "transaction", "confirm"]
+						},
+						"description": "Confirm a discount code transaction"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"transactionId\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"clientTransactionId\": \"TRX123\"\n}"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "",
+								"data": {
+									"code": "ABC123",
+									"transactionId": "550e8400-e29b-41d4-a716-446655440000",
+									"originalAmount": 1000,
+									"discountAmount": 100,
+									"percentage": 10,
+									"maxDiscountAmount": 1000,
+									"trxType": "Confirmation",
+									"trxDate": "2024-03-20T10:00:00",
+									"storeId": 1,
+									"clientTransactionId": "TRX123",
+									"storeName": "Store 1",
+									"phoneNo": "1234567890"
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Reverse Transaction",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"transactionId\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"clientTransactionId\": \"TRX123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discountcode/transaction/reverse",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "discountcode", "transaction", "reverse"]
+						},
+						"description": "Reverse a discount code transaction"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"transactionId\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"clientTransactionId\": \"TRX123\"\n}"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "",
+								"data": {
+									"code": "ABC123",
+									"transactionId": "550e8400-e29b-41d4-a716-446655440000",
+									"originalAmount": 1000,
+									"discountAmount": 100,
+									"percentage": 10,
+									"maxDiscountAmount": 1000,
+									"trxType": "Reversal",
+									"trxDate": "2024-03-20T10:00:00",
+									"storeId": 1,
+									"clientTransactionId": "TRX123",
+									"storeName": "Store 1",
+									"phoneNo": "1234567890"
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Get Transaction",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discountcode/transaction/550e8400-e29b-41d4-a716-446655440000",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "discountcode", "transaction", "550e8400-e29b-41d4-a716-446655440000"]
+						},
+						"description": "Get details of a specific transaction"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "GET",
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/discountcode/transaction/550e8400-e29b-41d4-a716-446655440000"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "",
+								"data": {
+									"code": "ABC123",
+									"transactionId": "550e8400-e29b-41d4-a716-446655440000",
+									"originalAmount": 1000,
+									"discountAmount": 100,
+									"percentage": 10,
+									"maxDiscountAmount": 1000,
+									"trxType": "Redeem",
+									"trxDate": "2024-03-20T10:00:00",
+									"storeId": 1,
+									"clientTransactionId": "TRX123",
+									"storeName": "Store 1",
+									"phoneNo": "1234567890"
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "List Transactions",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discountcode/transaction/list?page=0&size=10&sort=trxDate,desc",
+							"host": ["{{baseUrl}}"],
+							"path": ["api", "v1", "discountcode", "transaction", "list"],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								},
+								{
+									"key": "sort",
+									"value": "trxDate,desc"
+								}
+							]
+						},
+						"description": "Get a paginated list of transactions"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "GET",
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/discountcode/transaction/list?page=0&size=10&sort=trxDate,desc"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"body": {
+								"status": 0,
+								"message": "",
+								"data": {
+									"content": [
+										{
+											"code": "ABC123",
+											"transactionId": "550e8400-e29b-41d4-a716-446655440000",
+											"originalAmount": 1000,
+											"discountAmount": 100,
+											"percentage": 10,
+											"maxDiscountAmount": 1000,
+											"trxType": "Redeem",
+											"trxDate": "2024-03-20T10:00:00",
+											"storeId": 1,
+											"clientTransactionId": "TRX123",
+											"storeName": "Store 1",
+											"phoneNo": "1234567890"
+										}
+									],
+									"pageable": {
+										"pageNumber": 0,
+										"pageSize": 10,
+										"sort": {
+											"sorted": true,
+											"unsorted": false,
+											"empty": false
+										},
+										"offset": 0,
+										"paged": true,
+										"unpaged": false
+									},
+									"totalElements": 1,
+									"totalPages": 1,
+									"last": true,
+									"size": 10,
+									"number": 0,
+									"sort": {
+										"sorted": true,
+										"unsorted": false,
+										"empty": false
+									},
+									"numberOfElements": 1,
+									"first": true,
+									"empty": false
+								}
+							}
+						}
+					]
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "your-jwt-token-here",
+			"type": "string"
+		}
+	]
+} 
