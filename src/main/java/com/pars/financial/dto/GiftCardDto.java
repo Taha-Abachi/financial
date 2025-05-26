@@ -1,10 +1,7 @@
 package com.pars.financial.dto;
 
 
-import com.pars.financial.entity.GiftCard;
-
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 public class GiftCardDto {
@@ -16,6 +13,7 @@ public class GiftCardDto {
     public boolean isActive;
     public boolean isBlocked;
     public boolean isAnonymous;
+    public Long identifier;
 
     public List<GiftCardTransactionDto> transactions;
 
@@ -49,5 +47,13 @@ public class GiftCardDto {
 
     public void setTransactions(List<GiftCardTransactionDto> transactions) {
         this.transactions = transactions;
+    }
+
+    public Long getIdentifier() {
+        return identifier;
+    }
+
+    public void setIdentifier(Long identifier) {
+        this.identifier = identifier;
     }
 }

@@ -48,6 +48,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/giftcard/all").hasRole("ADMIN")
                         .requestMatchers("/api/v1/giftcard/transaction").hasRole("API_USER")
                         .requestMatchers("/api/v1/giftcard/*").hasRole("API_USER")
+                        .requestMatchers("/api/v1/giftcard/identifier/*").hasRole("API_USER")
                         .requestMatchers("/api/v1/giftcard/transaction/checkStatus/").hasAnyRole("ADMIN", "API_USER")
                         .anyRequest().permitAll()
                 )

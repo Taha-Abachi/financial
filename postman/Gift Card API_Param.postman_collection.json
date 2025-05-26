@@ -1,0 +1,891 @@
+{
+	"info": {
+		"_postman_id": "44cc87f5-a61b-4d25-85f6-3f630cc3389d",
+		"name": "Gift Card API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "2575375"
+	},
+	"item": [
+		{
+			"name": "Gift Card Management",
+			"item": [
+				{
+					"name": "Get All Gift Cards",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{ADMIN_API_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/all",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"giftcard",
+								"all"
+							]
+						},
+						"description": "Get a list of all gift cards"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Get Gift Card by Serial Number",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "X-API-KEY",
+								"value": "{{API_USER_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/{{serialNo}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"giftcard",
+								"{{serialNo}}"
+							]
+						},
+						"description": "Get details of a specific gift card by serial number"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Get Gift Card by Identifier",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-API-KEY",
+								"value": "{{API_USER_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/identifier/{{gcidentifier}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"giftcard",
+								"identifier",
+								"{{gcidentifier}}"
+							]
+						},
+						"description": "Get details of a specific gift card by identifier"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Issue Single Gift Card",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"response is ok\",  ()=>{\r",
+									"    pm.response.to.have.status(200)\r",
+									"})\r",
+									"\r",
+									"var jsonData = JSON.parse(responseBody);\r",
+									"\r",
+									"pm.environment.set(\"serialNo\", jsonData.data.serialNo);\r",
+									"pm.environment.set(\"gcidentifier\", jsonData.data.identifier);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "X-API-KEY",
+								"value": "{{ADMIN_API_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"realAmount\": 1000,\n    \"balance\": 1000,\n    \"remainingValidityPeriod\": 30\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/issue",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"giftcard",
+								"issue"
+							]
+						},
+						"description": "Create a single gift card"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"realAmount\": 1000,\n    \"balance\": 1000,\n    \"remainingValidityPeriod\": 30\n}"
+								},
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Issue Multiple Gift Cards",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"realAmount\": 1000,\n    \"balance\": 1000,\n    \"remainingValidityPeriod\": 30,\n    \"count\": 5\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/issuelist",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"giftcard",
+								"issuelist"
+							]
+						},
+						"description": "Create multiple gift cards at once"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"realAmount\": 1000,\n    \"balance\": 1000,\n    \"remainingValidityPeriod\": 30,\n    \"count\": 5\n}"
+								},
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Limit Gift Card to Stores",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"storeIds\": [1, 2, 3]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/{{serialNo}}/limit-stores",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"giftcard",
+								"{{serialNo}}",
+								"limit-stores"
+							]
+						},
+						"description": "Limit a gift card to specific stores"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"storeIds\": [1, 2, 3]\n}"
+								},
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Remove Store Limitation",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/{{serialNo}}/remove-store-limitation",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"giftcard",
+								"{{serialNo}}",
+								"remove-store-limitation"
+							]
+						},
+						"description": "Remove store limitations from a gift card"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Gift Card Transactions",
+			"item": [
+				{
+					"name": "Debit Gift Card",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"response is ok\",  ()=>{\r",
+									"    pm.response.to.have.status(200)\r",
+									"})\r",
+									"\r",
+									"var jsonData = JSON.parse(responseBody);\r",
+									"\r",
+									"pm.environment.set(\"transactionId\", jsonData.data.transactionId);\r",
+									"pm.environment.set(\"clienttransactionid\", jsonData.data.clientTransactionId);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const moment = pm.environment.get('moment') ? pm.environment.get('moment') : require('moment');\r",
+									"const timestamp = moment().format('YYYYMMDDHHmmss');\r",
+									"\r",
+									"pm.environment.set(\"clienttransactionid\", timestamp);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "X-API-KEY",
+								"value": "{{API_USER_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"phoneNo\" : \"09357577482\",\n    \"giftCardSerialNo\":\"{{serialNo}}\",\n    \"amount\": 10,\n    \"clientTransactionId\" : \"{{clienttransactionid}}\",\n    \"storeId\" : 4\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/transaction/debit",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"giftcard",
+								"transaction",
+								"debit"
+							]
+						},
+						"description": "Debit a gift card for a transaction"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"clientTransactionId\": \"TRX123\",\n    \"amount\": 100,\n    \"giftCardSerialNo\": \"GC12345678\",\n    \"storeId\": 1,\n    \"phoneNo\": \"1234567890\"\n}"
+								},
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Confirm Transaction",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "X-API-KEY",
+								"value": "{{API_USER_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    //\"clientTransactionId\": \"clientTransactionId\",\n    \"amount\": 10,\n    \"giftCardSerialNo\": \"{{serialNo}}\",\n    \"transactionId\": \"{{transactionId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/transaction/confirm",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"giftcard",
+								"transaction",
+								"confirm"
+							]
+						},
+						"description": "Confirm a gift card transaction"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"clientTransactionId\": \"TRX123\",\n    \"amount\": 100,\n    \"giftCardSerialNo\": \"GC12345678\",\n    \"transactionId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+								},
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Reverse Transaction",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "X-API-KEY",
+								"value": "{{API_USER_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"giftCardSerialNo\":\"{{serialNo}}\",\n    \"amount\": 10,\n    \"clientTransactionId\" : \"{{clienttransactionid}}\"//,\n    //\"transactionId\": \"{{transactionId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/transaction/reverse",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"giftcard",
+								"transaction",
+								"reverse"
+							]
+						},
+						"description": "Reverse a gift card transaction"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"clientTransactionId\": \"TRX123\",\n    \"amount\": 100,\n    \"giftCardSerialNo\": \"GC12345678\",\n    \"transactionId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+								},
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Refund Transaction",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    //\"clientTransactionId\": {{clienttransactionid}},\n    \"giftCardSerialNo\":\"{{serialNo}}\",\n    \"amount\": 2000000,\n    \"transactionId\": \"{{transactionId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/transaction/refund",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"giftcard",
+								"transaction",
+								"refund"
+							]
+						},
+						"description": "Refund a gift card transaction"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"clientTransactionId\": \"TRX123\",\n    \"amount\": 100,\n    \"giftCardSerialNo\": \"GC12345678\",\n    \"transactionId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+								},
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Check Transaction Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/transaction/checkStatus/{{clienttransactionid}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"giftcard",
+								"transaction",
+								"checkStatus",
+								"{{clienttransactionid}}"
+							]
+						},
+						"description": "Check the status of a transaction"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Get Transaction",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/transaction/{{transactionId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"giftcard",
+								"transaction",
+								"{{transactionId}}"
+							]
+						},
+						"description": "Get details of a specific transaction"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Get Transaction History",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/transaction/list/{{serialNo}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"giftcard",
+								"transaction",
+								"list",
+								"{{serialNo}}"
+							]
+						},
+						"description": "Get transaction history for a gift card"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				}
+			]
+		}
+	]
+}

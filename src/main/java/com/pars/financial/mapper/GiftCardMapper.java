@@ -24,6 +24,7 @@ public class GiftCardMapper {
         dto.isActive = gc.isActive();
         dto.isBlocked = gc.isBlocked();
         dto.isAnonymous = (gc.getCustomer() == null);
+        dto.identifier = gc.getIdentifier();
         return dto;
     }
 

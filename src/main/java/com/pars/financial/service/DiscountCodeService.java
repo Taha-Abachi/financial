@@ -3,6 +3,7 @@ package com.pars.financial.service;
 import com.pars.financial.dto.DiscountCodeDto;
 import com.pars.financial.dto.DiscountCodeIssueRequest;
 import com.pars.financial.entity.DiscountCode;
+import com.pars.financial.enums.DiscountType;
 import com.pars.financial.mapper.DiscountCodeMapper;
 import com.pars.financial.repository.DiscountCodeRepository;
 import com.pars.financial.utils.RandomStringGenerator;
@@ -15,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 public class DiscountCodeService {
@@ -36,8 +38,8 @@ public class DiscountCodeService {
         var code = new DiscountCode();
         code.setIssueDate(LocalDateTime.now());
         code.setExpiryDate(LocalDate.now().plusDays(validityPeriod));
-        code.setCode(RandomStringGenerator.generateRandomUppercaseStringWithNumbers(8));
-        code.setSerialNo(random.nextLong(100000000L));
+        code.setCode("DC" + RandomStringGenerator.generateRandomUppercaseStringWithNumbers(8));
+        code.setSerialNo(ThreadLocalRandom.current().nextLong(10000000, 100000000));
         code.setPercentage(percentage);
         code.setMaxDiscountAmount(maxDiscountAmount);
         code.setMinimumBillAmount(minimumBillAmount);
