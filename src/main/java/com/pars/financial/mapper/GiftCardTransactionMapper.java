@@ -1,11 +1,14 @@
 package com.pars.financial.mapper;
 
-import com.pars.financial.dto.GiftCardTransactionDto;
-import com.pars.financial.entity.GiftCardTransaction;
-import org.springframework.stereotype.Component;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.springframework.stereotype.Component;
+
+import com.pars.financial.dto.GiftCardTransactionDto;
+import com.pars.financial.entity.GiftCardTransaction;
+import com.pars.financial.enums.TransactionStatus;
+import com.pars.financial.enums.TransactionType;
 
 @Component
 public class GiftCardTransactionMapper {
@@ -22,6 +25,41 @@ public class GiftCardTransactionMapper {
         dto.clientTransactionId = transaction.getClientTransactionId();
         dto.storeName = transaction.getStore().getStore_name();
         dto.storeId = transaction.getStore().getId();
+        
+        // Set transaction status
+        if (transaction.getTransactionType() == TransactionType.Debit) {
+            var stream = transaction.getGiftCard().getTransactions().stream();
+            // Check if there's a corresponding confirm or reverse transaction
+            boolean hasConfirm = stream
+                .anyMatch(t -> t.getTransactionType() == TransactionType.Confirmation 
+                    && t.getDebitTransaction() != null 
+                    && t.getDebitTransaction().getTransactionId().equals(transaction.getTransactionId()));
+            
+            boolean hasReverse = stream
+                .anyMatch(t -> t.getTransactionType() == TransactionType.Reversal 
+                    && t.getDebitTransaction() != null 
+                    && t.getDebitTransaction().getTransactionId().equals(transaction.getTransactionId()));
+            
+            boolean hasRefund = stream
+                .anyMatch(t -> t.getTransactionType() == TransactionType.Refund 
+                    && t.getDebitTransaction() != null 
+                    && t.getDebitTransaction().getTransactionId().equals(transaction.getTransactionId()));
+            
+
+            if (hasConfirm) {
+                dto.status = TransactionStatus.Confirmed;
+            } else if (hasReverse) {
+                dto.status = TransactionStatus.Reversed;
+                } else if (hasRefund) {
+                dto.status = TransactionStatus.Refunded;
+            } else {
+                dto.status = TransactionStatus.Pending;
+            }
+        } else {
+            // For non-debit transactions, status is not applicable
+            dto.status = null;
+        }
+        
         return dto;
     }
 

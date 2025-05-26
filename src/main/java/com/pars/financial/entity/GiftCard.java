@@ -2,6 +2,8 @@ package com.pars.financial.entity;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import jakarta.persistence.Column;
@@ -14,6 +16,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
@@ -48,6 +51,9 @@ public class GiftCard {
 
     @Column(columnDefinition = "boolean default false")
     private boolean storeLimited = false;
+
+    @OneToMany(mappedBy = "giftCard")
+    private List<GiftCardTransaction> transactions = new ArrayList<>();
 
     @ManyToMany
     @JoinTable(
@@ -172,5 +178,13 @@ public class GiftCard {
 
     public void setAllowedStores(Set<Store> allowedStores) {
         this.allowedStores = allowedStores;
+    }
+
+    public List<GiftCardTransaction> getTransactions() {
+        return transactions;
+    }
+
+    public void setTransactions(List<GiftCardTransaction> transactions) {
+        this.transactions = transactions;
     }
 }

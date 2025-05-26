@@ -49,10 +49,11 @@ public class DiscountCodeTransactionService {
 
     public DiscountCodeTransactionDto getTransaction(UUID transactionId) {
         logger.debug("Fetching discount code transaction: {}", transactionId);
-        var transaction = transactionRepository.findByTransactionId(transactionId);
+        var transaction = transactionRepository.findByTransactionIdAndTrxType(transactionId, TransactionType.Redeem);
         if (transaction == null) {
             logger.warn("Transaction not found: {}", transactionId);
         }
+        assert transaction != null;
         return mapper.getFrom(transaction);
     }
 
