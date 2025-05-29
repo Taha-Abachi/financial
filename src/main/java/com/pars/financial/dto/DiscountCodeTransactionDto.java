@@ -1,9 +1,10 @@
 package com.pars.financial.dto;
 
-import com.pars.financial.enums.TransactionType;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import com.pars.financial.enums.TransactionStatus;
+import com.pars.financial.enums.TransactionType;
 
 public class DiscountCodeTransactionDto {
     public String phoneNo;
@@ -14,8 +15,17 @@ public class DiscountCodeTransactionDto {
     public long maxDiscountAmount;
     public String code;
     public TransactionType trxType;
+    public TransactionStatus status;
     public LocalDateTime trxDate = LocalDateTime.now();
     public Long storeId;
     public String clientTransactionId;
     public String storeName;
+
+    public TransactionStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(TransactionStatus status) {
+        this.status = status;
+    }
 }

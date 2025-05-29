@@ -2,6 +2,8 @@ package com.pars.financial.entity;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.pars.financial.enums.DiscountType;
 
@@ -13,6 +15,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -47,6 +50,9 @@ public class DiscountCode {
     private boolean used = false;
     @Column(columnDefinition = "boolean default true")
     private boolean isActive = true;
+
+    @OneToMany(mappedBy = "discountCode")
+    private List<DiscountCodeTransaction> transactions = new ArrayList<>();
 
     public void setId(Long id) {
         this.id = id;
@@ -166,5 +172,13 @@ public class DiscountCode {
 
     public void setDiscountType(DiscountType discountType) {
         this.discountType = discountType;
+    }
+
+    public List<DiscountCodeTransaction> getTransactions() {
+        return transactions;
+    }
+
+    public void setTransactions(List<DiscountCodeTransaction> transactions) {
+        this.transactions = transactions;
     }
 }

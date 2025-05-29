@@ -30,17 +30,17 @@ public class GiftCardTransactionMapper {
         if (transaction.getTransactionType() == TransactionType.Debit) {
             var stream = transaction.getGiftCard().getTransactions().stream();
             // Check if there's a corresponding confirm or reverse transaction
-            boolean hasConfirm = stream
+            boolean hasConfirm = transaction.getGiftCard().getTransactions().stream()
                 .anyMatch(t -> t.getTransactionType() == TransactionType.Confirmation 
                     && t.getDebitTransaction() != null 
                     && t.getDebitTransaction().getTransactionId().equals(transaction.getTransactionId()));
             
-            boolean hasReverse = stream
+            boolean hasReverse = transaction.getGiftCard().getTransactions().stream()
                 .anyMatch(t -> t.getTransactionType() == TransactionType.Reversal 
                     && t.getDebitTransaction() != null 
                     && t.getDebitTransaction().getTransactionId().equals(transaction.getTransactionId()));
             
-            boolean hasRefund = stream
+            boolean hasRefund = transaction.getGiftCard().getTransactions().stream()
                 .anyMatch(t -> t.getTransactionType() == TransactionType.Refund 
                     && t.getDebitTransaction() != null 
                     && t.getDebitTransaction().getTransactionId().equals(transaction.getTransactionId()));
