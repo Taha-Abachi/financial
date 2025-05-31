@@ -11,6 +11,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.pars.financial.config.RateLimitProperties;
 import com.pars.financial.repository.ApiUserRepository;
 import com.pars.financial.security.ApiKeyAuthFilter;
 import com.pars.financial.security.RateLimitFilter;
@@ -23,17 +24,19 @@ public class SecurityConfig {
 
     private final ApiUserRepository apiUserRepository;
     private final ApiKeyEncryption apiKeyEncryption;
+    private final RateLimitProperties rateLimitProperties;
 
-    public SecurityConfig(ApiUserRepository apiUserRepository, ApiKeyEncryption apiKeyEncryption) {
+    public SecurityConfig(ApiUserRepository apiUserRepository, ApiKeyEncryption apiKeyEncryption, RateLimitProperties rateLimitProperties) {
         this.apiUserRepository = apiUserRepository;
         this.apiKeyEncryption = apiKeyEncryption;
+        this.rateLimitProperties = rateLimitProperties;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .addFilterBefore(new SecurityContextFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(new RateLimitFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new RateLimitFilter(rateLimitProperties), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new ApiKeyAuthFilter(apiUserRepository, apiKeyEncryption), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
                         // Swagger UI and OpenAPI endpoints
