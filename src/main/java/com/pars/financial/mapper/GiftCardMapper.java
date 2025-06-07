@@ -7,9 +7,18 @@ import org.springframework.stereotype.Component;
 
 import com.pars.financial.dto.GiftCardDto;
 import com.pars.financial.entity.GiftCard;
+import com.pars.financial.entity.GiftCardTransaction;
 
 @Component
 public class GiftCardMapper {
+
+    private final GiftCardTransactionMapper giftCardTransactionMapper;
+
+    public GiftCardMapper(GiftCardTransactionMapper giftCardTransactionMapper) {
+        this.giftCardTransactionMapper = giftCardTransactionMapper;
+    }
+
+
     public GiftCardDto getFrom(GiftCard gc) {
         if(gc == null) {
             return null;
@@ -25,6 +34,10 @@ public class GiftCardMapper {
         dto.isBlocked = gc.isBlocked();
         dto.isAnonymous = (gc.getCustomer() == null);
         dto.identifier = gc.getIdentifier();
+        dto.transactions = new ArrayList<>();
+        for(GiftCardTransaction transaction : gc.getTransactions()) {
+            dto.transactions.add(giftCardTransactionMapper.getFrom(transaction));
+        }
         return dto;
     }
 

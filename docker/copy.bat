@@ -1,1 +1,2 @@
+cd /D D:\Positron\Projects\Financial\docker
 pscp -P 9011 -pw ihcabaahat@1A ..\build\libs\financial-0.0.1-SNAPSHOT.jar root@194.60.231.247:/home/taha/creditapp

@@ -39,9 +39,9 @@ public class GiftCardController {
     }
 
     @GetMapping("/identifier/{identifier}")
-    public GenericResponse<GiftCard> getGiftCards(@PathVariable Long identifier){
+    public GenericResponse<GiftCardDto> getGiftCards(@PathVariable Long identifier){
         logger.info("GET /api/v1/giftcard/identifier/{} called", identifier);
-        GenericResponse<GiftCard> genericResponseDto = new GenericResponse<>();
+        GenericResponse<GiftCardDto> genericResponseDto = new GenericResponse<>();
         var ls = giftCardService.getGiftCard(identifier);
         if(ls == null){
             logger.warn("Gift card not found for identifier {}", identifier);
@@ -53,9 +53,9 @@ public class GiftCardController {
     }
 
     @GetMapping("/{serialNo}")
-    public GenericResponse<GiftCard> getGiftCards(@PathVariable String serialNo){
+    public GenericResponse<GiftCardDto> getGiftCards(@PathVariable String serialNo){
         logger.info("GET /api/v1/giftcard/{} called", serialNo);
-        GenericResponse<GiftCard> genericResponseDto = new GenericResponse<>();
+        GenericResponse<GiftCardDto> genericResponseDto = new GenericResponse<>();
         var ls = giftCardService.getGiftCard(serialNo);
         if(ls == null){
             logger.warn("Gift card not found for serialNo {}", serialNo);

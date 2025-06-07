@@ -1,12 +1,12 @@
 package com.pars.financial.mapper;
 
-import com.pars.financial.dto.CustomerDto;
-import com.pars.financial.dto.GiftCardTransactionDto;
-import com.pars.financial.entity.Customer;
-import org.springframework.stereotype.Component;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.springframework.stereotype.Component;
+
+import com.pars.financial.dto.CustomerDto;
+import com.pars.financial.entity.Customer;
 
 @Component
 public class CustomerMapper {

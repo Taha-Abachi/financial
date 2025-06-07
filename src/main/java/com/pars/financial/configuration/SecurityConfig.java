@@ -11,7 +11,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.pars.financial.config.RateLimitProperties;
+import com.pars.financial.configuration.RateLimitProperties;
 import com.pars.financial.repository.ApiUserRepository;
 import com.pars.financial.security.ApiKeyAuthFilter;
 import com.pars.financial.security.RateLimitFilter;

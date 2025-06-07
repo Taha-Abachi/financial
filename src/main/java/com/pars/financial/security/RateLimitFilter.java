@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.pars.financial.config.RateLimitProperties;
+import com.pars.financial.configuration.RateLimitProperties;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

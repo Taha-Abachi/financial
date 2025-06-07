@@ -28,33 +28,28 @@ public class GiftCardTransactionMapper {
         
         // Set transaction status
         if (transaction.getTransactionType() == TransactionType.Debit) {
-            var stream = transaction.getGiftCard().getTransactions().stream();
-            // Check if there's a corresponding confirm or reverse transaction
-            boolean hasConfirm = transaction.getGiftCard().getTransactions().stream()
-                .anyMatch(t -> t.getTransactionType() == TransactionType.Confirmation 
-                    && t.getDebitTransaction() != null 
-                    && t.getDebitTransaction().getTransactionId().equals(transaction.getTransactionId()));
-            
-            boolean hasReverse = transaction.getGiftCard().getTransactions().stream()
-                .anyMatch(t -> t.getTransactionType() == TransactionType.Reversal 
-                    && t.getDebitTransaction() != null 
-                    && t.getDebitTransaction().getTransactionId().equals(transaction.getTransactionId()));
-            
-            boolean hasRefund = transaction.getGiftCard().getTransactions().stream()
-                .anyMatch(t -> t.getTransactionType() == TransactionType.Refund 
-                    && t.getDebitTransaction() != null 
-                    && t.getDebitTransaction().getTransactionId().equals(transaction.getTransactionId()));
-            
-
-            if (hasConfirm) {
-                dto.status = TransactionStatus.Confirmed;
-            } else if (hasReverse) {
-                dto.status = TransactionStatus.Reversed;
-                } else if (hasRefund) {
-                dto.status = TransactionStatus.Refunded;
-            } else {
+            // Ensure we have initialized transactions
+            if (transaction.getGiftCard() == null || transaction.getGiftCard().getTransactions() == null) {
                 dto.status = TransactionStatus.Pending;
+                return dto;
             }
+
+//            // Find any related transactions (refund, confirm, or reverse)
+//            var relatedTransactions = transaction.getGiftCard().getTransactions().stream()
+//                .filter(t -> t.getDebitTransaction() != null
+//                    && t.getDebitTransaction().getTransactionId().equals(transaction.getTransactionId()))
+//                .toList();
+//
+//            // Check for refund first, then confirm, then reverse
+//            if (relatedTransactions.stream().anyMatch(t -> t.getTransactionType() == TransactionType.Refund)) {
+//                dto.status = TransactionStatus.Refunded;
+//            } else if (relatedTransactions.stream().anyMatch(t -> t.getTransactionType() == TransactionType.Confirmation)) {
+//                dto.status = TransactionStatus.Confirmed;
+//            } else if (relatedTransactions.stream().anyMatch(t -> t.getTransactionType() == TransactionType.Reversal)) {
+//                dto.status = TransactionStatus.Reversed;
+//            } else {
+                dto.status = TransactionStatus.Unkown;
+//            }
         } else {
             // For non-debit transactions, status is not applicable
             dto.status = null;

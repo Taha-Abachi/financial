@@ -64,24 +64,24 @@ public class GiftCardService {
         return giftCardMapper.getFrom(giftCardRepository.findAll());
     }
 
-    public GiftCard getGiftCard(String serialNo) {
+    public GiftCardDto getGiftCard(String serialNo) {
         logger.debug("Fetching gift card by serialNo: {}", serialNo);
         var gc = giftCardRepository.findBySerialNo(serialNo);
         if (gc == null) {
             logger.warn("Gift card not found with serialNo: {}", serialNo);
             throw new GiftCardNotFoundException("Gift Card Not Found with serial No: " + serialNo);
         }
-        return gc;
+        return giftCardMapper.getFrom(gc);
     }
 
-    public GiftCard getGiftCard(Long identifier) {
+    public GiftCardDto getGiftCard(Long identifier) {
         logger.debug("Fetching gift card by identifier: {}", identifier);
         var gc = giftCardRepository.findByIdentifier(identifier);
         if (gc == null) {
             logger.warn("Gift card not found with identifier: {}", identifier);
             throw new GiftCardNotFoundException("Gift Card Not Found with identifier: " + identifier);
         }
-        return gc;
+        return giftCardMapper.getFrom(gc);
     }
 
     public GiftCardDto generateGiftCard(long realAmount, long amount, long validityPeriod) {
