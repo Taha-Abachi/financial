@@ -30,7 +30,7 @@ public class GiftCardTransactionMapper {
         if (transaction.getTransactionType() == TransactionType.Debit) {
             // Ensure we have initialized transactions
             if (transaction.getGiftCard() == null || transaction.getGiftCard().getTransactions() == null) {
-                dto.status = TransactionStatus.Pending;
+                dto.status = TransactionStatus.Unkown;
                 return dto;
             }
 
