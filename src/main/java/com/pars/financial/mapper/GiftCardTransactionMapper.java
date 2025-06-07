@@ -31,30 +31,25 @@ public class GiftCardTransactionMapper {
             // Ensure we have initialized transactions
             if (transaction.getGiftCard() == null || transaction.getGiftCard().getTransactions() == null) {
                 dto.status = TransactionStatus.Unkown;
+
+            }
+            else{
+                dto.status = TransactionStatus.Pending;
+                var stream = transaction.getGiftCard().getTransactions().stream().filter(p->p.getTransactionId().equals(transaction.getTransactionId()));
+                dto.status = stream.anyMatch(p -> (p.getTransactionType() == TransactionType.Refund))
+                        ? TransactionStatus.Refunded
+                        : stream.anyMatch(p -> (p.getTransactionType() == TransactionType.Reversal))
+                        ? TransactionStatus.Reversed
+                        : stream.anyMatch(p -> (p.getTransactionType() == TransactionType.Confirmation))
+                        ? TransactionStatus.Confirmed
+                        : TransactionStatus.Pending;
                 return dto;
             }
-
-//            // Find any related transactions (refund, confirm, or reverse)
-//            var relatedTransactions = transaction.getGiftCard().getTransactions().stream()
-//                .filter(t -> t.getDebitTransaction() != null
-//                    && t.getDebitTransaction().getTransactionId().equals(transaction.getTransactionId()))
-//                .toList();
-//
-//            // Check for refund first, then confirm, then reverse
-//            if (relatedTransactions.stream().anyMatch(t -> t.getTransactionType() == TransactionType.Refund)) {
-//                dto.status = TransactionStatus.Refunded;
-//            } else if (relatedTransactions.stream().anyMatch(t -> t.getTransactionType() == TransactionType.Confirmation)) {
-//                dto.status = TransactionStatus.Confirmed;
-//            } else if (relatedTransactions.stream().anyMatch(t -> t.getTransactionType() == TransactionType.Reversal)) {
-//                dto.status = TransactionStatus.Reversed;
-//            } else {
                 dto.status = TransactionStatus.Unkown;
-//            }
         } else {
             // For non-debit transactions, status is not applicable
             dto.status = null;
         }
-        
         return dto;
     }
 
