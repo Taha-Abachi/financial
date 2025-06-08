@@ -3,6 +3,7 @@ package com.pars.financial.entity;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.pars.financial.enums.TransactionStatus;
 import com.pars.financial.enums.TransactionType;
 
 import jakarta.persistence.Entity;
@@ -36,6 +37,9 @@ public class GiftCardTransaction {
 
     @Enumerated(EnumType.STRING)
     private TransactionType transactionType;
+
+    @Enumerated(EnumType.STRING)
+    private TransactionStatus status;
 
     private UUID transactionId = UUID.randomUUID();
 
@@ -158,6 +162,14 @@ public class GiftCardTransaction {
 
     public void setBalanceBefore(long balanceBefore) {
         this.balanceBefore = balanceBefore;
+    }
+
+    public TransactionStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(TransactionStatus status) {
+        this.status = status;
     }
 }
 

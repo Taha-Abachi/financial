@@ -40,32 +40,32 @@ public class GiftCardMapper {
         var debits = gc.getTransactions().stream().filter(p->p.getTransactionType() == TransactionType.Debit).toList();
         for(GiftCardTransaction transaction : debits) {
             var ldto = giftCardTransactionMapper.getFrom(transaction);
-            ldto.status = TransactionStatus.Pending;
-            ldto.status =
-                    gc.getTransactions().stream().anyMatch(
-                            p-> (
-                                    (
-                                        p.getTransactionType() == TransactionType.Refund)
-                                        && (p.getDebitTransaction().getTransactionId() == transaction.getTransactionId())
-                                    )
-                                )
-                    ? TransactionStatus.Refunded :
-                            gc.getTransactions().stream().anyMatch(
-                                    p-> (
-                                            (
-                                                    p.getTransactionType() == TransactionType.Reversal)
-                                                    && (p.getDebitTransaction().getTransactionId() == transaction.getTransactionId())
-                                    )
-                            )
-                            ? TransactionStatus.Reversed :
-                                    gc.getTransactions().stream().anyMatch(
-                                            p-> (
-                                                    (
-                                                            p.getTransactionType() == TransactionType.Confirmation)                                                            && (p.getDebitTransaction().getTransactionId() == transaction.getTransactionId())
-                                            )
-                                    )
-                            ? TransactionStatus.Confirmed :
-                            TransactionStatus.Pending;
+//            ldto.status = TransactionStatus.Pending;
+//            ldto.status =
+//                    gc.getTransactions().stream().anyMatch(
+//                            p-> (
+//                                    (
+//                                        p.getTransactionType() == TransactionType.Refund)
+//                                        && (p.getDebitTransaction().getTransactionId() == transaction.getTransactionId())
+//                                    )
+//                                )
+//                    ? TransactionStatus.Refunded :
+//                            gc.getTransactions().stream().anyMatch(
+//                                    p-> (
+//                                            (
+//                                                    p.getTransactionType() == TransactionType.Reversal)
+//                                                    && (p.getDebitTransaction().getTransactionId() == transaction.getTransactionId())
+//                                    )
+//                            )
+//                            ? TransactionStatus.Reversed :
+//                                    gc.getTransactions().stream().anyMatch(
+//                                            p-> (
+//                                                    (
+//                                                            p.getTransactionType() == TransactionType.Confirmation)                                                            && (p.getDebitTransaction().getTransactionId() == transaction.getTransactionId())
+//                                            )
+//                                    )
+//                            ? TransactionStatus.Confirmed :
+//                            TransactionStatus.Pending;
             dto.transactions.add(ldto);
         }
         return dto;

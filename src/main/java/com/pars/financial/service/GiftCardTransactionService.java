@@ -14,6 +14,7 @@ import com.pars.financial.dto.GiftCardTransactionDto;
 import com.pars.financial.entity.ApiUser;
 import com.pars.financial.entity.GiftCard;
 import com.pars.financial.entity.GiftCardTransaction;
+import com.pars.financial.enums.TransactionStatus;
 import com.pars.financial.enums.TransactionType;
 import com.pars.financial.exception.ClientTransactionIdNotUniqueException;
 import com.pars.financial.exception.CustomerNotFoundException;
@@ -115,7 +116,8 @@ public class GiftCardTransactionService {
                 transaction.setBalanceBefore(gc.getBalance());
                 transaction.setClientTransactionId(clientTransactionId);
                 transaction.setTrxDate(LocalDateTime.now());
-                
+                transaction.setStatus(TransactionStatus.Pending);
+
                 gc.setBalance(gc.getBalance() - amount);
                 gc.setLastUsed(LocalDateTime.now());
                 
@@ -237,6 +239,19 @@ public class GiftCardTransactionService {
         
         giftCardRepository.save(gc);
         var savedTransaction = transactionRepository.save(transaction);
+        
+        switch (trxType) {
+            case Reversal -> {
+                debitTransaction.setStatus(TransactionStatus.Reversed);
+            }
+            case Refund -> {
+                debitTransaction.setStatus(TransactionStatus.Refunded);
+            }
+            case Confirmation -> {
+                debitTransaction.setStatus(TransactionStatus.Confirmed);
+            }
+        }
+        transactionRepository.save(debitTransaction);
         
         logger.info("Successfully processed {} transaction: {}, new balance: {}", 
             trxType, savedTransaction.getTransactionId(), gc.getBalance());
