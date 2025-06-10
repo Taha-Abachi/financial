@@ -1,6 +1,7 @@
 package com.pars.financial.dto;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 
 import com.pars.financial.enums.DiscountType;
 
@@ -19,4 +20,5 @@ public class DiscountCodeDto {
     public boolean used;
     public boolean active;
     public LocalDateTime redeemDate;
+    public ArrayList<DiscountCodeTransactionDto> transactions;
 }

@@ -18,6 +18,8 @@ public class GiftCardTransactionDto {
     public long amount;
     public String clientTransactionId;
     public String storeName;
+    public String orderno;
+    public String description;
 
     public TransactionStatus getStatus() {
         return status;

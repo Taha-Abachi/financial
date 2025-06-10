@@ -7,8 +7,6 @@ import org.springframework.stereotype.Component;
 
 import com.pars.financial.dto.DiscountCodeTransactionDto;
 import com.pars.financial.entity.DiscountCodeTransaction;
-import com.pars.financial.enums.TransactionStatus;
-import com.pars.financial.enums.TransactionType;
 
 @Component
 public class DiscountCodeTransactionMapper {
@@ -18,6 +16,7 @@ public class DiscountCodeTransactionMapper {
         DiscountCodeTransactionDto dto = new DiscountCodeTransactionDto();
         dto.clientTransactionId = transaction.getClientTransactionId();
         dto.code = dst.getCode();
+        dto.discountType = dst.getDiscountType();
         dto.originalAmount = transaction.getOriginalAmount();
         dto.transactionId = transaction.getTransactionId();
         dto.maxDiscountAmount = dst.getMaxDiscountAmount();
@@ -29,31 +28,11 @@ public class DiscountCodeTransactionMapper {
         dto.trxType = transaction.getTrxType();
         dto.trxDate = transaction.getTrxDate();
         dto.storeName = transaction.getStore().getStore_name();
+        dto.orderno = transaction.getOrderno();
+        dto.description = transaction.getDescription();
 
         // Set transaction status
-        if (transaction.getTrxType() == TransactionType.Redeem) {
-            // Check if there's a corresponding confirm or reverse transaction
-            boolean hasConfirm = transaction.getDiscountCode().getTransactions().stream()
-                .anyMatch(t -> t.getTrxType() == TransactionType.Confirmation 
-                    && t.getRedeemTransaction() != null 
-                    && t.getRedeemTransaction().getTransactionId().equals(transaction.getTransactionId()));
-            
-            boolean hasReverse = transaction.getDiscountCode().getTransactions().stream()
-                .anyMatch(t -> t.getTrxType() == TransactionType.Reversal 
-                    && t.getRedeemTransaction() != null 
-                    && t.getRedeemTransaction().getTransactionId().equals(transaction.getTransactionId()));
-            
-            if (hasConfirm) {
-                dto.status = TransactionStatus.Confirmed;
-            } else if (hasReverse) {
-                dto.status = TransactionStatus.Reversed;
-            } else {
-                dto.status = TransactionStatus.Pending;
-            }
-        } else {
-            // For non-redeem transactions, status is not applicable
-            dto.status = null;
-        }
+        dto.status = transaction.getStatus();
 
         return dto;
     }

@@ -6,6 +6,7 @@ import java.util.UUID;
 import com.pars.financial.enums.TransactionStatus;
 import com.pars.financial.enums.TransactionType;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -64,6 +65,12 @@ public class GiftCardTransaction {
     private long balanceBefore;
 
     private String clientTransactionId;
+
+    @Column(columnDefinition = "varchar(25)")
+    private String orderno;
+
+    @Column(columnDefinition = "varchar(250)")
+    private String description;
 
     @ManyToOne
     @JoinColumn(name = "debit_transaction_id")
@@ -170,6 +177,22 @@ public class GiftCardTransaction {
 
     public void setStatus(TransactionStatus status) {
         this.status = status;
+    }
+
+    public String getOrderno() {
+        return orderno;
+    }
+
+    public void setOrderno(String orderno) {
+        this.orderno = orderno;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 }
 

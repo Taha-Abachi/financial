@@ -7,8 +7,6 @@ import org.springframework.stereotype.Component;
 
 import com.pars.financial.dto.GiftCardTransactionDto;
 import com.pars.financial.entity.GiftCardTransaction;
-import com.pars.financial.enums.TransactionStatus;
-import com.pars.financial.enums.TransactionType;
 
 @Component
 public class GiftCardTransactionMapper {
@@ -26,6 +24,8 @@ public class GiftCardTransactionMapper {
         dto.storeName = transaction.getStore().getStore_name();
         dto.storeId = transaction.getStore().getId();
         dto.status = transaction.getStatus();
+        dto.orderno = transaction.getOrderno();
+        dto.description = transaction.getDescription();
         // Set transaction status
 //        if (transaction.getTransactionType() == TransactionType.Debit) {
 //            // Ensure we have initialized transactions

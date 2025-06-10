@@ -7,6 +7,7 @@ import com.pars.financial.enums.DiscountType;
 import com.pars.financial.mapper.DiscountCodeMapper;
 import com.pars.financial.repository.DiscountCodeRepository;
 import com.pars.financial.utils.RandomStringGenerator;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -15,7 +16,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Service
@@ -25,7 +25,6 @@ public class DiscountCodeService {
 
     private final DiscountCodeRepository codeRepository;
     private final DiscountCodeMapper mapper;
-    private final Random random = new Random();
 
     public DiscountCodeService(DiscountCodeRepository codeRepository, DiscountCodeMapper mapper) {
         this.codeRepository = codeRepository;

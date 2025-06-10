@@ -3,6 +3,8 @@ package com.pars.financial.mapper;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.pars.financial.dto.DiscountCodeTransactionDto;
+import com.pars.financial.enums.TransactionType;
 import org.springframework.stereotype.Component;
 
 import com.pars.financial.dto.DiscountCodeDto;
@@ -10,6 +12,12 @@ import com.pars.financial.entity.DiscountCode;
 
 @Component
 public class DiscountCodeMapper {
+    private final DiscountCodeTransactionMapper discountCodeTransactionMapper;
+
+    public DiscountCodeMapper(DiscountCodeTransactionMapper discountCodeTransactionMapper) {
+        this.discountCodeTransactionMapper = discountCodeTransactionMapper;
+    }
+
     public DiscountCodeDto getFrom(DiscountCode code) {
         if(code == null) {
             return null;
@@ -30,6 +38,12 @@ public class DiscountCodeMapper {
         dto.active = code.isActive();
         dto.issueDate = code.getIssueDate();
         dto.redeemDate = code.getRedeemDate();
+        ArrayList<DiscountCodeTransactionDto> transactions = new ArrayList<DiscountCodeTransactionDto>();
+        code.getTransactions().stream().filter(t->t.getTrxType() == TransactionType.Redeem).forEach(p->
+        {
+            transactions.add(discountCodeTransactionMapper.getFrom(p));
+        });
+        dto.transactions = transactions;
         return dto;
     }
 

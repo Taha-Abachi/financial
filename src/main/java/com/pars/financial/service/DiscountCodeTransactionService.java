@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import com.pars.financial.dto.DiscountCodeTransactionDto;
 import com.pars.financial.entity.ApiUser;
 import com.pars.financial.entity.DiscountCodeTransaction;
-import com.pars.financial.enums.DiscountType;
+import com.pars.financial.enums.TransactionStatus;
 import com.pars.financial.enums.TransactionType;
 import com.pars.financial.exception.CustomerNotFoundException;
 import com.pars.financial.exception.ValidationException;
@@ -111,18 +111,24 @@ public class DiscountCodeTransactionService {
             }
         }
 
-        var discount = 0L;
-        if (code.getDiscountType() == DiscountType.CONSTANT) {
-            // Use constant discount amount
-            discount = code.getConstantDiscountAmount();
-            logger.debug("Using constant discount amount: {}", discount);
-        } else {
-            // Calculate percentage-based discount
-            discount = (long) (code.getPercentage() * dto.originalAmount / 100);
-            if(code.getMaxDiscountAmount() > 0) {
-                discount = Math.min(discount, code.getMaxDiscountAmount());
+        long discount;
+        switch (code.getDiscountType()) {
+            case FREEDELIVERY -> {
+                discount = 0;
+                logger.debug("Using free delivery discount amount: {}", discount);
             }
-            logger.debug("Calculated percentage-based discount amount: {} ({}% of {})", discount, code.getPercentage(), dto.originalAmount);
+            case CONSTANT -> {
+                discount = code.getConstantDiscountAmount();
+                logger.debug("Using constant discount amount: {}", discount);
+            }
+            default -> {
+                // PERCENTAGE
+                discount = (long) (code.getPercentage() * dto.originalAmount / 100);
+                if(code.getMaxDiscountAmount() > 0) {
+                    discount = Math.min(discount, code.getMaxDiscountAmount());
+                }
+                logger.debug("Calculated percentage-based discount amount: {} ({}% of {})", discount, code.getPercentage(), dto.originalAmount);
+            }
         }
 
         transaction = new DiscountCodeTransaction();
@@ -135,6 +141,7 @@ public class DiscountCodeTransactionService {
         transaction.setCustomer(customer);
         transaction.setStore(store.get());
         transaction.setTrxDate(LocalDateTime.now());
+        transaction.setStatus(TransactionStatus.Pending);
         var savedTransaction = transactionRepository.save(transaction);
 
         code.setRedeemDate(LocalDateTime.now());
@@ -195,11 +202,13 @@ public class DiscountCodeTransactionService {
         nTransaction.setRedeemTransaction(transaction);
         var savedTransaction = transactionRepository.save(nTransaction);
 
+        transaction.setStatus(trxType == TransactionType.Confirmation ? TransactionStatus.Confirmed : TransactionStatus.Reversed);
+        transactionRepository.save(transaction);
+
         var code = transaction.getDiscountCode();
         if(trxType == TransactionType.Confirmation) {
             logger.debug("Marking discount code {} as used", code.getCode());
-            code.setUsed(code.getCurrentUsageCount() + 1 >= code.getUsageLimit());
-            code.setCurrentUsageCount(code.getCurrentUsageCount() + 1);
+            code.setUsed(code.getCurrentUsageCount() >= code.getUsageLimit());
             code.setActive(true);
             code.setRedeemDate(LocalDateTime.now());
         }
@@ -223,12 +232,6 @@ public class DiscountCodeTransactionService {
     public DiscountCodeTransactionDto reverse(ApiUser apiUser, DiscountCodeTransactionDto dto) {
         logger.info("Initiating reverse transaction for discount code transaction: {}", dto.transactionId);
         var transaction = settleTransaction(apiUser, dto, TransactionType.Reversal);
-
-        var code = transaction.getDiscountCode();
-        logger.debug("Resetting discount code {} after reversal", code.getCode());
-        code.setUsed(false);
-        code.setRedeemDate(null);
-        codeRepository.save(code);
 
         return mapper.getFrom(transaction);
     }
