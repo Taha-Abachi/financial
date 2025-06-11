@@ -64,39 +64,39 @@ public class DiscountCodeTransactionService {
         var code = codeRepository.findByCode(dto.code);
         if(code == null) {
             logger.warn("Discount code not found: {}", dto.code);
-            throw new ValidationException("Discount Code not found.");
+            throw new ValidationException("Discount Code not found.", null, -104);
         }
         else if(!code.isActive()) {
             logger.warn("Discount code is inactive: {}", dto.code);
-            throw new ValidationException("Discount code is inactive.");
+            throw new ValidationException("Discount code is inactive.", null, -105);
         }
         else if(code.isUsed()) {
             logger.warn("Discount code already used: {}", dto.code);
-            throw new ValidationException("Discount already used.");
+            throw new ValidationException("Discount already used.", null, -106);
         }
         
         if (code.getCurrentUsageCount() >= code.getUsageLimit()) {
             logger.warn("Discount code usage limit reached: {} (current: {}, limit: {})", 
                 dto.code, code.getCurrentUsageCount(), code.getUsageLimit());
-            throw new ValidationException("Discount code usage limit reached.");
+            throw new ValidationException("Discount code usage limit reached.", null, -107);
         }
         
         if (code.getMinimumBillAmount() > 0 && dto.originalAmount < code.getMinimumBillAmount()) {
             logger.warn("Original amount {} is less than minimum bill amount {} for discount code: {}", 
                 dto.originalAmount, code.getMinimumBillAmount(), dto.code);
-            throw new ValidationException("Original amount is less than minimum bill amount required.");
+            throw new ValidationException("Original amount is less than minimum bill amount required.", null, -108);
         }
         
         var transaction = transactionRepository.findByClientTransactionIdAndTrxType(dto.clientTransactionId, TransactionType.Redeem);
         if(transaction != null){
             logger.warn("Duplicate client transaction ID: {}", dto.clientTransactionId);
-            throw new ValidationException("ClientTransactionId should be unique.");
+            throw new ValidationException("ClientTransactionId should be unique.", null, -109);
         }
         
         var store = storeRepository.findById(dto.storeId);
         if (store.isEmpty()) {
             logger.warn("Store not found: {}", dto.storeId);
-            throw new ValidationException("Store Not Found");
+            throw new ValidationException("Store Not Found", null, -110);
         }
         
         var customer = customerRepository.findByPrimaryPhoneNumber(dto.phoneNo);
@@ -171,19 +171,19 @@ public class DiscountCodeTransactionService {
             logger.warn("Redeem transaction not found for {}: {}", 
                 (trxType == TransactionType.Confirmation ? "transactionId" : "clientTransactionId"),
                 (trxType == TransactionType.Confirmation ? dto.transactionId : dto.clientTransactionId));
-            throw new ValidationException("Redeem Transaction Not Found.");
+            throw new ValidationException("Redeem Transaction Not Found.", null, -112);
         }
 
         var transaction2 = transactionRepository.findByTransactionIdAndTrxType(transaction.getTransactionId(), TransactionType.Confirmation);
         if(transaction2 != null) {
             logger.warn("Transaction already confirmed: {}", transaction.getTransactionId());
-            throw new ValidationException("Transaction already confirmed.");
+            throw new ValidationException("Transaction already confirmed.", null, -113);
         }
         
         transaction2 = transactionRepository.findByTransactionIdAndTrxType(transaction.getTransactionId(), TransactionType.Reversal);
         if(transaction2 != null) {
             logger.warn("Transaction already reversed: {}", transaction.getTransactionId());
-            throw new ValidationException("Transaction already reversed.");
+            throw new ValidationException("Transaction already reversed.", null, -114   );
         }
 
         logger.debug("Creating {} transaction for redeem transaction: {}", trxType, transaction.getTransactionId());

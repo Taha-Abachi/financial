@@ -39,7 +39,7 @@ public class GiftCardService {
     private void validateRealAmount(long realAmount) {
         if (realAmount <= 0) {
             logger.error("Invalid real amount: {}", realAmount);
-            throw new ValidationException("Real amount must be greater than 0");
+            throw new ValidationException("Real amount must be greater than 0", null, -115);
         }
     }
 
@@ -122,7 +122,7 @@ public class GiftCardService {
                 var store = storeRepository.findById(storeId)
                     .orElseThrow(() -> {
                         logger.warn("Store not found with id: {}", storeId);
-                        return new ValidationException("Store not found with id: " + storeId);
+                        return new ValidationException("Store not found with id: " + storeId, null, -116);
                     });
                 stores.add(store);
             }

@@ -1,10 +1,18 @@
 package com.pars.financial.controller;
 
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.pars.financial.dto.CustomerDto;
 import com.pars.financial.dto.GenericResponse;
 import com.pars.financial.entity.Customer;
 import com.pars.financial.exception.ValidationException;
 import com.pars.financial.service.CustomerService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -12,7 +20,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/customer")
@@ -79,7 +86,7 @@ public class CustomerController {
     ) {
         var genericResponseDto = new GenericResponse<Customer>();
         if(dto.phoneNumber == null){
-            throw new ValidationException("Phone number is required");
+            throw new ValidationException("Phone number is required", null, -103);
         }
         genericResponseDto.data = customerService.createCustomer(dto);
         return genericResponseDto;
