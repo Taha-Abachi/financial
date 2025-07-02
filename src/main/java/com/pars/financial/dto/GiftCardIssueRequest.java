@@ -6,6 +6,15 @@ public class GiftCardIssueRequest {
     private long realAmount;
     private long remainingValidityPeriod;
     private int count;
+    private long companyId = 0;
+
+    public long getCompanyId() {
+        return companyId;
+    }
+
+    public void setCompanyId(long companyId) {
+        this.companyId = companyId;
+    }
 
     public long getBalance() {
         return balance;

@@ -70,7 +70,7 @@ public class GiftCardController {
     public GenericResponse<GiftCardDto> issueGiftCard(@RequestBody GiftCardIssueRequest dto){
         logger.info("POST /api/v1/giftcard/issue called with request: {}", dto);
         var genericResponseDto = new GenericResponse<GiftCardDto>();
-        var gc = giftCardService.generateGiftCard(dto.getRealAmount(), dto.getBalance(), dto.getRemainingValidityPeriod());
+        var gc = giftCardService.generateGiftCard(dto.getRealAmount(), dto.getBalance(), dto.getRemainingValidityPeriod(), dto.getCompanyId());
         genericResponseDto.data = gc ;
         return genericResponseDto;
     }
@@ -79,7 +79,7 @@ public class GiftCardController {
     public GenericResponse<List<GiftCardDto>> issueGiftCards(@RequestBody GiftCardIssueRequest dto){
         logger.info("POST /api/v1/giftcard/issuelist called with request: {}", dto);
         var genericResponseDto = new GenericResponse<List<GiftCardDto>>();
-        var gcl = giftCardService.generateGiftCards(dto.getRealAmount(), dto.getBalance(), dto.getRemainingValidityPeriod(), dto.getCount());
+        var gcl = giftCardService.generateGiftCards(dto.getRealAmount(), dto.getBalance(), dto.getRemainingValidityPeriod(),dto.getCompanyId(), dto.getCount());
         genericResponseDto.data = gcl ;
         return genericResponseDto;
     }
@@ -97,6 +97,51 @@ public class GiftCardController {
         logger.info("POST /api/v1/giftcard/{}/remove-store-limitation called", serialNo);
         var response = new GenericResponse<Void>();
         giftCardService.removeStoreLimitation(serialNo);
+        return response;
+    }
+
+    @GetMapping("/company/{companyId}")
+    public GenericResponse<List<GiftCardDto>> getGiftCardsByCompany(@PathVariable Long companyId) {
+        logger.info("GET /api/v1/giftcard/company/{} called", companyId);
+        var response = new GenericResponse<List<GiftCardDto>>();
+        try {
+            var giftCards = giftCardService.getGiftCardsByCompany(companyId);
+            response.data = giftCards;
+        } catch (Exception e) {
+            logger.error("Error fetching gift cards for company {}: {}", companyId, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+        }
+        return response;
+    }
+
+    @PostMapping("/{serialNo}/assign-company/{companyId}")
+    public GenericResponse<GiftCardDto> assignCompanyToGiftCard(@PathVariable String serialNo, @PathVariable Long companyId) {
+        logger.info("POST /api/v1/giftcard/{}/assign-company/{} called", serialNo, companyId);
+        var response = new GenericResponse<GiftCardDto>();
+        try {
+            var giftCard = giftCardService.assignCompanyToGiftCard(serialNo, companyId);
+            response.data = giftCard;
+        } catch (Exception e) {
+            logger.error("Error assigning company {} to gift card {}: {}", companyId, serialNo, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+        }
+        return response;
+    }
+
+    @PostMapping("/{serialNo}/remove-company")
+    public GenericResponse<GiftCardDto> removeCompanyFromGiftCard(@PathVariable String serialNo) {
+        logger.info("POST /api/v1/giftcard/{}/remove-company called", serialNo);
+        var response = new GenericResponse<GiftCardDto>();
+        try {
+            var giftCard = giftCardService.removeCompanyFromGiftCard(serialNo);
+            response.data = giftCard;
+        } catch (Exception e) {
+            logger.error("Error removing company from gift card {}: {}", serialNo, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+        }
         return response;
     }
 }

@@ -156,4 +156,34 @@ public class GiftCardTransactionController {
         return res;
     }
 
+    @GetMapping("/company/{companyId}")
+    public GenericResponse<List<GiftCardTransactionDto>> getGiftCardsByCompany(@PathVariable Long companyId) {
+        logger.info("GET /api/v1/giftcard/transaction/company/{} called", companyId);
+        var res = new GenericResponse<List<GiftCardTransactionDto>>();
+        try {
+            var transactions = transactionService.getGiftCardsByCompany(companyId);
+            res.data = transactions;
+        } catch (Exception e) {
+            logger.error("Error fetching gift cards for company {}: {}", companyId, e.getMessage());
+            res.message = e.getMessage();
+            res.status = -1;
+        }
+        return res;
+    }
+
+    @GetMapping("/company/{companyId}/history")
+    public GenericResponse<List<GiftCardTransactionDto>> getCompanyTransactionHistory(@PathVariable Long companyId) {
+        logger.info("GET /api/v1/giftcard/transaction/company/{}/history called", companyId);
+        var res = new GenericResponse<List<GiftCardTransactionDto>>();
+        try {
+            var transactions = transactionService.getCompanyTransactionHistory(companyId);
+            res.data = transactions;
+        } catch (Exception e) {
+            logger.error("Error fetching transaction history for company {}: {}", companyId, e.getMessage());
+            res.message = e.getMessage();
+            res.status = -1;
+        }
+        return res;
+    }
+
 }

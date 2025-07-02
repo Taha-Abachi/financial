@@ -14,6 +14,7 @@ public class GiftCardDto {
     public boolean isBlocked;
     public boolean isAnonymous;
     public Long identifier;
+    public Long companyId;
 
     public List<GiftCardTransactionDto> transactions;
 

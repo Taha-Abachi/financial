@@ -15,6 +15,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
@@ -53,6 +55,10 @@ public class DiscountCode {
 
     @OneToMany(mappedBy = "discountCode")
     private List<DiscountCodeTransaction> transactions = new ArrayList<>();
+
+    @ManyToOne
+    @JoinColumn(name = "company_id")
+    private Company company;
 
     public void setId(Long id) {
         this.id = id;
@@ -180,5 +186,13 @@ public class DiscountCode {
 
     public void setTransactions(List<DiscountCodeTransaction> transactions) {
         this.transactions = transactions;
+    }
+
+    public Company getCompany() {
+        return company;
+    }
+
+    public void setCompany(Company company) {
+        this.company = company;
     }
 }

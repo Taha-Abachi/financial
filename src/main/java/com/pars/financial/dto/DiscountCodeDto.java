@@ -21,4 +21,5 @@ public class DiscountCodeDto {
     public boolean active;
     public LocalDateTime redeemDate;
     public ArrayList<DiscountCodeTransactionDto> transactions;
+    public Long companyId;
 }

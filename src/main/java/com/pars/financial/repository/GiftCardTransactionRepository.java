@@ -1,12 +1,13 @@
 package com.pars.financial.repository;
 
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
 import com.pars.financial.entity.GiftCard;
 import com.pars.financial.entity.GiftCardTransaction;
 import com.pars.financial.enums.TransactionType;
-import org.springframework.data.jpa.repository.JpaRepository;
-
-import java.util.List;
-import java.util.UUID;
 
 public interface GiftCardTransactionRepository extends JpaRepository<GiftCardTransaction, Integer> {
     GiftCardTransaction findByTransactionId(UUID transactionId);
@@ -18,6 +19,10 @@ public interface GiftCardTransactionRepository extends JpaRepository<GiftCardTra
     GiftCardTransaction findByTransactionTypeAndClientTransactionId(TransactionType transactionType, String clientTransactionId);
 
     List<GiftCardTransaction> findByGiftCardAndTransactionType(GiftCard giftCard, TransactionType transactionType);
+
+    List<GiftCardTransaction> findByGiftCard(GiftCard giftCard);
+
+    GiftCardTransaction findTopByGiftCardOrderByTrxDateDesc(GiftCard giftCard);
 
     GiftCardTransaction findTopByTransactionIdOrderByTrxDateDesc(UUID transactionId);
 }

@@ -1,11 +1,13 @@
 package com.pars.financial.service;
 
 import com.pars.financial.dto.GiftCardDto;
+import com.pars.financial.entity.Company;
 import com.pars.financial.entity.GiftCard;
 import com.pars.financial.entity.Store;
 import com.pars.financial.exception.GiftCardNotFoundException;
 import com.pars.financial.exception.ValidationException;
 import com.pars.financial.mapper.GiftCardMapper;
+import com.pars.financial.repository.CompanyRepository;
 import com.pars.financial.repository.GiftCardRepository;
 import com.pars.financial.repository.StoreRepository;
 import com.pars.financial.utils.RandomStringGenerator;
@@ -29,11 +31,13 @@ public class GiftCardService {
     final GiftCardRepository giftCardRepository;
     final GiftCardMapper giftCardMapper;
     final StoreRepository storeRepository;
+    final CompanyRepository companyRepository;
 
-    public GiftCardService(GiftCardRepository giftCardRepository, GiftCardMapper giftCardMapper, StoreRepository storeRepository) {
+    public GiftCardService(GiftCardRepository giftCardRepository, GiftCardMapper giftCardMapper, StoreRepository storeRepository, CompanyRepository companyRepository) {
         this.giftCardRepository = giftCardRepository;
         this.giftCardMapper = giftCardMapper;
         this.storeRepository = storeRepository;
+        this.companyRepository = companyRepository;
     }
 
     private void validateRealAmount(long realAmount) {
@@ -43,10 +47,16 @@ public class GiftCardService {
         }
     }
 
-    private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod) {
+    private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod, long companyId) {
         logger.debug("Issuing new gift card with realAmount: {}, amount: {}, validityPeriod: {}", realAmount, amount, validityPeriod);
         validateRealAmount(realAmount);
+        var company = companyRepository.findById(companyId);
+        if(company.isEmpty()) {
+            logger.error("Company not found while Issuing new gift card with realAmount: {}, amount: {}, validityPeriod: {}", realAmount, amount, validityPeriod);
+            throw new ValidationException("Invalid company", null, -115);
+        }
         var gc = new GiftCard();
+        gc.setCompany(company.get());
         gc.setIdentifier(ThreadLocalRandom.current().nextLong(10000000, 100000000));
 //        gc.setIdentifier(Long.parseLong(RandomStringGenerator.generateRandomNumericString(8)));
         gc.setSerialNo("GC" + RandomStringGenerator.generateRandomUppercaseStringWithNumbers(8));
@@ -84,19 +94,19 @@ public class GiftCardService {
         return giftCardMapper.getFrom(gc);
     }
 
-    public GiftCardDto generateGiftCard(long realAmount, long amount, long validityPeriod) {
+    public GiftCardDto generateGiftCard(long realAmount, long amount, long validityPeriod, long companyId) {
         logger.info("Generating new gift card with realAmount: {}, amount: {}, validityPeriod: {}", realAmount, amount, validityPeriod);
-        var giftCard = issueGiftCard(realAmount, amount, validityPeriod);
+        var giftCard = issueGiftCard(realAmount, amount, validityPeriod, companyId);
         var savedCard = giftCardRepository.save(giftCard);
         logger.info("Generated gift card with serialNo: {}", savedCard.getSerialNo());
         return giftCardMapper.getFrom(savedCard);
     }
 
-    public List<GiftCardDto> generateGiftCards(long realAmount, long amount, long validityPeriod, int count) {
+    public List<GiftCardDto> generateGiftCards(long realAmount, long amount, long validityPeriod, Long companyId, int count) {
         logger.info("Generating {} gift cards with realAmount: {}, amount: {}, validityPeriod: {}", count, realAmount, amount, validityPeriod);
         var ls = new ArrayList<GiftCard>();
         for (var i = 0; i < count; i++) {
-            ls.add(issueGiftCard(realAmount, amount, validityPeriod));
+            ls.add(issueGiftCard(realAmount, amount, validityPeriod, companyId));
         }
         var savedCards = giftCardRepository.saveAll(ls);
         logger.info("Generated {} gift cards successfully", count);
@@ -146,6 +156,70 @@ public class GiftCardService {
         giftCard.setAllowedStores(new HashSet<>());
         giftCardRepository.save(giftCard);
         logger.info("Successfully removed store limitations for gift card: {}", serialNo);
+    }
+
+    /**
+     * Get all gift cards for a specific company
+     * @param companyId the company ID
+     * @return list of gift card DTOs
+     */
+    public List<GiftCardDto> getGiftCardsByCompany(Long companyId) {
+        logger.info("Fetching gift cards for company: {}", companyId);
+        var company = companyRepository.findById(companyId);
+        if (company.isEmpty()) {
+            logger.warn("Company not found with ID: {}", companyId);
+            throw new ValidationException("Company not found", null, -134);
+        }
+        
+        var giftCards = giftCardRepository.findByCompany(company.get());
+        return giftCardMapper.getFrom(giftCards);
+    }
+
+    /**
+     * Assign a company to a gift card
+     * @param serialNo the gift card serial number
+     * @param companyId the company ID
+     * @return the updated gift card DTO
+     */
+    @Transactional
+    public GiftCardDto assignCompanyToGiftCard(String serialNo, Long companyId) {
+        logger.info("Assigning company {} to gift card: {}", companyId, serialNo);
+        var giftCard = giftCardRepository.findBySerialNo(serialNo);
+        if (giftCard == null) {
+            logger.warn("Gift card not found with serialNo: {}", serialNo);
+            throw new GiftCardNotFoundException("Gift card not found");
+        }
+
+        var company = companyRepository.findById(companyId);
+        if (company.isEmpty()) {
+            logger.warn("Company not found with ID: {}", companyId);
+            throw new ValidationException("Company not found", null, -134);
+        }
+
+        giftCard.setCompany(company.get());
+        var savedGiftCard = giftCardRepository.save(giftCard);
+        logger.info("Successfully assigned company {} to gift card: {}", companyId, serialNo);
+        return giftCardMapper.getFrom(savedGiftCard);
+    }
+
+    /**
+     * Remove company assignment from a gift card
+     * @param serialNo the gift card serial number
+     * @return the updated gift card DTO
+     */
+    @Transactional
+    public GiftCardDto removeCompanyFromGiftCard(String serialNo) {
+        logger.info("Removing company assignment from gift card: {}", serialNo);
+        var giftCard = giftCardRepository.findBySerialNo(serialNo);
+        if (giftCard == null) {
+            logger.warn("Gift card not found with serialNo: {}", serialNo);
+            throw new GiftCardNotFoundException("Gift card not found");
+        }
+
+        giftCard.setCompany(null);
+        var savedGiftCard = giftCardRepository.save(giftCard);
+        logger.info("Successfully removed company assignment from gift card: {}", serialNo);
+        return giftCardMapper.getFrom(savedGiftCard);
     }
 }
 

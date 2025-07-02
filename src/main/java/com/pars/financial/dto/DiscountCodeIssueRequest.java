@@ -11,4 +11,5 @@ public class DiscountCodeIssueRequest {
     public long constantDiscountAmount;
     public DiscountType discountType = DiscountType.PERCENTAGE;
     public int usageLimit = 1;
+    public Long companyId;
 }

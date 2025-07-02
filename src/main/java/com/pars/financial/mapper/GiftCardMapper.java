@@ -36,6 +36,10 @@ public class GiftCardMapper {
         dto.isBlocked = gc.isBlocked();
         dto.isAnonymous = (gc.getCustomer() == null);
         dto.identifier = gc.getIdentifier();
+        var company = gc.getCompany();
+        if(company != null) {
+            dto.companyId = gc.getCompany().getId();
+        }
         dto.transactions = new ArrayList<>();
         var debits = gc.getTransactions().stream().filter(p->p.getTransactionType() == TransactionType.Debit).toList();
         for(GiftCardTransaction transaction : debits) {

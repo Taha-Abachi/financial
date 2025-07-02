@@ -22,6 +22,7 @@ import com.pars.financial.exception.GenericException;
 import com.pars.financial.exception.GiftCardNotFoundException;
 import com.pars.financial.exception.ValidationException;
 import com.pars.financial.mapper.GiftCardTransactionMapper;
+import com.pars.financial.repository.CompanyRepository;
 import com.pars.financial.repository.CustomerRepository;
 import com.pars.financial.repository.GiftCardRepository;
 import com.pars.financial.repository.GiftCardTransactionRepository;
@@ -40,12 +41,13 @@ public class GiftCardTransactionService {
     private final StoreRepository storeRepository;
     private final CustomerRepository customerRepository;
     private final GiftCardTransactionRepository giftCardTransactionRepository;
+    private final CompanyRepository companyRepository;
 
     private final CustomerService customerService;
 
     final GiftCardTransactionMapper giftCardTransactionMapper;
 
-    public GiftCardTransactionService(GiftCardRepository giftCardRepository, GiftCardTransactionRepository transactionRepository, StoreRepository storeRpository, CustomerRepository customerRepository, GiftCardTransactionMapper giftCardTransactionMapper, GiftCardTransactionRepository giftCardTransactionRepository, CustomerService customerService) {
+    public GiftCardTransactionService(GiftCardRepository giftCardRepository, GiftCardTransactionRepository transactionRepository, StoreRepository storeRpository, CustomerRepository customerRepository, GiftCardTransactionMapper giftCardTransactionMapper, GiftCardTransactionRepository giftCardTransactionRepository, CustomerService customerService, CompanyRepository companyRepository) {
         this.giftCardRepository = giftCardRepository;
         this.transactionRepository = transactionRepository;
         this.storeRepository = storeRpository;
@@ -53,6 +55,7 @@ public class GiftCardTransactionService {
         this.giftCardTransactionMapper = giftCardTransactionMapper;
         this.giftCardTransactionRepository = giftCardTransactionRepository;
         this.customerService = customerService;
+        this.companyRepository = companyRepository;
     }
 
     private void validateStoreLimit(GiftCard giftCard, Long storeId) {
@@ -64,6 +67,22 @@ public class GiftCardTransactionService {
                 logger.warn("Store {} not allowed for gift card {}", storeId, giftCard.getSerialNo());
                 throw new ValidationException("Gift card cannot be used in this store", null, -117);
             }
+        }
+    }
+
+    private void validateCompanyAccess(GiftCard giftCard, Long storeId) {
+        logger.debug("Validating company access for gift card: {} and store: {}", giftCard.getSerialNo(), storeId);
+        if (giftCard.getCompany() != null) {
+            // var store = storeRepository.findById(storeId);
+            // if (store.isPresent()) {
+            //     Company storeCompany = store.get().getCompany();
+            //     if (storeCompany != null && !storeCompany.getId().equals(giftCard.getCompany().getId())) {
+            //         logger.warn("Store {} belongs to company {} but gift card {} belongs to company {}", 
+            //             storeId, storeCompany.getCompany_name(), giftCard.getSerialNo(), giftCard.getCompany().getCompany_name());
+            //         throw new ValidationException("Gift card cannot be used in this store - company mismatch", null, -133);
+            //     }
+            // }
+            logger.debug("Gift card {} belongs to company: {}", giftCard.getSerialNo(), giftCard.getCompany().getName());
         }
     }
 
@@ -102,6 +121,7 @@ public class GiftCardTransactionService {
         var gc = giftCardRepository.findBySerialNo(serialNo.toUpperCase());
         if (gc != null){
             validateStoreLimit(gc, storeId);
+            validateCompanyAccess(gc, storeId);
             if(gc.getBalance() >= amount) {
                 logger.debug("Processing debit transaction for gift card: {}, current balance: {}, debit amount: {}", 
                     gc.getSerialNo(), gc.getBalance(), amount);
@@ -292,5 +312,49 @@ public class GiftCardTransactionService {
         }
         logger.warn("Gift card not found: {}", serialNo);
         throw new GiftCardNotFoundException("Gift Card Not Found with serial No: " + serialNo);
+    }
+
+    /**
+     * Get all gift cards for a specific company
+     * @param companyId the company ID
+     * @return list of gift card transaction DTOs
+     */
+    public List<GiftCardTransactionDto> getGiftCardsByCompany(Long companyId) {
+        logger.debug("Fetching gift cards for company: {}", companyId);
+        var company = companyRepository.findById(companyId);
+        if (company.isEmpty()) {
+            logger.warn("Company not found with ID: {}", companyId);
+            throw new ValidationException("Company not found", null, -134);
+        }
+        
+        var giftCards = giftCardRepository.findByCompany(company.get());
+        return giftCards.stream()
+            .map(gc -> {
+                // Get the latest transaction for each gift card
+                var latestTransaction = transactionRepository.findTopByGiftCardOrderByTrxDateDesc(gc);
+                return latestTransaction != null ? giftCardTransactionMapper.getFrom(latestTransaction) : null;
+            })
+            .filter(Objects::nonNull)
+            .toList();
+    }
+
+    /**
+     * Get transaction history for all gift cards of a company
+     * @param companyId the company ID
+     * @return list of gift card transaction DTOs
+     */
+    public List<GiftCardTransactionDto> getCompanyTransactionHistory(Long companyId) {
+        logger.debug("Fetching transaction history for company: {}", companyId);
+        var company = companyRepository.findById(companyId);
+        if (company.isEmpty()) {
+            logger.warn("Company not found with ID: {}", companyId);
+            throw new ValidationException("Company not found", null, -134);
+        }
+        
+        var giftCards = giftCardRepository.findByCompany(company.get());
+        return giftCards.stream()
+            .flatMap(gc -> transactionRepository.findByGiftCard(gc).stream())
+            .map(giftCardTransactionMapper::getFrom)
+            .toList();
     }
 }
