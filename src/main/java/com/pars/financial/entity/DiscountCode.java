@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import com.pars.financial.enums.DiscountType;
 
@@ -16,6 +17,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
@@ -52,6 +55,17 @@ public class DiscountCode {
     private boolean used = false;
     @Column(columnDefinition = "boolean default true")
     private boolean isActive = true;
+
+    @Column(columnDefinition = "boolean default false")
+    private boolean storeLimited = false;
+
+    @ManyToMany
+    @JoinTable(
+        name = "discountcode_store_limitation",
+        joinColumns = @JoinColumn(name = "discountcode_id"),
+        inverseJoinColumns = @JoinColumn(name = "store_id")
+    )
+    private Set<Store> allowedStores;
 
     @OneToMany(mappedBy = "discountCode")
     private List<DiscountCodeTransaction> transactions = new ArrayList<>();
@@ -178,6 +192,22 @@ public class DiscountCode {
 
     public void setDiscountType(DiscountType discountType) {
         this.discountType = discountType;
+    }
+
+    public boolean isStoreLimited() {
+        return storeLimited;
+    }
+
+    public void setStoreLimited(boolean storeLimited) {
+        this.storeLimited = storeLimited;
+    }
+
+    public Set<Store> getAllowedStores() {
+        return allowedStores;
+    }
+
+    public void setAllowedStores(Set<Store> allowedStores) {
+        this.allowedStores = allowedStores;
     }
 
     public List<DiscountCodeTransaction> getTransactions() {

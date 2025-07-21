@@ -98,6 +98,15 @@ public class DiscountCodeTransactionService {
             logger.warn("Store not found: {}", dto.storeId);
             throw new ValidationException("Store Not Found", null, -110);
         }
+        // Store limitation check
+        if (code.isStoreLimited()) {
+            boolean storeAllowed = code.getAllowedStores().stream()
+                .anyMatch(s -> s.getId().equals(dto.storeId));
+            if (!storeAllowed) {
+                logger.warn("Store {} not allowed for discount code {}", dto.storeId, code.getCode());
+                throw new ValidationException("Discount code cannot be used in this store", null, -117);
+            }
+        }
         
         var customer = customerRepository.findByPrimaryPhoneNumber(dto.phoneNo);
         if(customer == null){
