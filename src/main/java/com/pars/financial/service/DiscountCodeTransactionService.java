@@ -1,5 +1,6 @@
 package com.pars.financial.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -65,6 +66,10 @@ public class DiscountCodeTransactionService {
         if(code == null) {
             logger.warn("Discount code not found: {}", dto.code);
             throw new ValidationException("Discount Code not found.", null, -104);
+        }
+        else if(LocalDate.now().isAfter(code.getExpiryDate())){
+            logger.warn("Discount code is expired: {}", dto.code);
+            throw new ValidationException("Discount code is expired.", null, -141);
         }
         else if(!code.isActive()) {
             logger.warn("Discount code is inactive: {}", dto.code);

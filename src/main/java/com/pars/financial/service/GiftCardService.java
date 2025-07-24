@@ -13,6 +13,7 @@ import com.pars.financial.repository.StoreRepository;
 import com.pars.financial.utils.RandomStringGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,9 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 public class GiftCardService {
+
+    @Value("${spring.application.giftcard.len}")
+    private int giftCardSerialNoLength;
 
     private static final Logger logger = LoggerFactory.getLogger(GiftCardService.class);
 
@@ -59,7 +63,7 @@ public class GiftCardService {
         gc.setCompany(company.get());
         gc.setIdentifier(ThreadLocalRandom.current().nextLong(10000000, 100000000));
 //        gc.setIdentifier(Long.parseLong(RandomStringGenerator.generateRandomNumericString(8)));
-        gc.setSerialNo("GC" + RandomStringGenerator.generateRandomUppercaseStringWithNumbers(8));
+        gc.setSerialNo("GC" + RandomStringGenerator.generateRandomUppercaseStringWithNumbers(giftCardSerialNoLength - 2));
         gc.setInitialAmount(amount);
         gc.setRealAmount(realAmount);
         gc.setBalance(amount);

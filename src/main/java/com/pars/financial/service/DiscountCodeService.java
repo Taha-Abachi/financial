@@ -2,7 +2,6 @@ package com.pars.financial.service;
 
 import com.pars.financial.dto.DiscountCodeDto;
 import com.pars.financial.dto.DiscountCodeIssueRequest;
-import com.pars.financial.entity.Company;
 import com.pars.financial.entity.DiscountCode;
 import com.pars.financial.enums.DiscountType;
 import com.pars.financial.exception.ValidationException;
@@ -14,6 +13,7 @@ import com.pars.financial.utils.RandomStringGenerator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -24,6 +24,9 @@ import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 public class DiscountCodeService {
+
+    @Value("${spring.application.discountcode.len}")
+    private int discountCodeLength;
 
     private static final Logger logger = LoggerFactory.getLogger(DiscountCodeService.class);
 
@@ -45,7 +48,7 @@ public class DiscountCodeService {
         var code = new DiscountCode();
         code.setIssueDate(LocalDateTime.now());
         code.setExpiryDate(LocalDate.now().plusDays(validityPeriod));
-        code.setCode("DC" + RandomStringGenerator.generateRandomUppercaseStringWithNumbers(8));
+        code.setCode("DC" + RandomStringGenerator.generateRandomUppercaseStringWithNumbers(discountCodeLength - 2));
         code.setSerialNo(ThreadLocalRandom.current().nextLong(10000000, 100000000));
         code.setPercentage(percentage);
         code.setMaxDiscountAmount(maxDiscountAmount);
@@ -83,14 +86,15 @@ public class DiscountCodeService {
 
     public DiscountCodeDto generate(DiscountCodeIssueRequest dto) {
         logger.info("Generating new discount code with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}, minimumBillAmount: {}, usageLimit: {}, constantDiscountAmount: {}, discountType: {}, companyId: {}, storeLimited: {}, allowedStoreIds: {}", 
-            dto.percentage, dto.remainingValidityPeriod, dto.maxDiscountAmount, dto.minimumBillAmount, dto.usageLimit, dto.constantDiscountAmount, dto.discountType, dto.companyId, dto.storeLimited, dto.allowedStoreIds);
-        var discountCode = issueDiscountCode(dto.percentage, dto.remainingValidityPeriod, dto.maxDiscountAmount, dto.minimumBillAmount, dto.usageLimit, dto.constantDiscountAmount, dto.discountType, dto.companyId, dto.storeLimited, dto.allowedStoreIds);
+            dto.percentage, dto.remainingValidityPeriod, dto.maxDiscountAmount, dto.minimumBillAmount, dto.usageLimit, dto.constantDiscountAmount, dto.discountType, dto.companyId, (long) dto.allowedStoreIds.size() > 0, dto.allowedStoreIds);
+        var discountCode = issueDiscountCode(dto.percentage, dto.remainingValidityPeriod, dto.maxDiscountAmount, dto.minimumBillAmount, dto.usageLimit, dto.constantDiscountAmount, dto.discountType, dto.companyId, (long) dto.allowedStoreIds.size() > 0, dto.allowedStoreIds);
         var savedCode = codeRepository.save(discountCode);
         logger.info("Generated discount code: {}", savedCode.getCode());
         return mapper.getFrom(savedCode);
     }
 
     public List<DiscountCodeDto> generateList(DiscountCodeIssueRequest request) {
+        request.storeLimited = !request.allowedStoreIds.isEmpty();
         logger.info("Generating {} discount codes with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}, minimumBillAmount: {}, usageLimit: {}, constantDiscountAmount: {}, discountType: {}, companyId: {}, storeLimited: {}, allowedStoreIds: {}", 
             request.count, request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount, request.usageLimit, request.constantDiscountAmount, request.discountType, request.companyId, request.storeLimited, request.allowedStoreIds);
         var ls = new ArrayList<DiscountCode>();

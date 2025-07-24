@@ -19,7 +19,6 @@ public class DiscountCodeTransactionMapper {
         dto.discountType = dst.getDiscountType();
         dto.originalAmount = transaction.getOriginalAmount();
         dto.transactionId = transaction.getTransactionId();
-        dto.maxDiscountAmount = dst.getMaxDiscountAmount();
         dto.discountAmount = transaction.getDiscountAmount();
         dto.storeId = transaction.getStore().getId();
         dto.maxDiscountAmount = dst.getMaxDiscountAmount();

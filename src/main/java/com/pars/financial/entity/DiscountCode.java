@@ -37,7 +37,7 @@ public class DiscountCode {
     private String code;
     private Long serialNo;
     private int percentage;
-    private long maxDiscountAmount = 0;
+    private long maxDiscountAmount = Long.MAX_VALUE;
     private long minimumBillAmount = 0;
     private long constantDiscountAmount = 0;
     private int usageLimit = 1;
@@ -115,11 +115,11 @@ public class DiscountCode {
     }
 
     public long getMaxDiscountAmount() {
-        return maxDiscountAmount;
+        return maxDiscountAmount == 0 ? Long.MAX_VALUE : maxDiscountAmount;
     }
 
     public void setMaxDiscountAmount(long maxDiscountAmount) {
-        this.maxDiscountAmount = maxDiscountAmount;
+        this.maxDiscountAmount = maxDiscountAmount == 0 ? Long.MAX_VALUE : maxDiscountAmount;
     }
 
     public long getMinimumBillAmount() {
