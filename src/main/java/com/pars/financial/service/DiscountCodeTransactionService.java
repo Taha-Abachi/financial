@@ -180,24 +180,43 @@ public class DiscountCodeTransactionService {
             logger.debug("Looking up redeem transaction by clientTransactionId: {}", dto.clientTransactionId);
             transaction = transactionRepository.findByClientTransactionIdAndTrxType(dto.clientTransactionId, TransactionType.Redeem);
         }
+        else if(trxType == TransactionType.Refund) {
+            logger.debug("Looking up redeem transaction by transactionId: {}", dto.transactionId);
+            transaction = transactionRepository.findByTransactionIdAndTrxType(dto.transactionId, TransactionType.Redeem);
+        }
 
         if(transaction == null) {
             logger.warn("Redeem transaction not found for {}: {}", 
-                (trxType == TransactionType.Confirmation ? "transactionId" : "clientTransactionId"),
-                (trxType == TransactionType.Confirmation ? dto.transactionId : dto.clientTransactionId));
+                (trxType == TransactionType.Confirmation || trxType == TransactionType.Refund ? "transactionId" : "clientTransactionId"),
+                (trxType == TransactionType.Confirmation || trxType == TransactionType.Refund ? dto.transactionId : dto.clientTransactionId));
             throw new ValidationException("Redeem Transaction Not Found.", null, -112);
         }
 
-        var transaction2 = transactionRepository.findByTransactionIdAndTrxType(transaction.getTransactionId(), TransactionType.Confirmation);
-        if(transaction2 != null) {
+        var confirmation = transactionRepository.findByTransactionIdAndTrxType(transaction.getTransactionId(), TransactionType.Confirmation);
+        if((confirmation != null) && (trxType != TransactionType.Refund)) {
             logger.warn("Transaction already confirmed: {}", transaction.getTransactionId());
             throw new ValidationException("Transaction already confirmed.", null, -113);
         }
         
-        transaction2 = transactionRepository.findByTransactionIdAndTrxType(transaction.getTransactionId(), TransactionType.Reversal);
-        if(transaction2 != null) {
+        var reversal = transactionRepository.findByTransactionIdAndTrxType(transaction.getTransactionId(), TransactionType.Reversal);
+        if(reversal != null) {
             logger.warn("Transaction already reversed: {}", transaction.getTransactionId());
-            throw new ValidationException("Transaction already reversed.", null, -114   );
+            throw new ValidationException("Transaction already reversed.", null, -114);
+        }
+
+        // Additional validation for refund
+        if(trxType == TransactionType.Refund) {
+            var refund = transactionRepository.findByTransactionIdAndTrxType(transaction.getTransactionId(), TransactionType.Refund);
+            if (refund != null) {
+                logger.warn("Transaction already refunded: {}", transaction.getTransactionId());
+                throw new ValidationException("Transaction already refunded.", null, -115);
+            }
+
+            //confirmation = transactionRepository.findByTransactionIdAndTrxType(transaction.getTransactionId(), TransactionType.Confirmation);
+            if(confirmation == null) {
+                logger.warn("Transaction not confirmed yet: {}", transaction.getTransactionId());
+                throw new ValidationException("Transaction not confirmed yet.", null, -116);
+            }
         }
 
         logger.debug("Creating {} transaction for redeem transaction: {}", trxType, transaction.getTransactionId());
@@ -216,7 +235,8 @@ public class DiscountCodeTransactionService {
         nTransaction.setRedeemTransaction(transaction);
         var savedTransaction = transactionRepository.save(nTransaction);
 
-        transaction.setStatus(trxType == TransactionType.Confirmation ? TransactionStatus.Confirmed : TransactionStatus.Reversed);
+        transaction.setStatus(trxType == TransactionType.Confirmation ? TransactionStatus.Confirmed : 
+                           trxType == TransactionType.Refund ? TransactionStatus.Refunded : TransactionStatus.Reversed);
         transactionRepository.save(transaction);
 
         var code = transaction.getDiscountCode();
@@ -246,6 +266,13 @@ public class DiscountCodeTransactionService {
     public DiscountCodeTransactionDto reverse(ApiUser apiUser, DiscountCodeTransactionDto dto) {
         logger.info("Initiating reverse transaction for discount code transaction: {}", dto.transactionId);
         var transaction = settleTransaction(apiUser, dto, TransactionType.Reversal);
+
+        return mapper.getFrom(transaction);
+    }
+
+    public DiscountCodeTransactionDto refund(ApiUser apiUser, DiscountCodeTransactionDto dto) {
+        logger.info("Initiating refund transaction for discount code transaction: {}", dto.transactionId);
+        var transaction = settleTransaction(apiUser, dto, TransactionType.Refund);
 
         return mapper.getFrom(transaction);
     }

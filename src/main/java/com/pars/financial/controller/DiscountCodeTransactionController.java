@@ -92,6 +92,27 @@ public class DiscountCodeTransactionController {
         return response;
     }
 
+    @PostMapping("/refund")
+    public GenericResponse<DiscountCodeTransactionDto> refund(@RequestBody DiscountCodeTransactionDto transactionDto) {
+        logger.info("POST /api/v1/discountcode/transaction/refund called with request: {}", transactionDto);
+        GenericResponse<DiscountCodeTransactionDto> response = new GenericResponse<>();
+        ApiUser apiUser = ApiUserUtil.getApiUser();
+        if (apiUser == null) {
+            logger.error("Api User is null");
+            response.message = "Api User is null";
+            response.status = -1;
+            return response;
+        }
+        var dto = discountCodeTransactionService.refund(apiUser, transactionDto);
+        if(dto == null){
+            logger.warn("Discount Transaction refund failed for transaction: {}", transactionDto);
+            response.status = -1;
+            response.message = "Discount Transaction refund failed.";
+        }
+        response.data = dto;
+        return response;
+    }
+
     @GetMapping("/followup/{transactionId}")
     public GenericResponse<DiscountCodeTransactionDto> get(@PathVariable UUID transactionId) {
         logger.info("GET /api/v1/discountcode/transaction/followup/{} called", transactionId);

@@ -348,7 +348,7 @@
 								"limit-stores"
 							]
 						},
-						"description": "Limit a gift card to specific stores"
+						"description": "Limit a gift card to specific stores. Use this endpoint after creation to limit a gift card to specific stores."
 					},
 					"response": [
 						{
@@ -504,7 +504,7 @@
 								"debit"
 							]
 						},
-						"description": "Debit a gift card for a transaction"
+						"description": "Debit a gift card for a transaction. If a gift card is store-limited, it can only be used at the allowed stores. Attempting to use it at a non-allowed store will result in an error (-117)."
 					},
 					"response": [
 						{

@@ -54,6 +54,7 @@ X-API-Key: your-api-key
     "remainingValidityPeriod": 0
 }
 ```
+**Note:** Store limitation is not set at creation time. To limit a gift card to specific stores, use the `limit-stores` endpoint after creation.
 
 ### Issue Multiple Gift Cards
 **Endpoint**: `POST /api/v1/giftcard/issuelist`  
@@ -67,6 +68,7 @@ X-API-Key: your-api-key
     "count": 0
 }
 ```
+**Note:** Store limitation is not set at creation time. To limit gift cards to specific stores, use the `limit-stores` endpoint after creation.
 
 ### Limit Gift Card to Stores
 **Endpoint**: `POST /api/v1/giftcard/{serialNo}/limit-stores`  
@@ -99,6 +101,7 @@ X-API-Key: your-api-key
     "description": "string"
 }
 ```
+**Note:** If a gift card is store-limited, it can only be used at the allowed stores. Attempting to use it at a non-allowed store will result in an error (-117).
 
 ### Confirm Transaction
 **Endpoint**: `POST /api/v1/giftcard/transaction/confirm`  

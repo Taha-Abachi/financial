@@ -1,7 +1,6 @@
 package com.pars.financial.service;
 
 import com.pars.financial.dto.GiftCardDto;
-import com.pars.financial.entity.Company;
 import com.pars.financial.entity.GiftCard;
 import com.pars.financial.entity.Store;
 import com.pars.financial.exception.GiftCardNotFoundException;
@@ -11,6 +10,7 @@ import com.pars.financial.repository.CompanyRepository;
 import com.pars.financial.repository.GiftCardRepository;
 import com.pars.financial.repository.StoreRepository;
 import com.pars.financial.utils.RandomStringGenerator;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

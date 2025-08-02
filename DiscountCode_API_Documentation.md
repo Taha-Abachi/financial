@@ -51,9 +51,14 @@ X-API-Key: your-api-key
     "maxDiscountAmount": 0,
     "minimumBillAmount": 0,
     "usageLimit": 0,
-    "remainingValidityPeriod": 0
+    "remainingValidityPeriod": 0,
+    "storeLimited": false,
+    "allowedStoreIds": [1, 2, 3]
 }
 ```
+**Field Descriptions:**
+- `storeLimited` (boolean, optional): If true, the discount code will only be valid at the stores specified in `allowedStoreIds`.
+- `allowedStoreIds` (array of long, optional): List of store IDs where the discount code can be used. Required if `storeLimited` is true.
 
 ### Issue Multiple Discount Codes
 **Endpoint**: `POST /api/v1/discountcode/issuelist`  
@@ -69,19 +74,14 @@ X-API-Key: your-api-key
     "minimumBillAmount": 0,
     "usageLimit": 0,
     "remainingValidityPeriod": 0,
-    "count": 0
+    "count": 0,
+    "storeLimited": false,
+    "allowedStoreIds": [1, 2, 3]
 }
 ```
-
-### Limit Discount Code to Stores
-**Endpoint**: `POST /api/v1/discountcode/{code}/limit-stores`  
-**Permissions**: ADMIN  
-**Request Body**:
-```json
-{
-    "storeIds": [0]
-}
-```
+**Field Descriptions:**
+- `storeLimited` (boolean, optional): If true, the discount codes will only be valid at the stores specified in `allowedStoreIds`.
+- `allowedStoreIds` (array of long, optional): List of store IDs where the discount codes can be used. Required if `storeLimited` is true.
 
 ### Remove Store Limitation
 **Endpoint**: `POST /api/v1/discountcode/{code}/remove-store-limitation`  
@@ -104,6 +104,7 @@ X-API-Key: your-api-key
     "description": "string"
 }
 ```
+**Note:** If a discount code is store-limited, it can only be redeemed at the allowed stores. Attempting to redeem at a non-allowed store will result in an error (-117).
 
 ### Confirm Transaction
 **Endpoint**: `POST /api/v1/discountcode/transaction/confirm`  
@@ -134,6 +135,22 @@ X-API-Key: your-api-key
     "description": "string"
 }
 ```
+
+### Refund Transaction
+**Endpoint**: `POST /api/v1/discountcode/transaction/refund`  
+**Permissions**: ADMIN  
+**Request Body**:
+```json
+{
+    "clientTransactionId": "string",
+    "code": "string",
+    "originalAmount": 0,
+    "transactionId": "string",
+    "orderno": "string",
+    "description": "string"
+}
+```
+**Note**: Refund can only be performed on confirmed transactions. Attempting to refund an unconfirmed or already refunded transaction will result in an error.
 
 ### Check Transaction Status
 **Endpoint**: `GET /api/v1/discountcode/transaction/checkStatus/{clientTransactionId}`  
