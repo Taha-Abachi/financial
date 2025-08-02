@@ -11,7 +11,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.pars.financial.configuration.RateLimitProperties;
 import com.pars.financial.repository.ApiUserRepository;
 import com.pars.financial.security.ApiKeyAuthFilter;
 import com.pars.financial.security.RateLimitFilter;
@@ -46,6 +45,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/store").hasRole("ADMIN")
                         .requestMatchers("/api/v1/giftcard/issue*").hasRole("ADMIN")
                         .requestMatchers("/api/v1/discountcode/issue*").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/discountcode/transaction/list").hasRole("ADMIN")
                         .requestMatchers("/api/v1/discountcode/transaction/").hasRole("API_USER")
                         .requestMatchers("/api/v1/discountcode/*").hasAnyRole("ADMIN","API_USER")
                         .requestMatchers("/api/v1/giftcard/all").hasRole("ADMIN")

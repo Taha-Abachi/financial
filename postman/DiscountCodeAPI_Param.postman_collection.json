@@ -779,7 +779,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/api/v1/discountcode/transaction/list?page=0&size=10&sort=trxDate,desc",
+							"raw": "{{baseUrl}}/api/v1/discountcode/transaction/list?page=0&size=10",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -798,14 +798,10 @@
 								{
 									"key": "size",
 									"value": "10"
-								},
-								{
-									"key": "sort",
-									"value": "trxDate,desc"
 								}
 							]
 						},
-						"description": "Get a paginated list of transactions"
+						"description": "Get a paginated list of discount code transactions"
 					},
 					"response": [
 						{

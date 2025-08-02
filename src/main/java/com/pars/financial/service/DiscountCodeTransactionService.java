@@ -2,11 +2,15 @@ package com.pars.financial.service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.pars.financial.dto.DiscountCodeTransactionDto;
@@ -275,5 +279,14 @@ public class DiscountCodeTransactionService {
         var transaction = settleTransaction(apiUser, dto, TransactionType.Refund);
 
         return mapper.getFrom(transaction);
+    }
+
+    public List<DiscountCodeTransactionDto> getTransactions(int page, int size) {
+        logger.info("Fetching discount code transactions with page: {}, size: {}", page, size);
+        Pageable pageable = PageRequest.of(page, size);
+        Page<DiscountCodeTransaction> transactionPage = transactionRepository.findAll(pageable);
+        List<DiscountCodeTransaction> transactions = transactionPage.getContent();
+        logger.info("Found {} discount code transactions", transactions.size());
+        return mapper.getFrom(transactions);
     }
 }

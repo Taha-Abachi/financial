@@ -1,5 +1,6 @@
 package com.pars.financial.controller;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -9,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.pars.financial.dto.DiscountCodeTransactionDto;
@@ -131,6 +133,29 @@ public class DiscountCodeTransactionController {
             response.message = "Discount Code transaction not found";
         }
         response.data = dto;
+        return response;
+    }
+
+    @GetMapping("/list")
+    public GenericResponse<List<DiscountCodeTransactionDto>> getTransactions(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        logger.info("GET /api/v1/discountcode/transaction/list called with page: {}, size: {}", page, size);
+        GenericResponse<List<DiscountCodeTransactionDto>> response = new GenericResponse<>();
+        ApiUser apiUser = ApiUserUtil.getApiUser();
+        if (apiUser == null) {
+            logger.error("Api User is null");
+            response.message = "Api User is null";
+            response.status = -1;
+            return response;
+        }
+        var transactions = discountCodeTransactionService.getTransactions(page, size);
+        if(transactions == null || transactions.isEmpty()){
+            logger.warn("No discount code transactions found for page: {}, size: {}", page, size);
+            response.status = -1;
+            response.message = "No discount code transactions found";
+        }
+        response.data = transactions;
         return response;
     }
 }

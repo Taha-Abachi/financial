@@ -152,6 +152,19 @@ X-API-Key: your-api-key
 ```
 **Note**: Refund can only be performed on confirmed transactions. Attempting to refund an unconfirmed or already refunded transaction will result in an error.
 
+### Get Transaction
+**Endpoint**: `GET /api/v1/discountcode/transaction/{transactionId}`  
+**Permissions**: ADMIN  
+**Response**: Transaction details
+
+### List Transactions
+**Endpoint**: `GET /api/v1/discountcode/transaction/list?page=0&size=10`  
+**Permissions**: ADMIN  
+**Query Parameters**:
+- `page` (optional, default: 0): Page number (0-based)
+- `size` (optional, default: 10): Number of transactions per page
+**Response**: List of discount code transactions with pagination
+
 ### Check Transaction Status
 **Endpoint**: `GET /api/v1/discountcode/transaction/checkStatus/{clientTransactionId}`  
 **Permissions**: ADMIN  
