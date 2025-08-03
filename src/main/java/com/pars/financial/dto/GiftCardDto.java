@@ -15,6 +15,8 @@ public class GiftCardDto {
     public boolean isAnonymous;
     public Long identifier;
     public Long companyId;
+    public boolean storeLimited;
+    public boolean itemCategoryLimited;
 
     public List<GiftCardTransactionDto> transactions;
 

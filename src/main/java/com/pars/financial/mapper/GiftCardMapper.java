@@ -3,13 +3,12 @@ package com.pars.financial.mapper;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.pars.financial.enums.TransactionStatus;
-import com.pars.financial.enums.TransactionType;
 import org.springframework.stereotype.Component;
 
 import com.pars.financial.dto.GiftCardDto;
 import com.pars.financial.entity.GiftCard;
 import com.pars.financial.entity.GiftCardTransaction;
+import com.pars.financial.enums.TransactionType;
 
 @Component
 public class GiftCardMapper {
@@ -40,6 +39,8 @@ public class GiftCardMapper {
         if(company != null) {
             dto.companyId = gc.getCompany().getId();
         }
+        dto.storeLimited = gc.isStoreLimited();
+        dto.itemCategoryLimited = gc.isItemCategoryLimited();
         dto.transactions = new ArrayList<>();
         var debits = gc.getTransactions().stream().filter(p->p.getTransactionType() == TransactionType.Debit).toList();
         for(GiftCardTransaction transaction : debits) {

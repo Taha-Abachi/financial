@@ -7,6 +7,10 @@ public class GiftCardIssueRequest {
     private long remainingValidityPeriod;
     private int count;
     private long companyId = 0;
+    private boolean storeLimited = false;
+    private java.util.List<Long> allowedStoreIds;
+    private boolean itemCategoryLimited = false;
+    private java.util.List<Long> allowedItemCategoryIds;
 
     public long getCompanyId() {
         return companyId;
@@ -42,4 +46,36 @@ public class GiftCardIssueRequest {
 
     public long getRealAmount() {return realAmount;}
     public void setRealAmount(long realAmount) {this.realAmount = realAmount;}
+
+    public boolean isStoreLimited() {
+        return storeLimited;
+    }
+
+    public void setStoreLimited(boolean storeLimited) {
+        this.storeLimited = storeLimited;
+    }
+
+    public java.util.List<Long> getAllowedStoreIds() {
+        return allowedStoreIds;
+    }
+
+    public void setAllowedStoreIds(java.util.List<Long> allowedStoreIds) {
+        this.allowedStoreIds = allowedStoreIds;
+    }
+
+    public boolean isItemCategoryLimited() {
+        return itemCategoryLimited;
+    }
+
+    public void setItemCategoryLimited(boolean itemCategoryLimited) {
+        this.itemCategoryLimited = itemCategoryLimited;
+    }
+
+    public java.util.List<Long> getAllowedItemCategoryIds() {
+        return allowedItemCategoryIds;
+    }
+
+    public void setAllowedItemCategoryIds(java.util.List<Long> allowedItemCategoryIds) {
+        this.allowedItemCategoryIds = allowedItemCategoryIds;
+    }
 }

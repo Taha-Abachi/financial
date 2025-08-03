@@ -8,6 +8,7 @@ import com.pars.financial.exception.ValidationException;
 import com.pars.financial.mapper.GiftCardMapper;
 import com.pars.financial.repository.CompanyRepository;
 import com.pars.financial.repository.GiftCardRepository;
+import com.pars.financial.repository.ItemCategoryRepository;
 import com.pars.financial.repository.StoreRepository;
 import com.pars.financial.utils.RandomStringGenerator;
 
@@ -37,11 +38,12 @@ public class GiftCardService {
     final StoreRepository storeRepository;
     final CompanyRepository companyRepository;
 
-    public GiftCardService(GiftCardRepository giftCardRepository, GiftCardMapper giftCardMapper, StoreRepository storeRepository, CompanyRepository companyRepository) {
+    public GiftCardService(GiftCardRepository giftCardRepository, GiftCardMapper giftCardMapper, StoreRepository storeRepository, CompanyRepository companyRepository, ItemCategoryRepository itemCategoryRepository) {
         this.giftCardRepository = giftCardRepository;
         this.giftCardMapper = giftCardMapper;
         this.storeRepository = storeRepository;
         this.companyRepository = companyRepository;
+        this.itemCategoryRepository = itemCategoryRepository;
     }
 
     private void validateRealAmount(long realAmount) {
@@ -51,8 +53,8 @@ public class GiftCardService {
         }
     }
 
-    private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod, long companyId) {
-        logger.debug("Issuing new gift card with realAmount: {}, amount: {}, validityPeriod: {}", realAmount, amount, validityPeriod);
+    private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod, long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds) {
+        logger.debug("Issuing new gift card with realAmount: {}, amount: {}, validityPeriod: {}, storeLimited: {}, itemCategoryLimited: {}", realAmount, amount, validityPeriod, storeLimited, itemCategoryLimited);
         validateRealAmount(realAmount);
         var company = companyRepository.findById(companyId);
         if(company.isEmpty()) {

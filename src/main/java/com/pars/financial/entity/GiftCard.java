@@ -63,6 +63,17 @@ public class GiftCard {
     )
     private Set<Store> allowedStores;
 
+    @Column(columnDefinition = "boolean default false")
+    private boolean itemCategoryLimited = false;
+
+    @ManyToMany
+    @JoinTable(
+        name = "giftcard_item_category_limitation",
+        joinColumns = @JoinColumn(name = "giftcard_id"),
+        inverseJoinColumns = @JoinColumn(name = "item_category_id")
+    )
+    private Set<ItemCategory> allowedItemCategories;
+
     @ManyToOne
     @JoinColumn(name = "customer_id")
     private Customer customer;
@@ -190,6 +201,22 @@ public class GiftCard {
 
     public void setAllowedStores(Set<Store> allowedStores) {
         this.allowedStores = allowedStores;
+    }
+
+    public boolean isItemCategoryLimited() {
+        return itemCategoryLimited;
+    }
+
+    public void setItemCategoryLimited(boolean itemCategoryLimited) {
+        this.itemCategoryLimited = itemCategoryLimited;
+    }
+
+    public Set<ItemCategory> getAllowedItemCategories() {
+        return allowedItemCategories;
+    }
+
+    public void setAllowedItemCategories(Set<ItemCategory> allowedItemCategories) {
+        this.allowedItemCategories = allowedItemCategories;
     }
 
     public List<GiftCardTransaction> getTransactions() {
