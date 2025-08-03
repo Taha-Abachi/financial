@@ -39,7 +39,9 @@ public class DiscountCodeMapper {
         dto.issueDate = code.getIssueDate();
         dto.redeemDate = code.getRedeemDate();
         dto.companyId = code.getCompany() != null ? code.getCompany().getId() : null;
-        ArrayList<DiscountCodeTransactionDto> transactions = new ArrayList<DiscountCodeTransactionDto>();
+        dto.storeLimited = code.isStoreLimited();
+        dto.itemCategoryLimited = code.isItemCategoryLimited();
+        ArrayList<DiscountCodeTransactionDto> transactions = new ArrayList<>();
         code.getTransactions().stream().filter(t->t.getTrxType() == TransactionType.Redeem).forEach(p->
         {
             transactions.add(discountCodeTransactionMapper.getFrom(p));

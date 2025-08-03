@@ -22,4 +22,6 @@ public class DiscountCodeDto {
     public LocalDateTime redeemDate;
     public ArrayList<DiscountCodeTransactionDto> transactions;
     public Long companyId;
+    public boolean storeLimited;
+    public boolean itemCategoryLimited;
 }

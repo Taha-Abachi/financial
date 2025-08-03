@@ -20,5 +20,6 @@ public interface DiscountCodeTransactionRepository extends JpaRepository<Discoun
 
     DiscountCodeTransaction findByTransactionIdAndTrxType(UUID transactionId, TransactionType trxType);
 
+    @Override
     Page<DiscountCodeTransaction> findAll(Pageable pageable);
 }

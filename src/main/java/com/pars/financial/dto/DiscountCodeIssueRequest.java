@@ -14,4 +14,6 @@ public class DiscountCodeIssueRequest {
     public Long companyId;
     public boolean storeLimited = false;
     public java.util.List<Long> allowedStoreIds;
+    public boolean itemCategoryLimited = false;
+    public java.util.List<Long> allowedItemCategoryIds;
 }

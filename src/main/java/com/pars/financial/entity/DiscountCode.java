@@ -67,6 +67,17 @@ public class DiscountCode {
     )
     private Set<Store> allowedStores;
 
+    @Column(columnDefinition = "boolean default false")
+    private boolean itemCategoryLimited = false;
+
+    @ManyToMany
+    @JoinTable(
+        name = "discountcode_item_category_limitation",
+        joinColumns = @JoinColumn(name = "discountcode_id"),
+        inverseJoinColumns = @JoinColumn(name = "item_category_id")
+    )
+    private Set<ItemCategory> allowedItemCategories;
+
     @OneToMany(mappedBy = "discountCode")
     private List<DiscountCodeTransaction> transactions = new ArrayList<>();
 
@@ -208,6 +219,22 @@ public class DiscountCode {
 
     public void setAllowedStores(Set<Store> allowedStores) {
         this.allowedStores = allowedStores;
+    }
+
+    public boolean isItemCategoryLimited() {
+        return itemCategoryLimited;
+    }
+
+    public void setItemCategoryLimited(boolean itemCategoryLimited) {
+        this.itemCategoryLimited = itemCategoryLimited;
+    }
+
+    public Set<ItemCategory> getAllowedItemCategories() {
+        return allowedItemCategories;
+    }
+
+    public void setAllowedItemCategories(Set<ItemCategory> allowedItemCategories) {
+        this.allowedItemCategories = allowedItemCategories;
     }
 
     public List<DiscountCodeTransaction> getTransactions() {

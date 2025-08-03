@@ -53,6 +53,14 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/giftcard/*").hasRole("API_USER")
                         .requestMatchers("/api/v1/giftcard/identifier/*").hasRole("API_USER")
                         .requestMatchers("/api/v1/giftcard/transaction/checkStatus/").hasAnyRole("ADMIN", "API_USER")
+                        // Item Category endpoints - POST, PUT, DELETE operations restricted to ADMIN only
+                        .requestMatchers("/api/v1/item-category/create").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/item-category/create-bulk").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/item-category/update/*").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/item-category/delete/*").hasRole("ADMIN")
+                        // Item Category endpoints - GET operations accessible to both ADMIN and API_USER
+                        .requestMatchers("/api/v1/item-category/list").hasAnyRole("ADMIN", "API_USER")
+                        .requestMatchers("/api/v1/item-category/*").hasAnyRole("ADMIN", "API_USER")
                         .anyRequest().permitAll()
                 )
                 .anonymous(anonymous -> anonymous

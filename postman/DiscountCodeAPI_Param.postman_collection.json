@@ -99,7 +99,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"percentage\": 10,\n    \"remainingValidityPeriod\": 30,\n    \"maxDiscountAmount\": 1000,\n    \"minimumBillAmount\": 500,\n    \"constantDiscountAmount\": 0,\n    \"discountType\": \"PERCENTAGE\",\n    \"usageLimit\": 1,\n    \"storeLimited\": true,\n    \"allowedStoreIds\": [1, 2, 3]\n}"
+							"raw": "{\n    \"percentage\": 10,\n    \"remainingValidityPeriod\": 30,\n    \"maxDiscountAmount\": 1000,\n    \"minimumBillAmount\": 500,\n    \"constantDiscountAmount\": 0,\n    \"discountType\": \"PERCENTAGE\",\n    \"usageLimit\": 1,\n    \"storeLimited\": false,\n    \"allowedStoreIds\": [],\n    \"itemCategoryLimited\": false,\n    \"allowedItemCategoryIds\": []\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/discountcode/issue",
@@ -166,7 +166,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"count\": 5,\n    \"percentage\": 10,\n    \"remainingValidityPeriod\": 30,\n    \"maxDiscountAmount\": 1000,\n    \"minimumBillAmount\": 500,\n    \"constantDiscountAmount\": 0,\n    \"discountType\": \"PERCENTAGE\",\n    \"usageLimit\": 1,\n    \"storeLimited\": true,\n    \"allowedStoreIds\": [1, 2, 3]\n}"
+							"raw": "{\n    \"count\": 5,\n    \"percentage\": 10,\n    \"remainingValidityPeriod\": 30,\n    \"maxDiscountAmount\": 1000,\n    \"minimumBillAmount\": 500,\n    \"constantDiscountAmount\": 0,\n    \"discountType\": \"PERCENTAGE\",\n    \"usageLimit\": 1,\n    \"storeLimited\": false,\n    \"allowedStoreIds\": [],\n    \"itemCategoryLimited\": false,\n    \"allowedItemCategoryIds\": []\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/discountcode/issuelist",
@@ -191,6 +191,73 @@
 								"body": {
 									"mode": "raw",
 									"raw": "{\n    \"count\": 5,\n    \"percentage\": 10,\n    \"remainingValidityPeriod\": 30,\n    \"maxDiscountAmount\": 1000,\n    \"minimumBillAmount\": 500,\n    \"constantDiscountAmount\": 0,\n    \"discountType\": \"PERCENTAGE\",\n    \"usageLimit\": 1\n}"
+								},
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Issue Discount Code (Item Category Only)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{ADMIN_API_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"percentage\": 15,\n    \"remainingValidityPeriod\": 60,\n    \"maxDiscountAmount\": 2000,\n    \"minimumBillAmount\": 1000,\n    \"constantDiscountAmount\": 0,\n    \"discountType\": \"PERCENTAGE\",\n    \"usageLimit\": 1,\n    \"storeLimited\": false,\n    \"allowedStoreIds\": [],\n    \"itemCategoryLimited\": true,\n    \"allowedItemCategoryIds\": [1]\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discountcode/issue",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"discountcode",
+								"issue"
+							]
+						},
+						"description": "Create a discount code limited to specific item categories only"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"percentage\": 15,\n    \"remainingValidityPeriod\": 60,\n    \"maxDiscountAmount\": 2000,\n    \"minimumBillAmount\": 1000,\n    \"constantDiscountAmount\": 0,\n    \"discountType\": \"PERCENTAGE\",\n    \"usageLimit\": 1,\n    \"storeLimited\": false,\n    \"allowedStoreIds\": [],\n    \"itemCategoryLimited\": true,\n    \"allowedItemCategoryIds\": [1]\n}"
 								},
 								"url": {
 									"raw": ""
