@@ -132,4 +132,90 @@ public class DiscountCodeService {
         }
         return mapper.getFrom(discountCode);
     }
+
+    public void limitToStores(String code, List<Long> storeIds) {
+        logger.info("Limiting discount code {} to stores: {}", code, storeIds);
+        var discountCode = codeRepository.findByCode(code);
+        if (discountCode == null) {
+            logger.warn("Discount code not found with code: {}", code);
+            throw new ValidationException("Discount code not found", null, -118);
+        }
+
+        if (storeIds == null || storeIds.isEmpty()) {
+            logger.debug("Removing store limitations for discount code: {}", code);
+            discountCode.setStoreLimited(false);
+            discountCode.setAllowedStores(new java.util.HashSet<>());
+        } else {
+            java.util.Set<com.pars.financial.entity.Store> stores = new java.util.HashSet<>();
+            for (Long storeId : storeIds) {
+                var store = storeRepository.findById(storeId)
+                    .orElseThrow(() -> {
+                        logger.warn("Store not found with id: {}", storeId);
+                        return new ValidationException("Store not found with id: " + storeId, null, -116);
+                    });
+                stores.add(store);
+            }
+            discountCode.setStoreLimited(true);
+            discountCode.setAllowedStores(stores);
+            logger.debug("Limited discount code {} to {} stores", code, stores.size());
+        }
+        codeRepository.save(discountCode);
+        logger.info("Successfully updated store limitations for discount code: {}", code);
+    }
+
+    public void removeStoreLimitation(String code) {
+        logger.info("Removing store limitations for discount code: {}", code);
+        var discountCode = codeRepository.findByCode(code);
+        if (discountCode == null) {
+            logger.warn("Discount code not found with code: {}", code);
+            throw new ValidationException("Discount code not found", null, -118);
+        }
+        discountCode.setStoreLimited(false);
+        discountCode.setAllowedStores(new java.util.HashSet<>());
+        codeRepository.save(discountCode);
+        logger.info("Successfully removed store limitations for discount code: {}", code);
+    }
+
+    public void limitToItemCategories(String code, List<Long> itemCategoryIds) {
+        logger.info("Limiting discount code {} to item categories: {}", code, itemCategoryIds);
+        var discountCode = codeRepository.findByCode(code);
+        if (discountCode == null) {
+            logger.warn("Discount code not found with code: {}", code);
+            throw new ValidationException("Discount code not found", null, -118);
+        }
+
+        if (itemCategoryIds == null || itemCategoryIds.isEmpty()) {
+            logger.debug("Removing item category limitations for discount code: {}", code);
+            discountCode.setItemCategoryLimited(false);
+            discountCode.setAllowedItemCategories(new java.util.HashSet<>());
+        } else {
+            java.util.Set<com.pars.financial.entity.ItemCategory> itemCategories = new java.util.HashSet<>();
+            for (Long itemCategoryId : itemCategoryIds) {
+                var itemCategory = itemCategoryRepository.findById(itemCategoryId)
+                    .orElseThrow(() -> {
+                        logger.warn("Item category not found with id: {}", itemCategoryId);
+                        return new ValidationException("Item category not found with id: " + itemCategoryId, null, -117);
+                    });
+                itemCategories.add(itemCategory);
+            }
+            discountCode.setItemCategoryLimited(true);
+            discountCode.setAllowedItemCategories(itemCategories);
+            logger.debug("Limited discount code {} to {} item categories", code, itemCategories.size());
+        }
+        codeRepository.save(discountCode);
+        logger.info("Successfully updated item category limitations for discount code: {}", code);
+    }
+
+    public void removeItemCategoryLimitation(String code) {
+        logger.info("Removing item category limitations for discount code: {}", code);
+        var discountCode = codeRepository.findByCode(code);
+        if (discountCode == null) {
+            logger.warn("Discount code not found with code: {}", code);
+            throw new ValidationException("Discount code not found", null, -118);
+        }
+        discountCode.setItemCategoryLimited(false);
+        discountCode.setAllowedItemCategories(new java.util.HashSet<>());
+        codeRepository.save(discountCode);
+        logger.info("Successfully removed item category limitations for discount code: {}", code);
+    }
 }

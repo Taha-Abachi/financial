@@ -70,7 +70,7 @@ public class GiftCardController {
     public GenericResponse<GiftCardDto> issueGiftCard(@RequestBody GiftCardIssueRequest dto){
         logger.info("POST /api/v1/giftcard/issue called with request: {}", dto);
         var genericResponseDto = new GenericResponse<GiftCardDto>();
-        var gc = giftCardService.generateGiftCard(dto.getRealAmount(), dto.getBalance(), dto.getRemainingValidityPeriod(), dto.getCompanyId());
+        var gc = giftCardService.generateGiftCard(dto);
         genericResponseDto.data = gc ;
         return genericResponseDto;
     }
@@ -79,7 +79,7 @@ public class GiftCardController {
     public GenericResponse<List<GiftCardDto>> issueGiftCards(@RequestBody GiftCardIssueRequest dto){
         logger.info("POST /api/v1/giftcard/issuelist called with request: {}", dto);
         var genericResponseDto = new GenericResponse<List<GiftCardDto>>();
-        var gcl = giftCardService.generateGiftCards(dto.getRealAmount(), dto.getBalance(), dto.getRemainingValidityPeriod(),dto.getCompanyId(), dto.getCount());
+        var gcl = giftCardService.generateGiftCards(dto);
         genericResponseDto.data = gcl ;
         return genericResponseDto;
     }
@@ -97,6 +97,22 @@ public class GiftCardController {
         logger.info("POST /api/v1/giftcard/{}/remove-store-limitation called", serialNo);
         var response = new GenericResponse<Void>();
         giftCardService.removeStoreLimitation(serialNo);
+        return response;
+    }
+
+    @PostMapping("/{serialNo}/limit-item-categories")
+    public GenericResponse<Void> limitToItemCategories(@PathVariable String serialNo, @RequestBody StoreLimitationRequest request) {
+        logger.info("POST /api/v1/giftcard/{}/limit-item-categories called with itemCategoryIds: {}", serialNo, request.storeIds);
+        var response = new GenericResponse<Void>();
+        giftCardService.limitToItemCategories(serialNo, request.storeIds);
+        return response;
+    }
+
+    @PostMapping("/{serialNo}/remove-item-category-limitation")
+    public GenericResponse<Void> removeItemCategoryLimitation(@PathVariable String serialNo) {
+        logger.info("POST /api/v1/giftcard/{}/remove-item-category-limitation called", serialNo);
+        var response = new GenericResponse<Void>();
+        giftCardService.removeItemCategoryLimitation(serialNo);
         return response;
     }
 

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.pars.financial.dto.DiscountCodeDto;
 import com.pars.financial.dto.DiscountCodeIssueRequest;
 import com.pars.financial.dto.GenericResponse;
+import com.pars.financial.dto.StoreLimitationRequest;
 import com.pars.financial.service.DiscountCodeService;
 
 @RestController
@@ -56,6 +57,38 @@ public class DiscountCodeController {
         logger.info("POST /api/v1/discountcode/issuelist called with request: {}", discountCodeDto);
         GenericResponse<List<DiscountCodeDto>> response = new GenericResponse<>();
         response.data = codeService.generateList(discountCodeDto);
+        return response;
+    }
+
+    @PostMapping("/{code}/limit-stores")
+    public GenericResponse<Void> limitToStores(@PathVariable String code, @RequestBody StoreLimitationRequest request) {
+        logger.info("POST /api/v1/discountcode/{}/limit-stores called with storeIds: {}", code, request.storeIds);
+        var response = new GenericResponse<Void>();
+        codeService.limitToStores(code, request.storeIds);
+        return response;
+    }
+
+    @PostMapping("/{code}/remove-store-limitation")
+    public GenericResponse<Void> removeStoreLimitation(@PathVariable String code) {
+        logger.info("POST /api/v1/discountcode/{}/remove-store-limitation called", code);
+        var response = new GenericResponse<Void>();
+        codeService.removeStoreLimitation(code);
+        return response;
+    }
+
+    @PostMapping("/{code}/limit-item-categories")
+    public GenericResponse<Void> limitToItemCategories(@PathVariable String code, @RequestBody StoreLimitationRequest request) {
+        logger.info("POST /api/v1/discountcode/{}/limit-item-categories called with itemCategoryIds: {}", code, request.storeIds);
+        var response = new GenericResponse<Void>();
+        codeService.limitToItemCategories(code, request.storeIds);
+        return response;
+    }
+
+    @PostMapping("/{code}/remove-item-category-limitation")
+    public GenericResponse<Void> removeItemCategoryLimitation(@PathVariable String code) {
+        logger.info("POST /api/v1/discountcode/{}/remove-item-category-limitation called", code);
+        var response = new GenericResponse<Void>();
+        codeService.removeItemCategoryLimitation(code);
         return response;
     }
 

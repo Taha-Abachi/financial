@@ -1,6 +1,7 @@
 package com.pars.financial.service;
 
 import com.pars.financial.dto.GiftCardDto;
+import com.pars.financial.dto.GiftCardIssueRequest;
 import com.pars.financial.entity.GiftCard;
 import com.pars.financial.entity.Store;
 import com.pars.financial.exception.GiftCardNotFoundException;
@@ -37,6 +38,7 @@ public class GiftCardService {
     final GiftCardMapper giftCardMapper;
     final StoreRepository storeRepository;
     final CompanyRepository companyRepository;
+    final ItemCategoryRepository itemCategoryRepository;
 
     public GiftCardService(GiftCardRepository giftCardRepository, GiftCardMapper giftCardMapper, StoreRepository storeRepository, CompanyRepository companyRepository, ItemCategoryRepository itemCategoryRepository) {
         this.giftCardRepository = giftCardRepository;
@@ -71,6 +73,37 @@ public class GiftCardService {
         gc.setBalance(amount);
         gc.setIssueDate(LocalDate.now());
         gc.setExpiryDate(LocalDate.now().plusDays(validityPeriod));
+        
+        // Set store limitations
+        gc.setStoreLimited(storeLimited);
+        if (storeLimited && allowedStoreIds != null && !allowedStoreIds.isEmpty()) {
+            java.util.Set<com.pars.financial.entity.Store> stores = new java.util.HashSet<>();
+            for (Long storeId : allowedStoreIds) {
+                var storeOpt = storeRepository.findById(storeId);
+                if (storeOpt.isPresent()) {
+                    stores.add(storeOpt.get());
+                } else {
+                    logger.warn("Store not found with id: {} while assigning to gift card", storeId);
+                }
+            }
+            gc.setAllowedStores(stores);
+        }
+        
+        // Set item category limitations
+        gc.setItemCategoryLimited(itemCategoryLimited);
+        if (itemCategoryLimited && allowedItemCategoryIds != null && !allowedItemCategoryIds.isEmpty()) {
+            java.util.Set<com.pars.financial.entity.ItemCategory> itemCategories = new java.util.HashSet<>();
+            for (Long itemCategoryId : allowedItemCategoryIds) {
+                var itemCategoryOpt = itemCategoryRepository.findById(itemCategoryId);
+                if (itemCategoryOpt.isPresent()) {
+                    itemCategories.add(itemCategoryOpt.get());
+                } else {
+                    logger.warn("Item category not found with id: {} while assigning to gift card", itemCategoryId);
+                }
+            }
+            gc.setAllowedItemCategories(itemCategories);
+        }
+        
         logger.debug("Created gift card with serialNo: {}", gc.getSerialNo());
         return gc;
     }
@@ -102,7 +135,17 @@ public class GiftCardService {
 
     public GiftCardDto generateGiftCard(long realAmount, long amount, long validityPeriod, long companyId) {
         logger.info("Generating new gift card with realAmount: {}, amount: {}, validityPeriod: {}", realAmount, amount, validityPeriod);
-        var giftCard = issueGiftCard(realAmount, amount, validityPeriod, companyId);
+        var giftCard = issueGiftCard(realAmount, amount, validityPeriod, companyId, false, new ArrayList<>(), false, new ArrayList<>());
+        var savedCard = giftCardRepository.save(giftCard);
+        logger.info("Generated gift card with serialNo: {}", savedCard.getSerialNo());
+        return giftCardMapper.getFrom(savedCard);
+    }
+
+    public GiftCardDto generateGiftCard(GiftCardIssueRequest request) {
+        logger.info("Generating new gift card with request: {}", request);
+        var giftCard = issueGiftCard(request.getRealAmount(), request.getBalance(), request.getRemainingValidityPeriod(), 
+                                   request.getCompanyId(), request.isStoreLimited(), request.getAllowedStoreIds(), 
+                                   request.isItemCategoryLimited(), request.getAllowedItemCategoryIds());
         var savedCard = giftCardRepository.save(giftCard);
         logger.info("Generated gift card with serialNo: {}", savedCard.getSerialNo());
         return giftCardMapper.getFrom(savedCard);
@@ -112,10 +155,23 @@ public class GiftCardService {
         logger.info("Generating {} gift cards with realAmount: {}, amount: {}, validityPeriod: {}", count, realAmount, amount, validityPeriod);
         var ls = new ArrayList<GiftCard>();
         for (var i = 0; i < count; i++) {
-            ls.add(issueGiftCard(realAmount, amount, validityPeriod, companyId));
+            ls.add(issueGiftCard(realAmount, amount, validityPeriod, companyId, false, new ArrayList<>(), false, new ArrayList<>()));
         }
         var savedCards = giftCardRepository.saveAll(ls);
         logger.info("Generated {} gift cards successfully", count);
+        return giftCardMapper.getFrom(savedCards);
+    }
+
+    public List<GiftCardDto> generateGiftCards(GiftCardIssueRequest request) {
+        logger.info("Generating {} gift cards with request: {}", request.getCount(), request);
+        var ls = new ArrayList<GiftCard>();
+        for (var i = 0; i < request.getCount(); i++) {
+            ls.add(issueGiftCard(request.getRealAmount(), request.getBalance(), request.getRemainingValidityPeriod(), 
+                                request.getCompanyId(), request.isStoreLimited(), request.getAllowedStoreIds(), 
+                                request.isItemCategoryLimited(), request.getAllowedItemCategoryIds()));
+        }
+        var savedCards = giftCardRepository.saveAll(ls);
+        logger.info("Generated {} gift cards successfully", request.getCount());
         return giftCardMapper.getFrom(savedCards);
     }
 
@@ -162,6 +218,51 @@ public class GiftCardService {
         giftCard.setAllowedStores(new HashSet<>());
         giftCardRepository.save(giftCard);
         logger.info("Successfully removed store limitations for gift card: {}", serialNo);
+    }
+
+    @Transactional
+    public void limitToItemCategories(String serialNo, List<Long> itemCategoryIds) {
+        logger.info("Limiting gift card {} to item categories: {}", serialNo, itemCategoryIds);
+        var giftCard = giftCardRepository.findBySerialNo(serialNo);
+        if (giftCard == null) {
+            logger.warn("Gift card not found with serialNo: {}", serialNo);
+            throw new GiftCardNotFoundException("Gift card not found");
+        }
+
+        if (itemCategoryIds == null || itemCategoryIds.isEmpty()) {
+            logger.debug("Removing item category limitations for gift card: {}", serialNo);
+            giftCard.setItemCategoryLimited(false);
+            giftCard.setAllowedItemCategories(new HashSet<>());
+        } else {
+            Set<com.pars.financial.entity.ItemCategory> itemCategories = new HashSet<>();
+            for (Long itemCategoryId : itemCategoryIds) {
+                var itemCategory = itemCategoryRepository.findById(itemCategoryId)
+                    .orElseThrow(() -> {
+                        logger.warn("Item category not found with id: {}", itemCategoryId);
+                        return new ValidationException("Item category not found with id: " + itemCategoryId, null, -117);
+                    });
+                itemCategories.add(itemCategory);
+            }
+            giftCard.setItemCategoryLimited(true);
+            giftCard.setAllowedItemCategories(itemCategories);
+            logger.debug("Limited gift card {} to {} item categories", serialNo, itemCategories.size());
+        }
+        giftCardRepository.save(giftCard);
+        logger.info("Successfully updated item category limitations for gift card: {}", serialNo);
+    }
+
+    @Transactional
+    public void removeItemCategoryLimitation(String serialNo) {
+        logger.info("Removing item category limitations for gift card: {}", serialNo);
+        var giftCard = giftCardRepository.findBySerialNo(serialNo);
+        if (giftCard == null) {
+            logger.warn("Gift card not found with serialNo: {}", serialNo);
+            throw new GiftCardNotFoundException("Gift card not found");
+        }
+        giftCard.setItemCategoryLimited(false);
+        giftCard.setAllowedItemCategories(new HashSet<>());
+        giftCardRepository.save(giftCard);
+        logger.info("Successfully removed item category limitations for gift card: {}", serialNo);
     }
 
     /**
