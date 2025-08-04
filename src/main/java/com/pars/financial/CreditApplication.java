@@ -3,11 +3,13 @@ package com.pars.financial;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 import com.pars.financial.utils.ApiKeyEncryption;
 import com.pars.financial.utils.RandomStringGenerator;
 
 @SpringBootApplication(exclude = {SecurityAutoConfiguration.class})
+@EnableAsync
 public class CreditApplication {
 
     public static void main(String[] args) {

@@ -1,0 +1,541 @@
+{
+	"info": {
+		"_postman_id": "batch-management-api",
+		"name": "Batch Management API",
+		"description": "API collection for managing batch requests for discount codes and gift cards",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Get All Batches (ADMIN or SUPERADMIN)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					},
+					{
+						"key": "x-api-key",
+						"value": "{{ADMIN_API_KEY}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/batches/list",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"batches",
+						"list"
+					]
+				},
+				"description": "Get all batch requests in the system"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": ""
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"batchNumber\": \"BATCH12345678\",\n      \"batchType\": \"DISCOUNT_CODE\",\n      \"description\": \"Holiday promotion discount codes\",\n      \"requestDate\": \"2024-01-01T10:00:00\",\n      \"totalCount\": 100,\n      \"status\": \"COMPLETED\",\n      \"processedCount\": 100,\n      \"failedCount\": 0,\n      \"createdAt\": \"2024-01-01T10:00:00\",\n      \"updatedAt\": \"2024-01-01T10:05:00\",\n      \"requestUser\": {\n        \"id\": 1,\n        \"username\": \"admin\",\n        \"name\": \"Administrator\"\n      },\n      \"company\": {\n        \"id\": 1,\n        \"name\": \"Test Company\"\n      }\n    }\n  ]\n}"
+				}
+			]
+		},
+		{
+			"name": "Get Batch by ID (ADMIN or SUPERADMIN)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					},
+					{
+						"key": "x-api-key",
+						"value": "{{ADMIN_API_KEY}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/batches/1",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"batches",
+						"1"
+					]
+				},
+				"description": "Get a specific batch by ID"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": ""
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"batchNumber\": \"BATCH12345678\",\n    \"batchType\": \"DISCOUNT_CODE\",\n    \"description\": \"Holiday promotion discount codes\",\n    \"requestDate\": \"2024-01-01T10:00:00\",\n    \"totalCount\": 100,\n    \"status\": \"COMPLETED\",\n    \"processedCount\": 100,\n    \"failedCount\": 0,\n    \"createdAt\": \"2024-01-01T10:00:00\",\n    \"updatedAt\": \"2024-01-01T10:05:00\",\n    \"requestUser\": {\n      \"id\": 1,\n      \"username\": \"admin\",\n      \"name\": \"Administrator\"\n    },\n    \"company\": {\n      \"id\": 1,\n      \"name\": \"Test Company\"\n    }\n  }\n}"
+				}
+			]
+		},
+		{
+			"name": "Create Discount Code Batch (ADMIN or SUPERADMIN)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "x-api-key",
+						"value": "{{ADMIN_API_KEY}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"batchType\": \"DISCOUNT_CODE\",\n    \"description\": \"Holiday promotion discount codes\",\n    \"totalCount\": 100,\n    \"companyId\": 1,\n    \"requestUserId\": 1,\n    \"discountCodeRequests\": [\n        {\n            \"companyId\": 1,\n            \"balance\": 1000,\n            \"remainingValidityPeriod\": 30,\n            \"count\": 50,\n            \"storeLimited\": false,\n            \"allowedStoreIds\": [],\n            \"itemCategoryLimited\": false,\n            \"allowedItemCategoryIds\": []\n        },\n        {\n            \"companyId\": 1,\n            \"balance\": 2000,\n            \"remainingValidityPeriod\": 60,\n            \"count\": 50,\n            \"storeLimited\": true,\n            \"allowedStoreIds\": [1, 2],\n            \"itemCategoryLimited\": false,\n            \"allowedItemCategoryIds\": []\n        }\n    ]\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/batches/create",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"batches",
+						"create"
+					]
+				},
+				"description": "Create a new discount code batch"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"batchType\": \"DISCOUNT_CODE\",\n    \"description\": \"Holiday promotion discount codes\",\n    \"totalCount\": 100,\n    \"companyId\": 1,\n    \"requestUserId\": 1\n}"
+						},
+						"url": {
+							"raw": ""
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"batchNumber\": \"BATCH12345678\",\n    \"batchType\": \"DISCOUNT_CODE\",\n    \"description\": \"Holiday promotion discount codes\",\n    \"requestDate\": \"2024-01-01T10:00:00\",\n    \"totalCount\": 100,\n    \"status\": \"PENDING\",\n    \"processedCount\": 0,\n    \"failedCount\": 0,\n    \"createdAt\": \"2024-01-01T10:00:00\",\n    \"updatedAt\": \"2024-01-01T10:00:00\",\n    \"requestUser\": {\n      \"id\": 1,\n      \"username\": \"admin\",\n      \"name\": \"Administrator\"\n    },\n    \"company\": {\n      \"id\": 1,\n      \"name\": \"Test Company\"\n    }\n  }\n}"
+				}
+			]
+		},
+		{
+			"name": "Create Gift Card Batch (ADMIN or SUPERADMIN)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "x-api-key",
+						"value": "{{ADMIN_API_KEY}}",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"batchType\": \"GIFT_CARD\",\n    \"description\": \"Corporate gift cards for employees\",\n    \"totalCount\": 50,\n    \"companyId\": 1,\n    \"requestUserId\": 1,\n    \"giftCardRequests\": [\n        {\n            \"companyId\": 1,\n            \"balance\": 5000,\n            \"remainingValidityPeriod\": 90,\n            \"count\": 25,\n            \"storeLimited\": false,\n            \"allowedStoreIds\": [],\n            \"itemCategoryLimited\": false,\n            \"allowedItemCategoryIds\": []\n        },\n        {\n            \"companyId\": 1,\n            \"balance\": 10000,\n            \"remainingValidityPeriod\": 180,\n            \"count\": 25,\n            \"storeLimited\": true,\n            \"allowedStoreIds\": [1, 2, 3],\n            \"itemCategoryLimited\": false,\n            \"allowedItemCategoryIds\": []\n        }\n    ]\n}"
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/batches/create",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"batches",
+						"create"
+					]
+				},
+				"description": "Create a new gift card batch"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"batchType\": \"GIFT_CARD\",\n    \"description\": \"Corporate gift cards for employees\",\n    \"totalCount\": 50,\n    \"companyId\": 1,\n    \"requestUserId\": 1\n}"
+						},
+						"url": {
+							"raw": ""
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 2,\n    \"batchNumber\": \"BATCH87654321\",\n    \"batchType\": \"GIFT_CARD\",\n    \"description\": \"Corporate gift cards for employees\",\n    \"requestDate\": \"2024-01-01T11:00:00\",\n    \"totalCount\": 50,\n    \"status\": \"PENDING\",\n    \"processedCount\": 0,\n    \"failedCount\": 0,\n    \"createdAt\": \"2024-01-01T11:00:00\",\n    \"updatedAt\": \"2024-01-01T11:00:00\",\n    \"requestUser\": {\n      \"id\": 1,\n      \"username\": \"admin\",\n      \"name\": \"Administrator\"\n    },\n    \"company\": {\n      \"id\": 1,\n      \"name\": \"Test Company\"\n    }\n  }\n}"
+				}
+			]
+		},
+		{
+			"name": "Cancel Batch (ADMIN or SUPERADMIN)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					},
+					{
+						"key": "x-api-key",
+						"value": "{{ADMIN_API_KEY}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/batches/1/cancel",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"batches",
+						"1",
+						"cancel"
+					]
+				},
+				"description": "Cancel a batch request"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": ""
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": null\n}"
+				}
+			]
+		},
+		{
+			"name": "Get Batches by Type (ADMIN or SUPERADMIN)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					},
+					{
+						"key": "x-api-key",
+						"value": "{{ADMIN_API_KEY}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/batches/type/DISCOUNT_CODE",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"batches",
+						"type",
+						"DISCOUNT_CODE"
+					]
+				},
+				"description": "Get all batches of a specific type"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": ""
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"batchNumber\": \"BATCH12345678\",\n      \"batchType\": \"DISCOUNT_CODE\",\n      \"description\": \"Holiday promotion discount codes\",\n      \"requestDate\": \"2024-01-01T10:00:00\",\n      \"totalCount\": 100,\n      \"status\": \"COMPLETED\",\n      \"processedCount\": 100,\n      \"failedCount\": 0,\n      \"createdAt\": \"2024-01-01T10:00:00\",\n      \"updatedAt\": \"2024-01-01T10:05:00\",\n      \"requestUser\": {\n        \"id\": 1,\n        \"username\": \"admin\",\n        \"name\": \"Administrator\"\n      },\n      \"company\": {\n        \"id\": 1,\n        \"name\": \"Test Company\"\n      }\n    }\n  ]\n}"
+				}
+			]
+		},
+		{
+			"name": "Get Batches by Status (ADMIN or SUPERADMIN)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					},
+					{
+						"key": "x-api-key",
+						"value": "{{ADMIN_API_KEY}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/batches/status/COMPLETED",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"batches",
+						"status",
+						"COMPLETED"
+					]
+				},
+				"description": "Get all batches with a specific status"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": ""
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"batchNumber\": \"BATCH12345678\",\n      \"batchType\": \"DISCOUNT_CODE\",\n      \"description\": \"Holiday promotion discount codes\",\n      \"requestDate\": \"2024-01-01T10:00:00\",\n      \"totalCount\": 100,\n      \"status\": \"COMPLETED\",\n      \"processedCount\": 100,\n      \"failedCount\": 0,\n      \"createdAt\": \"2024-01-01T10:00:00\",\n      \"updatedAt\": \"2024-01-01T10:05:00\",\n      \"requestUser\": {\n        \"id\": 1,\n        \"username\": \"admin\",\n        \"name\": \"Administrator\"\n      },\n      \"company\": {\n        \"id\": 1,\n        \"name\": \"Test Company\"\n      }\n    }\n  ]\n}"
+				}
+			]
+		},
+		{
+			"name": "Get Batches by Company (ADMIN or SUPERADMIN)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					},
+					{
+						"key": "x-api-key",
+						"value": "{{ADMIN_API_KEY}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/batches/company/1",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"batches",
+						"company",
+						"1"
+					]
+				},
+				"description": "Get all batches for a specific company"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": ""
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"batchNumber\": \"BATCH12345678\",\n      \"batchType\": \"DISCOUNT_CODE\",\n      \"description\": \"Holiday promotion discount codes\",\n      \"requestDate\": \"2024-01-01T10:00:00\",\n      \"totalCount\": 100,\n      \"status\": \"COMPLETED\",\n      \"processedCount\": 100,\n      \"failedCount\": 0,\n      \"createdAt\": \"2024-01-01T10:00:00\",\n      \"updatedAt\": \"2024-01-01T10:05:00\",\n      \"requestUser\": {\n        \"id\": 1,\n        \"username\": \"admin\",\n        \"name\": \"Administrator\"\n      },\n      \"company\": {\n        \"id\": 1,\n        \"name\": \"Test Company\"\n      }\n    }\n  ]\n}"
+				}
+			]
+		},
+		{
+			"name": "Get Batches by User (ADMIN or SUPERADMIN)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}",
+						"type": "text"
+					},
+					{
+						"key": "x-api-key",
+						"value": "{{ADMIN_API_KEY}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/batches/user/1",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"batches",
+						"user",
+						"1"
+					]
+				},
+				"description": "Get all batches created by a specific user"
+			},
+			"response": [
+				{
+					"name": "Success Response",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": ""
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 1,\n      \"batchNumber\": \"BATCH12345678\",\n      \"batchType\": \"DISCOUNT_CODE\",\n      \"description\": \"Holiday promotion discount codes\",\n      \"requestDate\": \"2024-01-01T10:00:00\",\n      \"totalCount\": 100,\n      \"status\": \"COMPLETED\",\n      \"processedCount\": 100,\n      \"failedCount\": 0,\n      \"createdAt\": \"2024-01-01T10:00:00\",\n      \"updatedAt\": \"2024-01-01T10:05:00\",\n      \"requestUser\": {\n        \"id\": 1,\n        \"username\": \"admin\",\n        \"name\": \"Administrator\"\n      },\n      \"company\": {\n        \"id\": 1,\n        \"name\": \"Test Company\"\n      }\n    }\n  ]\n}"
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080"
+		},
+		{
+			"key": "token",
+			"value": "your-jwt-token-here"
+		},
+		{
+			"key": "ADMIN_API_KEY",
+			"value": "your-admin-api-key-here"
+		}
+	]
+} 
