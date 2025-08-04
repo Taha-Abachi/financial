@@ -61,6 +61,9 @@ public class SecurityConfig {
                         // Item Category endpoints - GET operations accessible to both ADMIN and API_USER
                         .requestMatchers("/api/v1/item-category/list").hasAnyRole("ADMIN", "API_USER")
                         .requestMatchers("/api/v1/item-category/*").hasAnyRole("ADMIN", "API_USER")
+                        // User and UserRole endpoints - restricted to ADMIN and SUPERADMIN
+                        .requestMatchers("/api/v1/users/**").hasAnyRole("ADMIN", "SUPERADMIN")
+                        .requestMatchers("/api/v1/user-roles/**").hasAnyRole("ADMIN", "SUPERADMIN")
                         .anyRequest().permitAll()
                 )
                 .anonymous(anonymous -> anonymous
