@@ -1,7 +1,6 @@
 package com.pars.financial.dto;
 
 import com.pars.financial.entity.User;
-import com.pars.financial.entity.UserRole;
 
 import java.time.LocalDateTime;
 

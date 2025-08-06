@@ -2,16 +2,13 @@ package com.pars.financial.service;
 
 import com.pars.financial.dto.BatchCreateRequest;
 import com.pars.financial.dto.BatchDto;
-import com.pars.financial.dto.DiscountCodeDto;
-import com.pars.financial.dto.GiftCardDto;
 import com.pars.financial.entity.Batch;
-import com.pars.financial.entity.Company;
-import com.pars.financial.entity.User;
 import com.pars.financial.exception.ValidationException;
 import com.pars.financial.repository.BatchRepository;
 import com.pars.financial.repository.CompanyRepository;
 import com.pars.financial.repository.UserRepository;
 import com.pars.financial.utils.RandomStringGenerator;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;

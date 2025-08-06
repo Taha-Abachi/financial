@@ -45,6 +45,7 @@ X-API-Key: your-api-key
 ```json
 {
     "code": "string",
+    "serialNo": 0,
     "discountType": "PERCENTAGE",
     "percentage": 0,
     "constantDiscountAmount": 0,

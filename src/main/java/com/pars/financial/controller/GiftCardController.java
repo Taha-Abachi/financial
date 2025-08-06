@@ -4,8 +4,8 @@ import com.pars.financial.dto.GenericResponse;
 import com.pars.financial.dto.GiftCardDto;
 import com.pars.financial.dto.GiftCardIssueRequest;
 import com.pars.financial.dto.StoreLimitationRequest;
-import com.pars.financial.entity.GiftCard;
 import com.pars.financial.service.GiftCardService;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;

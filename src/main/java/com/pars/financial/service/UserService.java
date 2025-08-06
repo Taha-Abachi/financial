@@ -4,10 +4,10 @@ import com.pars.financial.dto.UserCreateRequest;
 import com.pars.financial.dto.UserDto;
 import com.pars.financial.dto.UserUpdateRequest;
 import com.pars.financial.entity.User;
-import com.pars.financial.entity.UserRole;
 import com.pars.financial.exception.ValidationException;
 import com.pars.financial.repository.UserRepository;
 import com.pars.financial.repository.UserRoleRepository;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;

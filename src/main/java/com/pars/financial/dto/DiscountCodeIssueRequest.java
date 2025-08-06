@@ -3,6 +3,8 @@ package com.pars.financial.dto;
 import com.pars.financial.enums.DiscountType;
 
 public class DiscountCodeIssueRequest {
+    public String code;
+    public Long serialNo;
     public int count;
     public int percentage;
     public long remainingValidityPeriod;

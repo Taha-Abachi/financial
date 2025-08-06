@@ -45,14 +45,27 @@ public class DiscountCodeService {
         this.itemCategoryRepository = itemCategoryRepository;
     }
 
-    private DiscountCode issueDiscountCode(int percentage, long validityPeriod, long maxDiscountAmount, long minimumBillAmount, int usageLimit, long constantDiscountAmount, DiscountType discountType, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds) {
-        logger.debug("Issuing new discount code with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}, minimumBillAmount: {}, usageLimit: {}, constantDiscountAmount: {}, discountType: {}, companyId: {}, storeLimited: {}, allowedStoreIds: {}, itemCategoryLimited: {}, allowedItemCategoryIds: {}", 
-            percentage, validityPeriod, maxDiscountAmount, minimumBillAmount, usageLimit, constantDiscountAmount, discountType, companyId, storeLimited, allowedStoreIds, itemCategoryLimited, allowedItemCategoryIds);
+    private DiscountCode issueDiscountCode(int percentage, long validityPeriod, long maxDiscountAmount, long minimumBillAmount, int usageLimit, long constantDiscountAmount, DiscountType discountType, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, String customCode, Long customSerialNo) {
+        logger.debug("Issuing new discount code with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}, minimumBillAmount: {}, usageLimit: {}, constantDiscountAmount: {}, discountType: {}, companyId: {}, storeLimited: {}, allowedStoreIds: {}, itemCategoryLimited: {}, allowedItemCategoryIds: {}, customCode: {}, customSerialNo: {}", 
+            percentage, validityPeriod, maxDiscountAmount, minimumBillAmount, usageLimit, constantDiscountAmount, discountType, companyId, storeLimited, allowedStoreIds, itemCategoryLimited, allowedItemCategoryIds, customCode, customSerialNo);
         var code = new DiscountCode();
         code.setIssueDate(LocalDateTime.now());
         code.setExpiryDate(LocalDate.now().plusDays(validityPeriod));
-        code.setCode("DC" + RandomStringGenerator.generateRandomUppercaseStringWithNumbers(discountCodeLength - 2));
-        code.setSerialNo(ThreadLocalRandom.current().nextLong(10000000, 100000000));
+        
+        // Use custom code if provided, otherwise generate random
+        if (customCode != null && !customCode.trim().isEmpty()) {
+            code.setCode(customCode);
+        } else {
+            code.setCode("DC" + RandomStringGenerator.generateRandomUppercaseStringWithNumbers(discountCodeLength - 2));
+        }
+        
+        // Use custom serial number if provided, otherwise generate random
+        if (customSerialNo != null) {
+            code.setSerialNo(customSerialNo);
+        } else {
+            code.setSerialNo(ThreadLocalRandom.current().nextLong(10000000, 100000000));
+        }
+        
         code.setPercentage(percentage);
         code.setMaxDiscountAmount(maxDiscountAmount);
         code.setMinimumBillAmount(minimumBillAmount);
@@ -102,9 +115,33 @@ public class DiscountCodeService {
     }
 
     public DiscountCodeDto generate(DiscountCodeIssueRequest dto) {
-        logger.info("Generating new discount code with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}, minimumBillAmount: {}, usageLimit: {}, constantDiscountAmount: {}, discountType: {}, companyId: {}, storeLimited: {}, allowedStoreIds: {}, itemCategoryLimited: {}, allowedItemCategoryIds: {}", 
-            dto.percentage, dto.remainingValidityPeriod, dto.maxDiscountAmount, dto.minimumBillAmount, dto.usageLimit, dto.constantDiscountAmount, dto.discountType, dto.companyId, (long) dto.allowedStoreIds.size() > 0, dto.allowedStoreIds, dto.itemCategoryLimited, dto.allowedItemCategoryIds);
-        var discountCode = issueDiscountCode(dto.percentage, dto.remainingValidityPeriod, dto.maxDiscountAmount, dto.minimumBillAmount, dto.usageLimit, dto.constantDiscountAmount, dto.discountType, dto.companyId, (long) dto.allowedStoreIds.size() > 0, dto.allowedStoreIds, dto.itemCategoryLimited, dto.allowedItemCategoryIds);
+        logger.info("Generating new discount code with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}, minimumBillAmount: {}, usageLimit: {}, constantDiscountAmount: {}, discountType: {}, companyId: {}, storeLimited: {}, allowedStoreIds: {}, itemCategoryLimited: {}, allowedItemCategoryIds: {}, customCode: {}, customSerialNo: {}", 
+            dto.percentage, dto.remainingValidityPeriod, dto.maxDiscountAmount, dto.minimumBillAmount, dto.usageLimit, dto.constantDiscountAmount, dto.discountType, dto.companyId, (long) dto.allowedStoreIds.size() > 0, dto.allowedStoreIds, dto.itemCategoryLimited, dto.allowedItemCategoryIds, dto.code, dto.serialNo);
+        
+        // Check if both code and serialNo are provided simultaneously and count is 1
+        boolean hasCustomCode = dto.code != null && !dto.code.trim().isEmpty();
+        boolean hasCustomSerialNo = dto.serialNo != null;
+        boolean isSingleCode = dto.count == 1;
+        
+        if (hasCustomCode && hasCustomSerialNo && isSingleCode) {
+            // Check if the provided code and serialNo are not already in the database
+            if (codeRepository.existsByCode(dto.code)) {
+                logger.warn("Discount code already exists: {}", dto.code);
+                throw new ValidationException("Discount code already exists", null, -150);
+            }
+            if (codeRepository.existsBySerialNo(dto.serialNo)) {
+                logger.warn("Serial number already exists: {}", dto.serialNo);
+                throw new ValidationException("Serial number already exists", null, -151);
+            }
+            logger.info("Using provided custom code: {} and serial number: {}", dto.code, dto.serialNo);
+        } else if (hasCustomCode || hasCustomSerialNo) {
+            // If only one of them is provided, or count is not 1, ignore custom values and generate random
+            logger.warn("Both code and serialNo must be provided simultaneously and count must be 1 to use custom values. Generating random values instead.");
+            dto.code = null;
+            dto.serialNo = null;
+        }
+        
+        var discountCode = issueDiscountCode(dto.percentage, dto.remainingValidityPeriod, dto.maxDiscountAmount, dto.minimumBillAmount, dto.usageLimit, dto.constantDiscountAmount, dto.discountType, dto.companyId, (long) dto.allowedStoreIds.size() > 0, dto.allowedStoreIds, dto.itemCategoryLimited, dto.allowedItemCategoryIds, dto.code, dto.serialNo);
         var savedCode = codeRepository.save(discountCode);
         logger.info("Generated discount code: {}", savedCode.getCode());
         return mapper.getFrom(savedCode);
@@ -113,11 +150,35 @@ public class DiscountCodeService {
     public List<DiscountCodeDto> generateList(DiscountCodeIssueRequest request) {
         request.storeLimited = !request.allowedStoreIds.isEmpty();
         request.itemCategoryLimited = !request.allowedItemCategoryIds.isEmpty();
-        logger.info("Generating {} discount codes with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}, minimumBillAmount: {}, usageLimit: {}, constantDiscountAmount: {}, discountType: {}, companyId: {}, storeLimited: {}, allowedStoreIds: {}, itemCategoryLimited: {}, allowedItemCategoryIds: {}", 
-            request.count, request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount, request.usageLimit, request.constantDiscountAmount, request.discountType, request.companyId, request.storeLimited, request.allowedStoreIds, request.itemCategoryLimited, request.allowedItemCategoryIds);
+        logger.info("Generating {} discount codes with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}, minimumBillAmount: {}, usageLimit: {}, constantDiscountAmount: {}, discountType: {}, companyId: {}, storeLimited: {}, allowedStoreIds: {}, itemCategoryLimited: {}, allowedItemCategoryIds: {}, customCode: {}, customSerialNo: {}", 
+            request.count, request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount, request.usageLimit, request.constantDiscountAmount, request.discountType, request.companyId, request.storeLimited, request.allowedStoreIds, request.itemCategoryLimited, request.allowedItemCategoryIds, request.code, request.serialNo);
+        
+        // Check if both code and serialNo are provided simultaneously and count is 1
+        boolean hasCustomCode = request.code != null && !request.code.trim().isEmpty();
+        boolean hasCustomSerialNo = request.serialNo != null;
+        boolean isSingleCode = request.count == 1;
+        
+        if (hasCustomCode && hasCustomSerialNo && isSingleCode) {
+            // Check if the provided code and serialNo are not already in the database
+            if (codeRepository.existsByCode(request.code)) {
+                logger.warn("Discount code already exists: {}", request.code);
+                throw new ValidationException("Discount code already exists", null, -150);
+            }
+            if (codeRepository.existsBySerialNo(request.serialNo)) {
+                logger.warn("Serial number already exists: {}", request.serialNo);
+                throw new ValidationException("Serial number already exists", null, -151);
+            }
+            logger.info("Using provided custom code: {} and serial number: {}", request.code, request.serialNo);
+        } else if (hasCustomCode || hasCustomSerialNo) {
+            // If only one of them is provided, or count is not 1, ignore custom values and generate random
+            logger.warn("Both code and serialNo must be provided simultaneously and count must be 1 to use custom values. Generating random values instead.");
+            request.code = null;
+            request.serialNo = null;
+        }
+        
         var ls = new ArrayList<DiscountCode>();
         for (var i = 0; i < request.count; i++) {
-            ls.add(issueDiscountCode(request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount, request.usageLimit, request.constantDiscountAmount, request.discountType, request.companyId, request.storeLimited, request.allowedStoreIds, request.itemCategoryLimited, request.allowedItemCategoryIds));
+            ls.add(issueDiscountCode(request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount, request.usageLimit, request.constantDiscountAmount, request.discountType, request.companyId, request.storeLimited, request.allowedStoreIds, request.itemCategoryLimited, request.allowedItemCategoryIds, request.code, request.serialNo));
         }
         var savedCodes = codeRepository.saveAll(ls);
         logger.info("Generated {} discount codes successfully", request.count);
