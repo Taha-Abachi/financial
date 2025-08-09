@@ -29,6 +29,14 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        
+        // Skip API key processing if JWT authentication is already present
+        if (SecurityContextHolder.getContext().getAuthentication() != null && 
+            SecurityContextHolder.getContext().getAuthentication() instanceof org.springframework.security.authentication.UsernamePasswordAuthenticationToken) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+        
         String apiKey = request.getHeader(apiKeyHeader);
         if (apiKey != null) {
             String encryptedApiKey = apiKeyEncryption.encrypt(apiKey);

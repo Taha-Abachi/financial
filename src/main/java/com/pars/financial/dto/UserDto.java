@@ -1,16 +1,14 @@
 package com.pars.financial.dto;
 
-import com.pars.financial.entity.User;
-
 import java.time.LocalDateTime;
 
 public class UserDto {
     private Long id;
     private String username;
     private String name;
+    private String email;
     private String mobilePhoneNumber;
     private String nationalCode;
-    private String email;
     private boolean isActive;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -18,35 +16,18 @@ public class UserDto {
 
     public UserDto() {}
 
-    public UserDto(Long id, String username, String name, String mobilePhoneNumber, String nationalCode, String email, boolean isActive, LocalDateTime createdAt, LocalDateTime updatedAt, UserRoleDto role) {
+    public UserDto(Long id, String username, String name, String email, String mobilePhoneNumber, 
+                   String nationalCode, boolean isActive, LocalDateTime createdAt, LocalDateTime updatedAt, UserRoleDto role) {
         this.id = id;
         this.username = username;
         this.name = name;
+        this.email = email;
         this.mobilePhoneNumber = mobilePhoneNumber;
         this.nationalCode = nationalCode;
-        this.email = email;
         this.isActive = isActive;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.role = role;
-    }
-
-    public static UserDto fromEntity(User user) {
-        if (user == null) {
-            return null;
-        }
-        return new UserDto(
-            user.getId(),
-            user.getUsername(),
-            user.getName(),
-            user.getMobilePhoneNumber(),
-            user.getNationalCode(),
-            user.getEmail(),
-            user.isActive(),
-            user.getCreatedAt(),
-            user.getUpdatedAt(),
-            UserRoleDto.fromEntity(user.getRole())
-        );
     }
 
     public Long getId() {
@@ -73,6 +54,14 @@ public class UserDto {
         this.name = name;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public String getMobilePhoneNumber() {
         return mobilePhoneNumber;
     }
@@ -87,14 +76,6 @@ public class UserDto {
 
     public void setNationalCode(String nationalCode) {
         this.nationalCode = nationalCode;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
     }
 
     public boolean isActive() {

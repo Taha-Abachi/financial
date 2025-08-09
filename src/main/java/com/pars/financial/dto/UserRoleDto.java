@@ -1,6 +1,6 @@
 package com.pars.financial.dto;
 
-import com.pars.financial.entity.UserRole;
+import java.time.LocalDateTime;
 
 public class UserRoleDto {
     private Long id;
@@ -13,13 +13,6 @@ public class UserRoleDto {
         this.id = id;
         this.name = name;
         this.description = description;
-    }
-
-    public static UserRoleDto fromEntity(UserRole role) {
-        if (role == null) {
-            return null;
-        }
-        return new UserRoleDto(role.getId(), role.getName(), role.getDescription());
     }
 
     public Long getId() {

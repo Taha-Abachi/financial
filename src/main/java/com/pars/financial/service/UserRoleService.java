@@ -25,7 +25,7 @@ public class UserRoleService {
     public List<UserRoleDto> getAllRoles() {
         logger.debug("Fetching all user roles");
         return userRoleRepository.findAll().stream()
-                .map(UserRoleDto::fromEntity)
+                .map(this::convertToUserRoleDto)
                 .collect(Collectors.toList());
     }
 
@@ -36,7 +36,7 @@ public class UserRoleService {
             logger.warn("User role not found with id: {}", id);
             throw new ValidationException("User role not found", null, -119);
         }
-        return UserRoleDto.fromEntity(role.get());
+        return convertToUserRoleDto(role.get());
     }
 
     public UserRoleDto getRoleByName(String name) {
@@ -46,7 +46,7 @@ public class UserRoleService {
             logger.warn("User role not found with name: {}", name);
             throw new ValidationException("User role not found", null, -119);
         }
-        return UserRoleDto.fromEntity(role.get());
+        return convertToUserRoleDto(role.get());
     }
 
     @Transactional
@@ -61,7 +61,7 @@ public class UserRoleService {
         var role = new UserRole(roleDto.getName(), roleDto.getDescription());
         var savedRole = userRoleRepository.save(role);
         logger.info("Created user role with id: {}", savedRole.getId());
-        return UserRoleDto.fromEntity(savedRole);
+        return convertToUserRoleDto(savedRole);
     }
 
     @Transactional
@@ -80,7 +80,7 @@ public class UserRoleService {
 
         var savedRole = userRoleRepository.save(role);
         logger.info("Updated user role with id: {}", savedRole.getId());
-        return UserRoleDto.fromEntity(savedRole);
+        return convertToUserRoleDto(savedRole);
     }
 
     @Transactional
@@ -98,5 +98,13 @@ public class UserRoleService {
 
     public boolean existsByName(String name) {
         return userRoleRepository.existsByName(name);
+    }
+
+    private UserRoleDto convertToUserRoleDto(UserRole userRole) {
+        UserRoleDto roleDto = new UserRoleDto();
+        roleDto.setId(userRole.getId());
+        roleDto.setName(userRole.getName());
+        roleDto.setDescription(userRole.getDescription());
+        return roleDto;
     }
 } 

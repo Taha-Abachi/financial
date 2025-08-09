@@ -4,10 +4,15 @@ import java.util.Collections;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -15,6 +20,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import com.pars.financial.repository.ApiUserRepository;
 import com.pars.financial.security.ApiKeyAuthFilter;
+import com.pars.financial.security.JwtAuthenticationFilter;
 import com.pars.financial.security.RateLimitFilter;
 import com.pars.financial.security.SecurityContextFilter;
 import com.pars.financial.utils.ApiKeyEncryption;
@@ -26,11 +32,17 @@ public class SecurityConfig {
     private final ApiUserRepository apiUserRepository;
     private final ApiKeyEncryption apiKeyEncryption;
     private final RateLimitProperties rateLimitProperties;
+    private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final UserDetailsService userDetailsService;
 
-    public SecurityConfig(ApiUserRepository apiUserRepository, ApiKeyEncryption apiKeyEncryption, RateLimitProperties rateLimitProperties) {
+    public SecurityConfig(ApiUserRepository apiUserRepository, ApiKeyEncryption apiKeyEncryption, 
+                         RateLimitProperties rateLimitProperties, JwtAuthenticationFilter jwtAuthenticationFilter,
+                         UserDetailsService userDetailsService) {
         this.apiUserRepository = apiUserRepository;
         this.apiKeyEncryption = apiKeyEncryption;
         this.rateLimitProperties = rateLimitProperties;
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.userDetailsService = userDetailsService;
     }
 
     @Bean
@@ -39,14 +51,30 @@ public class SecurityConfig {
     }
 
     @Bean
+    public AuthenticationProvider authenticationProvider() {
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+        authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder());
+        return authProvider;
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .addFilterBefore(new SecurityContextFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new RateLimitFilter(rateLimitProperties), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new ApiKeyAuthFilter(apiUserRepository, apiKeyEncryption), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
                         // Swagger UI and OpenAPI endpoints
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                        // Authentication endpoints
+                        .requestMatchers("/api/v1/auth/**").permitAll()
                         // API endpoints
                         .requestMatchers("/api/v1/customer").hasRole("ADMIN")
                         .requestMatchers("/api/v1/store").hasRole("ADMIN")

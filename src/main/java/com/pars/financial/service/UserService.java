@@ -2,6 +2,7 @@ package com.pars.financial.service;
 
 import com.pars.financial.dto.UserCreateRequest;
 import com.pars.financial.dto.UserDto;
+import com.pars.financial.dto.UserRoleDto;
 import com.pars.financial.dto.UserUpdateRequest;
 import com.pars.financial.entity.User;
 import com.pars.financial.exception.ValidationException;
@@ -35,7 +36,7 @@ public class UserService {
     public List<UserDto> getAllUsers() {
         logger.debug("Fetching all users");
         return userRepository.findAll().stream()
-                .map(UserDto::fromEntity)
+                .map(this::convertToUserDto)
                 .collect(Collectors.toList());
     }
 
@@ -46,7 +47,7 @@ public class UserService {
             logger.warn("User not found with id: {}", id);
             throw new ValidationException("User not found", null, -121);
         }
-        return UserDto.fromEntity(user.get());
+        return convertToUserDto(user.get());
     }
 
     public UserDto getUserByUsername(String username) {
@@ -56,7 +57,7 @@ public class UserService {
             logger.warn("User not found with username: {}", username);
             throw new ValidationException("User not found", null, -121);
         }
-        return UserDto.fromEntity(user.get());
+        return convertToUserDto(user.get());
     }
 
     @Transactional
@@ -106,7 +107,7 @@ public class UserService {
 
         var savedUser = userRepository.save(user);
         logger.info("Created user with id: {}", savedUser.getId());
-        return UserDto.fromEntity(savedUser);
+        return convertToUserDto(savedUser);
     }
 
     @Transactional
@@ -174,7 +175,7 @@ public class UserService {
 
         var savedUser = userRepository.save(user);
         logger.info("Updated user with id: {}", savedUser.getId());
-        return UserDto.fromEntity(savedUser);
+        return convertToUserDto(savedUser);
     }
 
     @Transactional
@@ -206,7 +207,7 @@ public class UserService {
 
         var savedUser = userRepository.save(userEntity);
         logger.info("Activated user with id: {}", savedUser.getId());
-        return UserDto.fromEntity(savedUser);
+        return convertToUserDto(savedUser);
     }
 
     @Transactional
@@ -225,24 +226,47 @@ public class UserService {
 
         var savedUser = userRepository.save(userEntity);
         logger.info("Deactivated user with id: {}", savedUser.getId());
-        return UserDto.fromEntity(savedUser);
+        return convertToUserDto(savedUser);
     }
 
     public List<UserDto> getUsersByRole(Long roleId) {
         logger.debug("Fetching users by role id: {}", roleId);
         return userRepository.findByRoleId(roleId).stream()
-                .map(UserDto::fromEntity)
+                .map(this::convertToUserDto)
                 .collect(Collectors.toList());
     }
 
     public List<UserDto> getActiveUsers() {
         logger.debug("Fetching active users");
         return userRepository.findByIsActive(true).stream()
-                .map(UserDto::fromEntity)
+                .map(this::convertToUserDto)
                 .collect(Collectors.toList());
     }
 
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);
+    }
+
+    private UserDto convertToUserDto(User user) {
+        UserDto userDto = new UserDto();
+        userDto.setId(user.getId());
+        userDto.setUsername(user.getUsername());
+        userDto.setName(user.getName());
+        userDto.setEmail(user.getEmail());
+        userDto.setMobilePhoneNumber(user.getMobilePhoneNumber());
+        userDto.setNationalCode(user.getNationalCode());
+        userDto.setActive(user.isActive());
+        userDto.setCreatedAt(user.getCreatedAt());
+        userDto.setUpdatedAt(user.getUpdatedAt());
+        
+        if (user.getRole() != null) {
+            UserRoleDto roleDto = new UserRoleDto();
+            roleDto.setId(user.getRole().getId());
+            roleDto.setName(user.getRole().getName());
+            roleDto.setDescription(user.getRole().getDescription());
+            userDto.setRole(roleDto);
+        }
+        
+        return userDto;
     }
 } 
