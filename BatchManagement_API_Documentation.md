@@ -46,7 +46,6 @@ x-api-key: <api-key>
       "updatedAt": "2024-01-01T10:05:00",
       "requestUser": {
         "id": 1,
-        "username": "admin",
         "name": "Administrator"
       },
       "company": {
@@ -219,8 +218,8 @@ Returns all batches created by a specific user.
 - `errorMessage`: Detailed error message when batch fails or has failed items (null if no errors)
 - `createdAt`: Date when the batch was created
 - `updatedAt`: Date when the batch was last updated
-- `requestUser`: User who requested the batch
-- `company`: Company associated with the batch
+- `requestUser`: User who requested the batch (contains only id and name)
+- `company`: Company associated with the batch (contains only id and name)
 
 ### BatchCreateRequest
 ```json
@@ -303,7 +302,6 @@ When a batch fails or has failed items, the response will include detailed error
   "updatedAt": "2024-01-01T10:01:00",
   "requestUser": {
     "id": 1,
-    "username": "admin",
     "name": "Administrator"
   },
   "company": {
@@ -330,7 +328,6 @@ When a batch fails or has failed items, the response will include detailed error
   "updatedAt": "2024-01-01T10:02:00",
   "requestUser": {
     "id": 1,
-    "username": "admin",
     "name": "Administrator"
   },
   "company": {

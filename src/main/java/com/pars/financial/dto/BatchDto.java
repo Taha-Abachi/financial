@@ -17,12 +17,12 @@ public class BatchDto {
     private String errorMessage;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private UserDto requestUser;
-    private CompanyDto company;
+    private SimpleUserDto requestUser;
+    private SimpleCompanyDto company;
 
     public BatchDto() {}
 
-    public BatchDto(Long id, String batchNumber, Batch.BatchType batchType, String description, LocalDateTime requestDate, Integer totalCount, Batch.BatchStatus status, Integer processedCount, Integer failedCount, String errorMessage, LocalDateTime createdAt, LocalDateTime updatedAt, UserDto requestUser, CompanyDto company) {
+    public BatchDto(Long id, String batchNumber, Batch.BatchType batchType, String description, LocalDateTime requestDate, Integer totalCount, Batch.BatchStatus status, Integer processedCount, Integer failedCount, String errorMessage, LocalDateTime createdAt, LocalDateTime updatedAt, SimpleUserDto requestUser, SimpleCompanyDto company) {
         this.id = id;
         this.batchNumber = batchNumber;
         this.batchType = batchType;
@@ -56,8 +56,8 @@ public class BatchDto {
             batch.getErrorMessage(),
             batch.getCreatedAt(),
             batch.getUpdatedAt(),
-            UserDto.fromEntity(batch.getRequestUser()),
-            CompanyDto.fromEntity(batch.getCompany())
+            SimpleUserDto.fromEntity(batch.getRequestUser()),
+            SimpleCompanyDto.fromEntity(batch.getCompany())
         );
     }
 
@@ -157,19 +157,19 @@ public class BatchDto {
         this.updatedAt = updatedAt;
     }
 
-    public UserDto getRequestUser() {
+    public SimpleUserDto getRequestUser() {
         return requestUser;
     }
 
-    public void setRequestUser(UserDto requestUser) {
+    public void setRequestUser(SimpleUserDto requestUser) {
         this.requestUser = requestUser;
     }
 
-    public CompanyDto getCompany() {
+    public SimpleCompanyDto getCompany() {
         return company;
     }
 
-    public void setCompany(CompanyDto company) {
+    public void setCompany(SimpleCompanyDto company) {
         this.company = company;
     }
 } 
