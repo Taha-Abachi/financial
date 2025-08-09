@@ -36,6 +36,7 @@ public class DiscountCodeMapper {
         dto.percentage = code.getPercentage();
         dto.used = code.isUsed();
         dto.active = code.isActive();
+        dto.isUsable = code.calculateIsUsable();
         dto.issueDate = code.getIssueDate();
         dto.redeemDate = code.getRedeemDate();
         dto.companyId = code.getCompany() != null ? code.getCompany().getId() : null;

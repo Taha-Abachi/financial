@@ -19,6 +19,7 @@ public class DiscountCodeDto {
     public long remainingValidityPeriod;
     public boolean used;
     public boolean active;
+    public boolean isUsable;
     public LocalDateTime redeemDate;
     public ArrayList<DiscountCodeTransactionDto> transactions;
     public Long companyId;

@@ -178,7 +178,8 @@ public class DiscountCodeService {
         
         var ls = new ArrayList<DiscountCode>();
         for (var i = 0; i < request.count; i++) {
-            ls.add(issueDiscountCode(request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount, request.usageLimit, request.constantDiscountAmount, request.discountType, request.companyId, request.storeLimited, request.allowedStoreIds, request.itemCategoryLimited, request.allowedItemCategoryIds, request.code, request.serialNo));
+            var discountCode = issueDiscountCode(request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount, request.usageLimit, request.constantDiscountAmount, request.discountType, request.companyId, request.storeLimited, request.allowedStoreIds, request.itemCategoryLimited, request.allowedItemCategoryIds, request.code, request.serialNo);
+            ls.add(discountCode);
         }
         var savedCodes = codeRepository.saveAll(ls);
         logger.info("Generated {} discount codes successfully", request.count);

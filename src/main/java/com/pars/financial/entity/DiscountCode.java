@@ -252,4 +252,37 @@ public class DiscountCode {
     public void setCompany(Company company) {
         this.company = company;
     }
+
+    /**
+     * Calculates if the discount code is usable based on various conditions
+     * @return true if the discount code is usable, false otherwise
+     */
+    public boolean calculateIsUsable() {
+        // Check if the discount code is active
+        if (!isActive) {
+            return false;
+        }
+
+        // Check if the discount code has been used and has no more usage left
+        if (used && currentUsageCount >= usageLimit) {
+            return false;
+        }
+
+        // Check if the discount code has reached its usage limit
+        if (currentUsageCount >= usageLimit) {
+            return false;
+        }
+
+        // Check if the discount code has expired
+        if (expiryDate != null && expiryDate.isBefore(java.time.LocalDate.now())) {
+            return false;
+        }
+
+        // Check if the discount code has been redeemed
+        if (redeemDate != null) {
+            return false;
+        }
+
+        return true;
+    }
 }
