@@ -105,6 +105,7 @@ public class BatchService {
     }
 
     @Async
+    @Transactional
     protected void processBatchAsync(Batch batch, BatchCreateRequest request) {
         logger.info("Starting async processing for batch: {}", batch.getBatchNumber());
         
@@ -130,29 +131,27 @@ public class BatchService {
             batch.setErrorMessage("Batch processing failed: " + e.getMessage());
             batch.setUpdatedAt(LocalDateTime.now());
             batchRepository.save(batch);
+            // Re-throw the exception to trigger transaction rollback
+            throw e;
         }
     }
 
+    @Transactional
     private void processDiscountCodeBatch(Batch batch, BatchCreateRequest request) {
         logger.info("Processing discount code batch: {}", batch.getBatchNumber());
         
         int processed = 0;
-        int failed = 0;
-        StringBuilder errorMessages = new StringBuilder();
 
         if (request.getDiscountCodeRequests() != null && !request.getDiscountCodeRequests().isEmpty()) {
             for (int i = 0; i < request.getDiscountCodeRequests().size(); i++) {
                 var discountCodeRequest = request.getDiscountCodeRequests().get(i);
                 try {
                     discountCodeService.generate(discountCodeRequest);
-                    processed++;
+                    processed += discountCodeRequest.count;
                 } catch (Exception e) {
                     logger.error("Error processing discount code {} in batch {}: {}", i + 1, batch.getBatchNumber(), e.getMessage());
-                    failed++;
-                    if (errorMessages.length() > 0) {
-                        errorMessages.append("; ");
-                    }
-                    errorMessages.append("Item ").append(i + 1).append(": ").append(e.getMessage());
+                    // Throw exception to trigger rollback of entire batch
+                    throw new RuntimeException("Failed to process discount code item " + (i + 1) + ": " + e.getMessage(), e);
                 }
             }
         } else {
@@ -170,29 +169,22 @@ public class BatchService {
                     processed++;
                 } catch (Exception e) {
                     logger.error("Error processing discount code {} in batch {}: {}", i + 1, batch.getBatchNumber(), e.getMessage());
-                    failed++;
-                    if (errorMessages.length() > 0) {
-                        errorMessages.append("; ");
-                    }
-                    errorMessages.append("Item ").append(i + 1).append(": ").append(e.getMessage());
+                    // Throw exception to trigger rollback of entire batch
+                    throw new RuntimeException("Failed to process discount code item " + (i + 1) + ": " + e.getMessage(), e);
                 }
             }
         }
 
         batch.setProcessedCount(processed);
-        batch.setFailedCount(failed);
-        if (failed > 0 && errorMessages.length() > 0) {
-            batch.setErrorMessage(errorMessages.toString());
-        }
+        batch.setFailedCount(0); // No failures since any failure would have triggered rollback
         batchRepository.save(batch);
     }
 
+    @Transactional
     private void processGiftCardBatch(Batch batch, BatchCreateRequest request) {
         logger.info("Processing gift card batch: {}", batch.getBatchNumber());
         
         int processed = 0;
-        int failed = 0;
-        StringBuilder errorMessages = new StringBuilder();
 
         if (request.getGiftCardRequests() != null && !request.getGiftCardRequests().isEmpty()) {
             for (int i = 0; i < request.getGiftCardRequests().size(); i++) {
@@ -202,11 +194,8 @@ public class BatchService {
                     processed += giftCardRequest.getCount();
                 } catch (Exception e) {
                     logger.error("Error processing gift card {} in batch {}: {}", i + 1, batch.getBatchNumber(), e.getMessage());
-                    failed += giftCardRequest.getCount();
-                    if (errorMessages.length() > 0) {
-                        errorMessages.append("; ");
-                    }
-                    errorMessages.append("Item ").append(i + 1).append(": ").append(e.getMessage());
+                    // Throw exception to trigger rollback of entire batch
+                    throw new RuntimeException("Failed to process gift card item " + (i + 1) + ": " + e.getMessage(), e);
                 }
             }
         } else {
@@ -225,20 +214,14 @@ public class BatchService {
                     processed++;
                 } catch (Exception e) {
                     logger.error("Error processing gift card {} in batch {}: {}", i + 1, batch.getBatchNumber(), e.getMessage());
-                    failed++;
-                    if (errorMessages.length() > 0) {
-                        errorMessages.append("; ");
-                    }
-                    errorMessages.append("Item ").append(i + 1).append(": ").append(e.getMessage());
+                    // Throw exception to trigger rollback of entire batch
+                    throw new RuntimeException("Failed to process gift card item " + (i + 1) + ": " + e.getMessage(), e);
                 }
             }
         }
 
         batch.setProcessedCount(processed);
-        batch.setFailedCount(failed);
-        if (failed > 0 && errorMessages.length() > 0) {
-            batch.setErrorMessage(errorMessages.toString());
-        }
+        batch.setFailedCount(0); // No failures since any failure would have triggered rollback
         batchRepository.save(batch);
     }
 

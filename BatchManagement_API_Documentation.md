@@ -283,7 +283,7 @@ Returns all batches created by a specific user.
 ## Error Handling and Failure Scenarios
 
 ### Batch Failure Indication
-When a batch fails or has failed items, the response will include detailed error information:
+When a batch fails, the entire batch is rolled back and no items are processed. The response will include detailed error information:
 
 **Failed Batch Example:**
 ```json
@@ -296,8 +296,8 @@ When a batch fails or has failed items, the response will include detailed error
   "totalCount": 10,
   "status": "FAILED",
   "processedCount": 0,
-  "failedCount": 10,
-  "errorMessage": "Batch processing failed: Database connection error",
+  "failedCount": 0,
+  "errorMessage": "Batch processing failed: Failed to process discount code item 3: Invalid balance amount",
   "createdAt": "2024-01-01T10:00:00",
   "updatedAt": "2024-01-01T10:01:00",
   "requestUser": {
@@ -311,35 +311,14 @@ When a batch fails or has failed items, the response will include detailed error
 }
 ```
 
-**Partial Failure Example:**
-```json
-{
-  "id": 3,
-  "batchNumber": "BATCH11111111",
-  "batchType": "GIFT_CARD",
-  "description": "Test batch with partial failures",
-  "requestDate": "2024-01-01T10:00:00",
-  "totalCount": 5,
-  "status": "COMPLETED",
-  "processedCount": 3,
-  "failedCount": 2,
-  "errorMessage": "Item 2: Invalid balance amount; Item 4: Company not found",
-  "createdAt": "2024-01-01T10:00:00",
-  "updatedAt": "2024-01-01T10:02:00",
-  "requestUser": {
-    "id": 1,
-    "name": "Administrator"
-  },
-  "company": {
-    "id": 1,
-    "name": "Test Company"
-  }
-}
-```
+### Transaction Rollback Behavior
+- **All-or-Nothing Processing**: If any individual item in a batch fails, the entire batch is rolled back
+- **No Partial Success**: No items are processed if any item fails
+- **Database Consistency**: Ensures database remains in a consistent state
+- **Error Reporting**: The first failure encountered is reported in the error message
 
 ### Error Message Format
-- **Complete Batch Failure**: `"Batch processing failed: [specific error message]"`
-- **Partial Item Failures**: `"Item [number]: [error message]; Item [number]: [error message]"`
+- **Batch Failure**: `"Batch processing failed: Failed to process [item type] item [number]: [specific error message]"`
 - **No Errors**: `null` or omitted from response
 
 ### Common Failure Scenarios
@@ -354,7 +333,7 @@ When a batch fails or has failed items, the response will include detailed error
 ### Asynchronous Processing
 - Batches are processed asynchronously in the background
 - Status is updated in real-time as processing progresses
-- Failed items are tracked separately from successful ones
+- Transaction rollback ensures data consistency on any failure
 
 ### Batch Number Generation
 - Each batch gets a unique batch number (format: BATCH + 8 random characters)
@@ -367,7 +346,7 @@ When a batch fails or has failed items, the response will include detailed error
 
 ### Status Tracking
 - Real-time status updates during processing
-- Separate counters for processed and failed items
+- All-or-nothing processing with transaction rollback on any failure
 - Ability to cancel batches before completion
 
 ### Filtering and Search
