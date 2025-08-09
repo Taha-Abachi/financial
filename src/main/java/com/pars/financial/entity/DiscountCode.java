@@ -272,17 +272,7 @@ public class DiscountCode {
         if (currentUsageCount >= usageLimit) {
             return false;
         }
-
         // Check if the discount code has expired
-        if (expiryDate != null && expiryDate.isBefore(java.time.LocalDate.now())) {
-            return false;
-        }
-
-        // Check if the discount code has been redeemed
-        if (redeemDate != null) {
-            return false;
-        }
-
-        return true;
+        return !(expiryDate != null && expiryDate.isBefore(java.time.LocalDate.now()));
     }
 }
