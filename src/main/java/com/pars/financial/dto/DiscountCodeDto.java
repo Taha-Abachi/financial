@@ -16,6 +16,7 @@ public class DiscountCodeDto {
     public int usageLimit;
     public int currentUsageCount;
     public LocalDateTime issueDate;
+    public LocalDate expireDate;
     public long remainingValidityPeriod;
     public boolean used;
     public boolean active;
