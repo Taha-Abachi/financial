@@ -1,7 +1,8 @@
 package com.pars.financial.dto;
 
-import com.pars.financial.entity.Batch;
 import java.time.LocalDateTime;
+
+import com.pars.financial.entity.Batch;
 
 public class BatchDto {
     private Long id;
@@ -13,6 +14,7 @@ public class BatchDto {
     private Batch.BatchStatus status;
     private Integer processedCount;
     private Integer failedCount;
+    private String errorMessage;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private UserDto requestUser;
@@ -20,7 +22,7 @@ public class BatchDto {
 
     public BatchDto() {}
 
-    public BatchDto(Long id, String batchNumber, Batch.BatchType batchType, String description, LocalDateTime requestDate, Integer totalCount, Batch.BatchStatus status, Integer processedCount, Integer failedCount, LocalDateTime createdAt, LocalDateTime updatedAt, UserDto requestUser, CompanyDto company) {
+    public BatchDto(Long id, String batchNumber, Batch.BatchType batchType, String description, LocalDateTime requestDate, Integer totalCount, Batch.BatchStatus status, Integer processedCount, Integer failedCount, String errorMessage, LocalDateTime createdAt, LocalDateTime updatedAt, UserDto requestUser, CompanyDto company) {
         this.id = id;
         this.batchNumber = batchNumber;
         this.batchType = batchType;
@@ -30,6 +32,7 @@ public class BatchDto {
         this.status = status;
         this.processedCount = processedCount;
         this.failedCount = failedCount;
+        this.errorMessage = errorMessage;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.requestUser = requestUser;
@@ -50,6 +53,7 @@ public class BatchDto {
             batch.getStatus(),
             batch.getProcessedCount(),
             batch.getFailedCount(),
+            batch.getErrorMessage(),
             batch.getCreatedAt(),
             batch.getUpdatedAt(),
             UserDto.fromEntity(batch.getRequestUser()),
@@ -127,6 +131,14 @@ public class BatchDto {
 
     public void setFailedCount(Integer failedCount) {
         this.failedCount = failedCount;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
     }
 
     public LocalDateTime getCreatedAt() {

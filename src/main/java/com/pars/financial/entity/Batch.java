@@ -1,7 +1,18 @@
 package com.pars.financial.entity;
 
-import jakarta.persistence.*;
 import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "batch")
@@ -35,6 +46,9 @@ public class Batch {
 
     @Column(name = "failed_count", nullable = false)
     private Integer failedCount = 0;
+
+    @Column(name = "error_message", columnDefinition = "TEXT")
+    private String errorMessage;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
@@ -147,6 +161,14 @@ public class Batch {
 
     public void setFailedCount(Integer failedCount) {
         this.failedCount = failedCount;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
     }
 
     public LocalDateTime getCreatedAt() {

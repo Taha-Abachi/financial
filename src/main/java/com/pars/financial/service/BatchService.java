@@ -1,5 +1,15 @@
 package com.pars.financial.service;
 
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.pars.financial.dto.BatchCreateRequest;
 import com.pars.financial.dto.BatchDto;
 import com.pars.financial.entity.Batch;
@@ -8,16 +18,6 @@ import com.pars.financial.repository.BatchRepository;
 import com.pars.financial.repository.CompanyRepository;
 import com.pars.financial.repository.UserRepository;
 import com.pars.financial.utils.RandomStringGenerator;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 public class BatchService {
@@ -127,6 +127,7 @@ public class BatchService {
         } catch (Exception e) {
             logger.error("Error processing batch {}: {}", batch.getBatchNumber(), e.getMessage());
             batch.setStatus(Batch.BatchStatus.FAILED);
+            batch.setErrorMessage("Batch processing failed: " + e.getMessage());
             batch.setUpdatedAt(LocalDateTime.now());
             batchRepository.save(batch);
         }
@@ -137,15 +138,21 @@ public class BatchService {
         
         int processed = 0;
         int failed = 0;
+        StringBuilder errorMessages = new StringBuilder();
 
         if (request.getDiscountCodeRequests() != null && !request.getDiscountCodeRequests().isEmpty()) {
-            for (var discountCodeRequest : request.getDiscountCodeRequests()) {
+            for (int i = 0; i < request.getDiscountCodeRequests().size(); i++) {
+                var discountCodeRequest = request.getDiscountCodeRequests().get(i);
                 try {
                     discountCodeService.generate(discountCodeRequest);
                     processed++;
                 } catch (Exception e) {
-                    logger.error("Error processing discount code in batch {}: {}", batch.getBatchNumber(), e.getMessage());
+                    logger.error("Error processing discount code {} in batch {}: {}", i + 1, batch.getBatchNumber(), e.getMessage());
                     failed++;
+                    if (errorMessages.length() > 0) {
+                        errorMessages.append("; ");
+                    }
+                    errorMessages.append("Item ").append(i + 1).append(": ").append(e.getMessage());
                 }
             }
         } else {
@@ -162,14 +169,21 @@ public class BatchService {
                     discountCodeService.generate(defaultRequest);
                     processed++;
                 } catch (Exception e) {
-                    logger.error("Error processing discount code in batch {}: {}", batch.getBatchNumber(), e.getMessage());
+                    logger.error("Error processing discount code {} in batch {}: {}", i + 1, batch.getBatchNumber(), e.getMessage());
                     failed++;
+                    if (errorMessages.length() > 0) {
+                        errorMessages.append("; ");
+                    }
+                    errorMessages.append("Item ").append(i + 1).append(": ").append(e.getMessage());
                 }
             }
         }
 
         batch.setProcessedCount(processed);
         batch.setFailedCount(failed);
+        if (failed > 0 && errorMessages.length() > 0) {
+            batch.setErrorMessage(errorMessages.toString());
+        }
         batchRepository.save(batch);
     }
 
@@ -178,15 +192,21 @@ public class BatchService {
         
         int processed = 0;
         int failed = 0;
+        StringBuilder errorMessages = new StringBuilder();
 
         if (request.getGiftCardRequests() != null && !request.getGiftCardRequests().isEmpty()) {
-            for (var giftCardRequest : request.getGiftCardRequests()) {
+            for (int i = 0; i < request.getGiftCardRequests().size(); i++) {
+                var giftCardRequest = request.getGiftCardRequests().get(i);
                 try {
                     giftCardService.generateGiftCards(giftCardRequest);
                     processed += giftCardRequest.getCount();
                 } catch (Exception e) {
-                    logger.error("Error processing gift card in batch {}: {}", batch.getBatchNumber(), e.getMessage());
+                    logger.error("Error processing gift card {} in batch {}: {}", i + 1, batch.getBatchNumber(), e.getMessage());
                     failed += giftCardRequest.getCount();
+                    if (errorMessages.length() > 0) {
+                        errorMessages.append("; ");
+                    }
+                    errorMessages.append("Item ").append(i + 1).append(": ").append(e.getMessage());
                 }
             }
         } else {
@@ -204,14 +224,21 @@ public class BatchService {
                     giftCardService.generateGiftCards(defaultRequest);
                     processed++;
                 } catch (Exception e) {
-                    logger.error("Error processing gift card in batch {}: {}", batch.getBatchNumber(), e.getMessage());
+                    logger.error("Error processing gift card {} in batch {}: {}", i + 1, batch.getBatchNumber(), e.getMessage());
                     failed++;
+                    if (errorMessages.length() > 0) {
+                        errorMessages.append("; ");
+                    }
+                    errorMessages.append("Item ").append(i + 1).append(": ").append(e.getMessage());
                 }
             }
         }
 
         batch.setProcessedCount(processed);
         batch.setFailedCount(failed);
+        if (failed > 0 && errorMessages.length() > 0) {
+            batch.setErrorMessage(errorMessages.toString());
+        }
         batchRepository.save(batch);
     }
 

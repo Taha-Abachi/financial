@@ -121,7 +121,7 @@ public class DiscountCodeService {
         // Check if both code and serialNo are provided simultaneously and count is 1
         boolean hasCustomCode = dto.code != null && !dto.code.trim().isEmpty();
         boolean hasCustomSerialNo = dto.serialNo != null;
-        boolean isSingleCode = dto.count == 1;
+        boolean isSingleCode = dto.count <= 1;
         
         if (hasCustomCode && hasCustomSerialNo && isSingleCode) {
             // Check if the provided code and serialNo are not already in the database

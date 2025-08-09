@@ -191,6 +191,7 @@ Returns all batches created by a specific user.
   "status": "COMPLETED",
   "processedCount": 100,
   "failedCount": 0,
+  "errorMessage": null,
   "createdAt": "2024-01-01T10:00:00",
   "updatedAt": "2024-01-01T10:05:00",
   "requestUser": {
@@ -204,6 +205,22 @@ Returns all batches created by a specific user.
   }
 }
 ```
+
+**Field Descriptions:**
+- `id`: Unique identifier for the batch
+- `batchNumber`: Unique batch number (format: BATCH + 8 random characters)
+- `batchType`: Type of batch (DISCOUNT_CODE or GIFT_CARD)
+- `description`: Description of the batch
+- `requestDate`: Date when the batch was requested
+- `totalCount`: Total number of items to be processed
+- `status`: Current status of the batch (PENDING, PROCESSING, COMPLETED, FAILED, CANCELLED)
+- `processedCount`: Number of items successfully processed
+- `failedCount`: Number of items that failed to process
+- `errorMessage`: Detailed error message when batch fails or has failed items (null if no errors)
+- `createdAt`: Date when the batch was created
+- `updatedAt`: Date when the batch was last updated
+- `requestUser`: User who requested the batch
+- `company`: Company associated with the batch
 
 ### BatchCreateRequest
 ```json
@@ -263,6 +280,77 @@ Returns all batches created by a specific user.
 - `-127`: Cannot cancel batch with current status
 - `-134`: Company not found
 - `-121`: User not found
+
+## Error Handling and Failure Scenarios
+
+### Batch Failure Indication
+When a batch fails or has failed items, the response will include detailed error information:
+
+**Failed Batch Example:**
+```json
+{
+  "id": 2,
+  "batchNumber": "BATCH87654321",
+  "batchType": "DISCOUNT_CODE",
+  "description": "Test batch with errors",
+  "requestDate": "2024-01-01T10:00:00",
+  "totalCount": 10,
+  "status": "FAILED",
+  "processedCount": 0,
+  "failedCount": 10,
+  "errorMessage": "Batch processing failed: Database connection error",
+  "createdAt": "2024-01-01T10:00:00",
+  "updatedAt": "2024-01-01T10:01:00",
+  "requestUser": {
+    "id": 1,
+    "username": "admin",
+    "name": "Administrator"
+  },
+  "company": {
+    "id": 1,
+    "name": "Test Company"
+  }
+}
+```
+
+**Partial Failure Example:**
+```json
+{
+  "id": 3,
+  "batchNumber": "BATCH11111111",
+  "batchType": "GIFT_CARD",
+  "description": "Test batch with partial failures",
+  "requestDate": "2024-01-01T10:00:00",
+  "totalCount": 5,
+  "status": "COMPLETED",
+  "processedCount": 3,
+  "failedCount": 2,
+  "errorMessage": "Item 2: Invalid balance amount; Item 4: Company not found",
+  "createdAt": "2024-01-01T10:00:00",
+  "updatedAt": "2024-01-01T10:02:00",
+  "requestUser": {
+    "id": 1,
+    "username": "admin",
+    "name": "Administrator"
+  },
+  "company": {
+    "id": 1,
+    "name": "Test Company"
+  }
+}
+```
+
+### Error Message Format
+- **Complete Batch Failure**: `"Batch processing failed: [specific error message]"`
+- **Partial Item Failures**: `"Item [number]: [error message]; Item [number]: [error message]"`
+- **No Errors**: `null` or omitted from response
+
+### Common Failure Scenarios
+1. **Database Connection Issues**: Batch processing fails due to database connectivity problems
+2. **Invalid Request Parameters**: Individual items fail due to invalid input data
+3. **Resource Limitations**: Processing fails due to memory or system resource constraints
+4. **Business Logic Violations**: Items fail due to business rule violations (e.g., invalid company ID)
+5. **External Service Failures**: Processing fails due to dependency service issues
 
 ## Features
 
