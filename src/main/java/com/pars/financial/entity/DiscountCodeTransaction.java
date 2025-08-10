@@ -44,7 +44,7 @@ public class DiscountCodeTransaction {
 
     @ManyToOne
     @JoinColumn(name = "api_user_id")
-    private ApiUser apiUser;
+    private User apiUser;
 
     @ManyToOne
     @JoinColumn(name = "customer_id")
@@ -147,11 +147,11 @@ public class DiscountCodeTransaction {
         this.customer = customer;
     }
 
-    public ApiUser getApiUser() {
+    public User getApiUser() {
         return apiUser;
     }
 
-    public void setApiUser(ApiUser apiUser) {
+    public void setApiUser(User apiUser) {
         this.apiUser = apiUser;
     }
 

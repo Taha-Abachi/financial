@@ -11,9 +11,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.pars.financial.dto.GiftCardTransactionDto;
-import com.pars.financial.entity.ApiUser;
 import com.pars.financial.entity.GiftCard;
 import com.pars.financial.entity.GiftCardTransaction;
+import com.pars.financial.entity.User;
 import com.pars.financial.enums.TransactionStatus;
 import com.pars.financial.enums.TransactionType;
 import com.pars.financial.exception.ClientTransactionIdNotUniqueException;
@@ -86,7 +86,7 @@ public class GiftCardTransactionService {
         }
     }
 
-    public GiftCardTransactionDto debitGiftCard(ApiUser user, String clientTransactionId, long amount, String serialNo, Long storeId, String phoneNumber) {
+    public GiftCardTransactionDto debitGiftCard(User user, String clientTransactionId, long amount, String serialNo, Long storeId, String phoneNumber) {
         logger.info("Processing debit request for gift card: {}, amount: {}, store: {}, phone: {}", serialNo, amount, storeId, phoneNumber);
         
         if((phoneNumber == null) || (phoneNumber.length() != 11)) {
@@ -157,7 +157,7 @@ public class GiftCardTransactionService {
         throw new GenericException("General Failure", null, -121);
     }
 
-    public GiftCardTransactionDto settleTransaction(ApiUser user, String clientTransactionId, long amount, String serialNo, UUID transactionId, TransactionType trxType) {
+    public GiftCardTransactionDto settleTransaction(User user, String clientTransactionId, long amount, String serialNo, UUID transactionId, TransactionType trxType) {
         logger.info("Processing {} transaction for gift card: {}, amount: {}, transactionId: {}", 
             trxType, serialNo, amount, transactionId);
             
@@ -279,17 +279,17 @@ public class GiftCardTransactionService {
         return giftCardTransactionMapper.getFrom(savedTransaction);
     }
 
-    public GiftCardTransactionDto reverseTransaction(ApiUser user, String clientTransactionId, long amount, String serialNo, UUID transactionId) {
+    public GiftCardTransactionDto reverseTransaction(User user, String clientTransactionId, long amount, String serialNo, UUID transactionId) {
         logger.info("Initiating reverse transaction for gift card: {}, amount: {}", serialNo, amount);
         return settleTransaction(user, clientTransactionId, amount, serialNo, transactionId, TransactionType.Reversal);
     }
 
-    public GiftCardTransactionDto confirmTransaction(ApiUser user, String clientTransactionId, long amount, String serialNo, UUID transactionId) {
+    public GiftCardTransactionDto confirmTransaction(User user, String clientTransactionId, long amount, String serialNo, UUID transactionId) {
         logger.info("Initiating confirm transaction for gift card: {}, amount: {}", serialNo, amount);
         return settleTransaction(user, clientTransactionId, amount, serialNo, transactionId, TransactionType.Confirmation);
     }
 
-    public GiftCardTransactionDto refundTransaction(ApiUser user, String clientTransactionId, long amount, String serialNo, UUID transactionId) {
+    public GiftCardTransactionDto refundTransaction(User user, String clientTransactionId, long amount, String serialNo, UUID transactionId) {
         logger.info("Initiating refund transaction for gift card: {}, amount: {}", serialNo, amount);
         return settleTransaction(user, clientTransactionId, amount, serialNo, transactionId, TransactionType.Refund);
     }

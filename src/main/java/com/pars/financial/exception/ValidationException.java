@@ -7,13 +7,28 @@ public class ValidationException extends GenericException {
         this.statusCode = -100;
     }
 
+    public ValidationException(String message, String messageFa) {
+        super(message, messageFa);
+        this.statusCode = -100;
+    }
+
     public ValidationException(String message, Object data) {
         super(message, data);
         this.statusCode = -100;
     }
 
+    public ValidationException(String message, String messageFa, Object data) {
+        super(message, messageFa, data);
+        this.statusCode = -100;
+    }
+
     public ValidationException(String message, Object data, int status) {
         super(message, data, status);
+        this.statusCode = status;
+    }
+
+    public ValidationException(String message, String messageFa, Object data, int status) {
+        super(message, messageFa, data, status);
         this.statusCode = status;
     }
 }

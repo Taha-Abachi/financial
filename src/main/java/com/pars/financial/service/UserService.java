@@ -1,13 +1,8 @@
 package com.pars.financial.service;
 
-import com.pars.financial.dto.UserCreateRequest;
-import com.pars.financial.dto.UserDto;
-import com.pars.financial.dto.UserRoleDto;
-import com.pars.financial.dto.UserUpdateRequest;
-import com.pars.financial.entity.User;
-import com.pars.financial.exception.ValidationException;
-import com.pars.financial.repository.UserRepository;
-import com.pars.financial.repository.UserRoleRepository;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,9 +10,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
+import com.pars.financial.dto.UserCreateRequest;
+import com.pars.financial.dto.UserDto;
+import com.pars.financial.dto.UserRoleDto;
+import com.pars.financial.dto.UserStatistics;
+import com.pars.financial.dto.UserUpdateRequest;
+import com.pars.financial.entity.User;
+import com.pars.financial.exception.ValidationException;
+import com.pars.financial.repository.UserRepository;
+import com.pars.financial.repository.UserRoleRepository;
+import com.pars.financial.utils.ApiKeyEncryption;
 
 @Service
 public class UserService {
@@ -26,11 +28,17 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserRoleRepository userRoleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ApiKeyEncryption apiKeyEncryption;
 
-    public UserService(UserRepository userRepository, UserRoleRepository userRoleRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, UserRoleRepository userRoleRepository, 
+                      PasswordEncoder passwordEncoder, ApiKeyEncryption apiKeyEncryption) {
         this.userRepository = userRepository;
         this.userRoleRepository = userRoleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.apiKeyEncryption = apiKeyEncryption;
+        
+        // Set the API key encryption in the User entity
+        User.setApiKeyEncryption(apiKeyEncryption);
     }
 
     public List<UserDto> getAllUsers() {
@@ -92,11 +100,11 @@ public class UserService {
             throw new ValidationException("User role not found", null, -119);
         }
 
-        // Create user with encrypted password
+        // Create user - password encoding is handled by the User entity
         var user = new User(
             request.getUsername(),
             request.getName(),
-            passwordEncoder.encode(request.getPassword()),
+            request.getPassword(),
             request.getMobilePhoneNumber(),
             request.getNationalCode(),
             role.get()
@@ -128,7 +136,7 @@ public class UserService {
         }
 
         if (request.getPassword() != null) {
-            user.setPassword(passwordEncoder.encode(request.getPassword()));
+            user.setPassword(request.getPassword()); // Password encoding handled by User entity
         }
 
         if (request.getMobilePhoneNumber() != null) {
@@ -229,6 +237,57 @@ public class UserService {
         return convertToUserDto(savedUser);
     }
 
+    @Transactional
+    public UserDto generateApiKey(Long userId) {
+        logger.info("Generating API key for user with id: {}", userId);
+
+        var user = userRepository.findById(userId);
+        if (user.isEmpty()) {
+            logger.warn("User not found with id: {}", userId);
+            throw new ValidationException("User not found", null, -121);
+        }
+
+        var userEntity = user.get();
+        
+        // Check if user can use API keys
+        if (!userEntity.canUseApiKey()) {
+            logger.warn("User {} cannot use API keys", userEntity.getUsername());
+            throw new ValidationException("User role does not support API key usage", null, -126);
+        }
+
+        // Generate a new API key
+        String apiKey = generateSecureApiKey();
+        userEntity.setApiKey(apiKey);
+        userEntity.setUpdatedAt(LocalDateTime.now());
+
+        var savedUser = userRepository.save(userEntity);
+        logger.info("Generated API key for user with id: {}", savedUser.getId());
+        
+        // Return user with the plain API key for display
+        var userDto = convertToUserDto(savedUser);
+        userDto.setApiKey(apiKey); // Set the plain API key
+        return userDto;
+    }
+
+    @Transactional
+    public UserDto revokeApiKey(Long userId) {
+        logger.info("Revoking API key for user with id: {}", userId);
+
+        var user = userRepository.findById(userId);
+        if (user.isEmpty()) {
+            logger.warn("User not found with id: {}", userId);
+            throw new ValidationException("User not found", null, -121);
+        }
+
+        var userEntity = user.get();
+        userEntity.setApiKey(null);
+        userEntity.setUpdatedAt(LocalDateTime.now());
+
+        var savedUser = userRepository.save(userEntity);
+        logger.info("Revoked API key for user with id: {}", savedUser.getId());
+        return convertToUserDto(savedUser);
+    }
+
     public List<UserDto> getUsersByRole(Long roleId) {
         logger.debug("Fetching users by role id: {}", roleId);
         return userRepository.findByRoleId(roleId).stream()
@@ -243,8 +302,103 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
+    public List<UserDto> getUsersWithApiKeyCapability() {
+        logger.debug("Fetching users with API key capability");
+        return userRepository.findAll().stream()
+                .filter(User::canUseApiKey)
+                .map(this::convertToUserDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<UserDto> getUsersWithActiveApiKeys() {
+        logger.debug("Fetching users with active API keys");
+        return userRepository.findAll().stream()
+                .filter(User::hasApiKey)
+                .map(this::convertToUserDto)
+                .collect(Collectors.toList());
+    }
+
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);
+    }
+
+    public UserDto getUserByApiKey(String apiKey) {
+        logger.debug("Fetching user by API key");
+        var user = userRepository.findByApiKey(apiKey);
+        if (user.isEmpty()) {
+            logger.warn("User not found with API key");
+            throw new ValidationException("Invalid API key", null, -127);
+        }
+        return convertToUserDto(user.get());
+    }
+
+    public boolean validateApiKey(String apiKey) {
+        if (apiKey == null || apiKey.trim().isEmpty()) {
+            return false;
+        }
+        return userRepository.existsByApiKey(apiKey);
+    }
+
+    public UserStatistics getUserStatistics() {
+        logger.debug("Fetching user statistics");
+        long totalUsers = userRepository.count();
+        long activeUsers = userRepository.countByIsActive(true);
+        long inactiveUsers = userRepository.countByIsActive(false);
+        long usersWithApiKeys = userRepository.findAll().stream()
+                .filter(User::hasApiKey)
+                .count();
+        long apiKeyCapableUsers = userRepository.findAll().stream()
+                .filter(User::canUseApiKey)
+                .count();
+        
+        return new UserStatistics(totalUsers, activeUsers, inactiveUsers, usersWithApiKeys, apiKeyCapableUsers);
+    }
+
+    private String generateSecureApiKey() {
+        // Generate a secure random API key
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        StringBuilder sb = new StringBuilder();
+        java.util.Random random = new java.util.Random();
+        for (int i = 0; i < 32; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
+    }
+
+    @Transactional
+    public void initializeDefaultSuperAdmin() {
+        logger.info("Initializing default super admin user");
+        
+        // Check if any super admin exists
+        var superAdminRole = userRoleRepository.findByName("SUPERADMIN");
+        if (superAdminRole.isEmpty()) {
+            logger.warn("SUPERADMIN role not found, cannot create default super admin");
+            return;
+        }
+        
+        // Check if any super admin user exists
+        var existingSuperAdmin = userRepository.findByRoleId(superAdminRole.get().getId());
+        if (!existingSuperAdmin.isEmpty()) {
+            logger.info("Super admin user already exists, skipping initialization");
+            return;
+        }
+        
+        // Create default super admin user
+        var superAdminUser = new User(
+            "superadmin",
+            "System Super Administrator",
+            "admin123", // This will be encoded by the User entity
+            "09123456789",
+            "0000000000",
+            superAdminRole.get()
+        );
+        superAdminUser.setEmail("admin@system.local");
+        superAdminUser.setActive(true);
+        superAdminUser.setCreatedAt(LocalDateTime.now());
+        superAdminUser.setUpdatedAt(LocalDateTime.now());
+        
+        var savedUser = userRepository.save(superAdminUser);
+        logger.info("Created default super admin user with id: {}", savedUser.getId());
     }
 
     private UserDto convertToUserDto(User user) {
@@ -258,6 +412,7 @@ public class UserService {
         userDto.setActive(user.isActive());
         userDto.setCreatedAt(user.getCreatedAt());
         userDto.setUpdatedAt(user.getUpdatedAt());
+        userDto.setApiKey(user.getApiKey()); // Include API key in DTO
         
         if (user.getRole() != null) {
             UserRoleDto roleDto = new UserRoleDto();

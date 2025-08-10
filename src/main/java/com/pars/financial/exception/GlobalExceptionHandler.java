@@ -10,8 +10,12 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<String> handleRuntimeException(RuntimeException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    public ResponseEntity<GenericResponse> handleRuntimeException(RuntimeException ex) {
+        GenericResponse response = new GenericResponse();
+        response.status = -1;
+        response.message = ex.getMessage();
+        response.messageFa = "خطای سیستمی";
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
 
     @ExceptionHandler(ClientTransactionIdNotUniqueException.class)

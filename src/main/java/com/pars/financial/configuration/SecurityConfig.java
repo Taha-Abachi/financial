@@ -18,7 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
-import com.pars.financial.repository.ApiUserRepository;
+import com.pars.financial.repository.UserRepository;
 import com.pars.financial.security.ApiKeyAuthFilter;
 import com.pars.financial.security.JwtAuthenticationFilter;
 import com.pars.financial.security.RateLimitFilter;
@@ -29,16 +29,16 @@ import com.pars.financial.utils.ApiKeyEncryption;
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final ApiUserRepository apiUserRepository;
+    private final UserRepository userRepository;
     private final ApiKeyEncryption apiKeyEncryption;
     private final RateLimitProperties rateLimitProperties;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserDetailsService userDetailsService;
 
-    public SecurityConfig(ApiUserRepository apiUserRepository, ApiKeyEncryption apiKeyEncryption, 
+    public SecurityConfig(UserRepository userRepository, ApiKeyEncryption apiKeyEncryption, 
                          RateLimitProperties rateLimitProperties, JwtAuthenticationFilter jwtAuthenticationFilter,
                          UserDetailsService userDetailsService) {
-        this.apiUserRepository = apiUserRepository;
+        this.userRepository = userRepository;
         this.apiKeyEncryption = apiKeyEncryption;
         this.rateLimitProperties = rateLimitProperties;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
@@ -68,7 +68,7 @@ public class SecurityConfig {
         http
                 .addFilterBefore(new SecurityContextFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new RateLimitFilter(rateLimitProperties), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(new ApiKeyAuthFilter(apiUserRepository, apiKeyEncryption), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new ApiKeyAuthFilter(userRepository, apiKeyEncryption), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
                         // Swagger UI and OpenAPI endpoints

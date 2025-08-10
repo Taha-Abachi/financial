@@ -13,6 +13,7 @@ public class UserDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private UserRoleDto role;
+    private String apiKey;
 
     public UserDto() {}
 
@@ -108,5 +109,13 @@ public class UserDto {
 
     public void setRole(UserRoleDto role) {
         this.role = role;
+    }
+
+    public String getApiKey() {
+        return apiKey;
+    }
+
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
     }
 } 

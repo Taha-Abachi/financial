@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.pars.financial.dto.DiscountCodeTransactionDto;
 import com.pars.financial.dto.GenericResponse;
-import com.pars.financial.entity.ApiUser;
+import com.pars.financial.entity.User;
 import com.pars.financial.service.DiscountCodeTransactionService;
 import com.pars.financial.utils.ApiUserUtil;
 
@@ -35,7 +35,7 @@ public class DiscountCodeTransactionController {
     public GenericResponse<DiscountCodeTransactionDto> redeem(@RequestBody DiscountCodeTransactionDto transactionDto) {
         logger.info("POST /api/v1/discountcode/transaction/redeem called with request: {}", transactionDto);
         GenericResponse<DiscountCodeTransactionDto> response = new GenericResponse<>();
-        ApiUser apiUser = ApiUserUtil.getApiUser();
+        User apiUser = ApiUserUtil.getApiUser();
         if (apiUser == null) {
             logger.error("Api User is null");
             response.message = "Api User is null";
@@ -56,7 +56,7 @@ public class DiscountCodeTransactionController {
     public GenericResponse<DiscountCodeTransactionDto> confirm(@RequestBody DiscountCodeTransactionDto transactionDto) {
         logger.info("POST /api/v1/discountcode/transaction/confirm called with request: {}", transactionDto);
         GenericResponse<DiscountCodeTransactionDto> response = new GenericResponse<>();
-        ApiUser apiUser = ApiUserUtil.getApiUser();
+        User apiUser = ApiUserUtil.getApiUser();
         if (apiUser == null) {
             logger.error("Api User is null");
             response.message = "Api User is null";
@@ -77,7 +77,7 @@ public class DiscountCodeTransactionController {
     public GenericResponse<DiscountCodeTransactionDto> reverse(@RequestBody DiscountCodeTransactionDto transactionDto) {
         logger.info("POST /api/v1/discountcode/transaction/reverse called with request: {}", transactionDto);
         GenericResponse<DiscountCodeTransactionDto> response = new GenericResponse<>();
-        ApiUser apiUser = ApiUserUtil.getApiUser();
+        User apiUser = ApiUserUtil.getApiUser();
         if (apiUser == null) {
             logger.error("Api User is null");
             response.message = "Api User is null";
@@ -98,7 +98,7 @@ public class DiscountCodeTransactionController {
     public GenericResponse<DiscountCodeTransactionDto> refund(@RequestBody DiscountCodeTransactionDto transactionDto) {
         logger.info("POST /api/v1/discountcode/transaction/refund called with request: {}", transactionDto);
         GenericResponse<DiscountCodeTransactionDto> response = new GenericResponse<>();
-        ApiUser apiUser = ApiUserUtil.getApiUser();
+        User apiUser = ApiUserUtil.getApiUser();
         if (apiUser == null) {
             logger.error("Api User is null");
             response.message = "Api User is null";
@@ -119,7 +119,7 @@ public class DiscountCodeTransactionController {
     public GenericResponse<DiscountCodeTransactionDto> get(@PathVariable UUID transactionId) {
         logger.info("GET /api/v1/discountcode/transaction/followup/{} called", transactionId);
         GenericResponse<DiscountCodeTransactionDto> response = new GenericResponse<>();
-        ApiUser apiUser = ApiUserUtil.getApiUser();
+        User apiUser = ApiUserUtil.getApiUser();
         if (apiUser == null) {
             logger.error("Api User is null");
             response.message = "Api User is null";
@@ -142,7 +142,7 @@ public class DiscountCodeTransactionController {
             @RequestParam(defaultValue = "10") int size) {
         logger.info("GET /api/v1/discountcode/transaction/list called with page: {}, size: {}", page, size);
         GenericResponse<List<DiscountCodeTransactionDto>> response = new GenericResponse<>();
-        ApiUser apiUser = ApiUserUtil.getApiUser();
+        User apiUser = ApiUserUtil.getApiUser();
         if (apiUser == null) {
             logger.error("Api User is null");
             response.message = "Api User is null";

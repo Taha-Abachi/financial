@@ -2,8 +2,7 @@ package com.pars.financial.controller;
 
 import com.pars.financial.dto.GenericResponse;
 import com.pars.financial.dto.ItemCategoryDto;
-import com.pars.financial.entity.ApiUser;
-import com.pars.financial.entity.ItemCategory;
+import com.pars.financial.entity.User;
 import com.pars.financial.service.ItemCategoryService;
 import com.pars.financial.utils.ApiUserUtil;
 
@@ -14,171 +13,161 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.pars.financial.entity.ItemCategory;
+
 @RestController
 @RequestMapping("/api/v1/item-category")
 public class ItemCategoryController {
     private static final Logger logger = LoggerFactory.getLogger(ItemCategoryController.class);
-    final ItemCategoryService itemCategoryService;
+
+    private final ItemCategoryService itemCategoryService;
 
     public ItemCategoryController(ItemCategoryService itemCategoryService) {
         this.itemCategoryService = itemCategoryService;
     }
 
-    @GetMapping("/list")
-    public GenericResponse<List<ItemCategoryDto>> getAllCategories() {
-        logger.info("GET /api/v1/item-category/list called");
-        var res = new GenericResponse<List<ItemCategoryDto>>();
-        ApiUser apiUser = ApiUserUtil.getApiUser();
-        if (apiUser == null) {
-            logger.error("Api User is null");
-            res.message = "Api User is null";
-            res.status = -1;
-            return res;
-        }
-
-        try {
-            var categories = itemCategoryService.getAllCategoryDtos();
-            res.data = categories;
-        } catch (Exception e) {
-            logger.error("Error fetching all item categories: {}", e.getMessage());
-            res.message = e.getMessage();
-            res.status = -1;
-        }
-        return res;
-    }
-
-    @GetMapping("/{categoryId}")
-    public GenericResponse<ItemCategoryDto> getCategory(@PathVariable Long categoryId) {
-        logger.info("GET /api/v1/item-category/{} called", categoryId);
-        var res = new GenericResponse<ItemCategoryDto>();
-        ApiUser apiUser = ApiUserUtil.getApiUser();
-        if (apiUser == null) {
-            logger.error("Api User is null");
-            res.message = "Api User is null";
-            res.status = -1;
-            return res;
-        }
-
-        try {
-            var category = itemCategoryService.getCategoryDtoById(categoryId);
-            res.data = category;
-        } catch (Exception e) {
-            logger.error("Error fetching item category with ID {}: {}", categoryId, e.getMessage());
-            res.message = e.getMessage();
-            res.status = -1;
-        }
-        return res;
-    }
-
     @PostMapping("/create")
-    public GenericResponse<ItemCategoryDto> createCategory(@RequestBody ItemCategoryDto dto) {
-        logger.info("POST /api/v1/item-category/create called with request: {}", dto);
-        var res = new GenericResponse<ItemCategoryDto>();
-        ApiUser apiUser = ApiUserUtil.getApiUser();
-        if (apiUser == null) {
-            logger.error("Api User is null");
-            res.message = "Api User is null";
-            res.status = -1;
-            return res;
-        }
-
+    public GenericResponse<ItemCategoryDto> createItemCategory(@RequestBody ItemCategoryDto request) {
+        logger.info("POST /api/v1/item-category/create called");
+        var response = new GenericResponse<ItemCategoryDto>();
         try {
-            ItemCategory category = new ItemCategory();
-            category.setName(dto.getName());
-            category.setDescription(dto.getDescription());
+            User apiUser = ApiUserUtil.getApiUser();
+            if (apiUser == null) {
+                response.status = -1;
+                response.message = "API user not found";
+                return response;
+            }
             
-            var createdCategory = itemCategoryService.createCategory(category);
-            res.data = ItemCategoryDto.fromEntity(createdCategory);
+            // Convert DTO to entity
+            ItemCategory category = new ItemCategory();
+            category.setName(request.getName());
+            category.setDescription(request.getDescription());
+            
+            var createdItemCategory = itemCategoryService.createCategory(category);
+            response.data = ItemCategoryDto.fromEntity(createdItemCategory);
         } catch (Exception e) {
             logger.error("Error creating item category: {}", e.getMessage());
-            res.message = e.getMessage();
-            res.status = -1;
+            response.status = -1;
+            response.message = e.getMessage();
         }
-        return res;
+        return response;
     }
 
     @PostMapping("/create-bulk")
-    public GenericResponse<List<ItemCategoryDto>> createCategories(@RequestBody List<ItemCategoryDto> dtos) {
-        logger.info("POST /api/v1/item-category/create-bulk called with {} categories", dtos.size());
-        var res = new GenericResponse<List<ItemCategoryDto>>();
-        ApiUser apiUser = ApiUserUtil.getApiUser();
-        if (apiUser == null) {
-            logger.error("Api User is null");
-            res.message = "Api User is null";
-            res.status = -1;
-            return res;
-        }
-
+    public GenericResponse<List<ItemCategoryDto>> createBulkItemCategories(@RequestBody List<ItemCategoryDto> request) {
+        logger.info("POST /api/v1/item-category/create-bulk called");
+        var response = new GenericResponse<List<ItemCategoryDto>>();
         try {
-            List<ItemCategory> categories = dtos.stream()
-                    .map(dto -> {
-                        ItemCategory category = new ItemCategory();
-                        category.setName(dto.getName());
-                        category.setDescription(dto.getDescription());
-                        return category;
-                    })
-                    .collect(Collectors.toList());
-            
-            var createdCategories = itemCategoryService.createCategories(categories);
-            res.data = createdCategories.stream()
-                    .map(ItemCategoryDto::fromEntity)
-                    .collect(Collectors.toList());
+            User apiUser = ApiUserUtil.getApiUser();
+            if (apiUser == null) {
+                response.status = -1;
+                response.message = "API user not found";
+                return response;
+            }
+            var entities = request.stream()
+                .map(dto -> {
+                    ItemCategory category = new ItemCategory();
+                    category.setName(dto.getName());
+                    category.setDescription(dto.getDescription());
+                    return category;
+                })
+                .collect(Collectors.toList());
+            var createdItemCategories = itemCategoryService.createCategories(entities);
+            response.data = createdItemCategories.stream()
+                .map(ItemCategoryDto::fromEntity)
+                .collect(Collectors.toList());
         } catch (Exception e) {
-            logger.error("Error creating item categories: {}", e.getMessage());
-            res.message = e.getMessage();
-            res.status = -1;
+            logger.error("Error creating bulk item categories: {}", e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
         }
-        return res;
+        return response;
     }
 
-    @PutMapping("/update/{categoryId}")
-    public GenericResponse<ItemCategoryDto> updateCategory(@PathVariable Long categoryId, @RequestBody ItemCategoryDto dto) {
-        logger.info("PUT /api/v1/item-category/update/{} called with request: {}", categoryId, dto);
-        var res = new GenericResponse<ItemCategoryDto>();
-        ApiUser apiUser = ApiUserUtil.getApiUser();
-        if (apiUser == null) {
-            logger.error("Api User is null");
-            res.message = "Api User is null";
-            res.status = -1;
-            return res;
-        }
-
+    @GetMapping("/list")
+    public GenericResponse<List<ItemCategoryDto>> getAllItemCategories() {
+        logger.info("GET /api/v1/item-category/list called");
+        var response = new GenericResponse<List<ItemCategoryDto>>();
         try {
+            User apiUser = ApiUserUtil.getApiUser();
+            if (apiUser == null) {
+                response.status = -1;
+                response.message = "API user not found";
+                return response;
+            }
+            var itemCategories = itemCategoryService.getAllCategoryDtos();
+            response.data = itemCategories;
+        } catch (Exception e) {
+            logger.error("Error fetching item categories: {}", e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+        }
+        return response;
+    }
+
+    @GetMapping("/{id}")
+    public GenericResponse<ItemCategoryDto> getItemCategoryById(@PathVariable Long id) {
+        logger.info("GET /api/v1/item-category/{} called", id);
+        var response = new GenericResponse<ItemCategoryDto>();
+        try {
+            User apiUser = ApiUserUtil.getApiUser();
+            if (apiUser == null) {
+                response.status = -1;
+                response.message = "API user not found";
+                return response;
+            }
+            var itemCategory = itemCategoryService.getCategoryDtoById(id);
+            response.data = itemCategory;
+        } catch (Exception e) {
+            logger.error("Error fetching item category with id {}: {}", id, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+        }
+        return response;
+    }
+
+    @PutMapping("/update/{id}")
+    public GenericResponse<ItemCategoryDto> updateItemCategory(@PathVariable Long id, @RequestBody ItemCategoryDto request) {
+        logger.info("PUT /api/v1/item-category/update/{} called", id);
+        var response = new GenericResponse<ItemCategoryDto>();
+        try {
+            User apiUser = ApiUserUtil.getApiUser();
+            if (apiUser == null) {
+                response.status = -1;
+                response.message = "API user not found";
+                return response;
+            }
             ItemCategory category = new ItemCategory();
-            category.setId(categoryId);
-            category.setName(dto.getName());
-            category.setDescription(dto.getDescription());
-            
-            var updatedCategory = itemCategoryService.updateCategory(category);
-            res.data = ItemCategoryDto.fromEntity(updatedCategory);
+            category.setId(id);
+            category.setName(request.getName());
+            category.setDescription(request.getDescription());
+            var updatedItemCategory = itemCategoryService.updateCategory(category);
+            response.data = ItemCategoryDto.fromEntity(updatedItemCategory);
         } catch (Exception e) {
-            logger.error("Error updating item category with ID {}: {}", categoryId, e.getMessage());
-            res.message = e.getMessage();
-            res.status = -1;
+            logger.error("Error updating item category with id {}: {}", id, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
         }
-        return res;
+        return response;
     }
 
-    @DeleteMapping("/delete/{categoryId}")
-    public GenericResponse<String> deleteCategory(@PathVariable Long categoryId) {
-        logger.info("DELETE /api/v1/item-category/delete/{} called", categoryId);
-        var res = new GenericResponse<String>();
-        ApiUser apiUser = ApiUserUtil.getApiUser();
-        if (apiUser == null) {
-            logger.error("Api User is null");
-            res.message = "Api User is null";
-            res.status = -1;
-            return res;
-        }
-
+    @DeleteMapping("/delete/{id}")
+    public GenericResponse<Void> deleteItemCategory(@PathVariable Long id) {
+        logger.info("DELETE /api/v1/item-category/delete/{} called", id);
+        var response = new GenericResponse<Void>();
         try {
-            itemCategoryService.deleteCategory(categoryId);
-            res.data = "Category deleted successfully";
+            User apiUser = ApiUserUtil.getApiUser();
+            if (apiUser == null) {
+                response.status = -1;
+                response.message = "API user not found";
+                return response;
+            }
+            itemCategoryService.deleteCategory(id);
         } catch (Exception e) {
-            logger.error("Error deleting item category with ID {}: {}", categoryId, e.getMessage());
-            res.message = e.getMessage();
-            res.status = -1;
+            logger.error("Error deleting item category with id {}: {}", id, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
         }
-        return res;
+        return response;
     }
 } 

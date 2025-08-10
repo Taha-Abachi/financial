@@ -1,16 +1,17 @@
 package com.pars.financial.service;
 
-import com.pars.financial.dto.UserRoleDto;
-import com.pars.financial.entity.UserRole;
-import com.pars.financial.exception.ValidationException;
-import com.pars.financial.repository.UserRoleRepository;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import com.pars.financial.dto.UserRoleDto;
+import com.pars.financial.entity.UserRole;
+import com.pars.financial.exception.ValidationException;
+import com.pars.financial.repository.UserRoleRepository;
 
 @Service
 public class UserRoleService {
@@ -98,6 +99,35 @@ public class UserRoleService {
 
     public boolean existsByName(String name) {
         return userRoleRepository.existsByName(name);
+    }
+
+    @Transactional
+    public void initializeDefaultRoles() {
+        logger.info("Initializing default user roles");
+        
+        // Check and create SUPERADMIN role
+        if (!existsByName("SUPERADMIN")) {
+            createRole(new UserRoleDto(null, "SUPERADMIN", "Super Administrator with full system access"));
+            logger.info("Created SUPERADMIN role");
+        }
+        
+        // Check and create ADMIN role
+        if (!existsByName("ADMIN")) {
+            createRole(new UserRoleDto(null, "ADMIN", "Administrator with management access"));
+            logger.info("Created ADMIN role");
+        }
+        
+        // Check and create API_USER role
+        if (!existsByName("API_USER")) {
+            createRole(new UserRoleDto(null, "API_USER", "API User with limited access"));
+            logger.info("Created API_USER role");
+        }
+        
+        // Check and create USER role
+        if (!existsByName("USER")) {
+            createRole(new UserRoleDto(null, "USER", "Regular user with basic access"));
+            logger.info("Created USER role");
+        }
     }
 
     private UserRoleDto convertToUserRoleDto(UserRole userRole) {

@@ -54,7 +54,7 @@ public class GiftCardTransaction {
 
     @ManyToOne
     @JoinColumn(name = "api_user_id")
-    private ApiUser apiUser;
+    private User apiUser;
 
     @ManyToOne
     @JoinColumn(name = "store_id")
@@ -99,11 +99,11 @@ public class GiftCardTransaction {
     public void setDebitTransaction(GiftCardTransaction debitTransaction) {
         this.debitTransaction = debitTransaction;
     }
-    public ApiUser getApiUser() {
+    public User getApiUser() {
         return apiUser;
     }
 
-    public void setApiUser(ApiUser apiUser) {
+    public void setApiUser(User apiUser) {
         this.apiUser = apiUser;
     }
 

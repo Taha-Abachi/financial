@@ -1,30 +1,32 @@
 package com.pars.financial.security;
 
-import com.pars.financial.entity.ApiUser;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.authentication.AbstractAuthenticationToken;
 import java.util.Collection;
+
+import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+
+import com.pars.financial.entity.User;
 
 public class ApiKeyAuthenticationToken extends AbstractAuthenticationToken {
     private final String apiKey;
     private final Long userId;
-    private final ApiUser apiUser;
+    private final User user;
 
     // Constructor for unauthenticated state
-    public ApiKeyAuthenticationToken(String apiKey, ApiUser apiUser) {
+    public ApiKeyAuthenticationToken(String apiKey, User user) {
         super(null);
         this.apiKey = apiKey;
-        this.apiUser = apiUser;
+        this.user = user;
         this.userId = null;
         setAuthenticated(false);
     }
 
     // Constructor for authenticated state
-    public ApiKeyAuthenticationToken(String apiKey, Long userId, Collection<? extends GrantedAuthority> authorities, ApiUser apiUser) {
+    public ApiKeyAuthenticationToken(String apiKey, Long userId, Collection<? extends GrantedAuthority> authorities, User user) {
         super(authorities);
         this.apiKey = apiKey;
         this.userId = userId;
-        this.apiUser = apiUser;
+        this.user = user;
         setAuthenticated(true);
     }
 
@@ -42,7 +44,7 @@ public class ApiKeyAuthenticationToken extends AbstractAuthenticationToken {
         return apiKey;
     }
 
-    public ApiUser getApiUser() {
-        return apiUser;
+    public User getUser() {
+        return user;
     }
 }

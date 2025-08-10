@@ -14,7 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.pars.financial.dto.DiscountCodeTransactionDto;
-import com.pars.financial.entity.ApiUser;
+import com.pars.financial.entity.User;
 import com.pars.financial.entity.DiscountCodeTransaction;
 import com.pars.financial.enums.TransactionStatus;
 import com.pars.financial.enums.TransactionType;
@@ -25,6 +25,7 @@ import com.pars.financial.repository.CustomerRepository;
 import com.pars.financial.repository.DiscountCodeRepository;
 import com.pars.financial.repository.DiscountCodeTransactionRepository;
 import com.pars.financial.repository.StoreRepository;
+import com.pars.financial.utils.PersianErrorMessages;
 
 @Service
 public class DiscountCodeTransactionService {
@@ -62,50 +63,50 @@ public class DiscountCodeTransactionService {
         return mapper.getFrom(transaction);
     }
 
-    public DiscountCodeTransactionDto redeem(ApiUser apiUser, DiscountCodeTransactionDto dto) {
+    public DiscountCodeTransactionDto redeem(User apiUser, DiscountCodeTransactionDto dto) {
         logger.info("Processing redeem request for discount code: {}, amount: {}, store: {}, phone: {}", 
             dto.code, dto.originalAmount, dto.storeId, dto.phoneNo);
             
         var code = codeRepository.findByCode(dto.code);
         if(code == null) {
             logger.warn("Discount code not found: {}", dto.code);
-            throw new ValidationException("Discount Code not found.", null, -104);
+            throw new ValidationException("Discount Code not found.", PersianErrorMessages.DISCOUNT_CODE_NOT_FOUND, null, -104);
         }
         else if(LocalDate.now().isAfter(code.getExpiryDate())){
             logger.warn("Discount code is expired: {}", dto.code);
-            throw new ValidationException("Discount code is expired.", null, -141);
+            throw new ValidationException("Discount code is expired.", PersianErrorMessages.DISCOUNT_CODE_EXPIRED, null, -141);
         }
         else if(!code.isActive()) {
             logger.warn("Discount code is inactive: {}", dto.code);
-            throw new ValidationException("Discount code is inactive.", null, -105);
+            throw new ValidationException("Discount code is inactive.", PersianErrorMessages.DISCOUNT_CODE_INACTIVE, null, -105);
         }
         else if(code.isUsed()) {
             logger.warn("Discount code already used: {}", dto.code);
-            throw new ValidationException("Discount already used.", null, -106);
+            throw new ValidationException("Discount already used.", PersianErrorMessages.DISCOUNT_CODE_ALREADY_USED, null, -106);
         }
         
         if (code.getCurrentUsageCount() >= code.getUsageLimit()) {
             logger.warn("Discount code usage limit reached: {} (current: {}, limit: {})", 
                 dto.code, code.getCurrentUsageCount(), code.getUsageLimit());
-            throw new ValidationException("Discount code usage limit reached.", null, -107);
+            throw new ValidationException("Discount code usage limit reached.", PersianErrorMessages.DISCOUNT_CODE_USAGE_LIMIT_REACHED, null, -107);
         }
         
         if (code.getMinimumBillAmount() > 0 && dto.originalAmount < code.getMinimumBillAmount()) {
             logger.warn("Original amount {} is less than minimum bill amount {} for discount code: {}", 
                 dto.originalAmount, code.getMinimumBillAmount(), dto.code);
-            throw new ValidationException("Original amount is less than minimum bill amount required.", null, -108);
+            throw new ValidationException("Original amount is less than minimum bill amount required.", PersianErrorMessages.MINIMUM_BILL_AMOUNT_NOT_MET, null, -108);
         }
         
         var transaction = transactionRepository.findByClientTransactionIdAndTrxType(dto.clientTransactionId, TransactionType.Redeem);
         if(transaction != null){
             logger.warn("Duplicate client transaction ID: {}", dto.clientTransactionId);
-            throw new ValidationException("ClientTransactionId should be unique.", null, -109);
+            throw new ValidationException("ClientTransactionId should be unique.", PersianErrorMessages.DUPLICATE_TRANSACTION_ID, null, -109);
         }
         
         var store = storeRepository.findById(dto.storeId);
         if (store.isEmpty()) {
             logger.warn("Store not found: {}", dto.storeId);
-            throw new ValidationException("Store Not Found", null, -110);
+            throw new ValidationException("Store Not Found", PersianErrorMessages.STORE_NOT_FOUND, null, -110);
         }
         // Store limitation check
         if (code.isStoreLimited()) {
@@ -113,7 +114,7 @@ public class DiscountCodeTransactionService {
                 .anyMatch(s -> s.getId().equals(dto.storeId));
             if (!storeAllowed) {
                 logger.warn("Store {} not allowed for discount code {}", dto.storeId, code.getCode());
-                throw new ValidationException("Discount code cannot be used in this store", null, -117);
+                throw new ValidationException("Discount code cannot be used in this store", PersianErrorMessages.STORE_NOT_ALLOWED, null, -117);
             }
         }
         
@@ -172,7 +173,7 @@ public class DiscountCodeTransactionService {
         return mapper.getFrom(savedTransaction);
     }
 
-    public DiscountCodeTransaction settleTransaction(ApiUser apiUser, DiscountCodeTransactionDto dto, TransactionType trxType) {
+    public DiscountCodeTransaction settleTransaction(User apiUser, DiscountCodeTransactionDto dto, TransactionType trxType) {
         logger.info("Processing {} transaction for discount code transaction: {}", trxType, dto.transactionId);
         
         DiscountCodeTransaction transaction = null;
@@ -262,19 +263,19 @@ public class DiscountCodeTransactionService {
         return savedTransaction;
     }
 
-    public DiscountCodeTransactionDto confirm(ApiUser apiUser, DiscountCodeTransactionDto dto) {
+    public DiscountCodeTransactionDto confirm(User apiUser, DiscountCodeTransactionDto dto) {
         logger.info("Initiating confirm transaction for discount code transaction: {}", dto.transactionId);
         return mapper.getFrom(settleTransaction(apiUser, dto, TransactionType.Confirmation));
     }
 
-    public DiscountCodeTransactionDto reverse(ApiUser apiUser, DiscountCodeTransactionDto dto) {
+    public DiscountCodeTransactionDto reverse(User apiUser, DiscountCodeTransactionDto dto) {
         logger.info("Initiating reverse transaction for discount code transaction: {}", dto.transactionId);
         var transaction = settleTransaction(apiUser, dto, TransactionType.Reversal);
 
         return mapper.getFrom(transaction);
     }
 
-    public DiscountCodeTransactionDto refund(ApiUser apiUser, DiscountCodeTransactionDto dto) {
+    public DiscountCodeTransactionDto refund(User apiUser, DiscountCodeTransactionDto dto) {
         logger.info("Initiating refund transaction for discount code transaction: {}", dto.transactionId);
         var transaction = settleTransaction(apiUser, dto, TransactionType.Refund);
 

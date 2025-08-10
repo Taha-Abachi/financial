@@ -1,18 +1,33 @@
 package com.pars.financial.entity;
 
-import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import com.pars.financial.utils.ApiKeyEncryption;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-import java.time.LocalDateTime;
-
 @Entity
 @Table(name = "users", indexes = {
     @Index(name = "idx_user_username", columnList = "username"),
     @Index(name = "idx_user_mobile", columnList = "mobilePhoneNumber"),
-    @Index(name = "idx_user_national_code", columnList = "nationalCode")
+    @Index(name = "idx_user_national_code", columnList = "nationalCode"),
+    @Index(name = "idx_user_api_key", columnList = "apiKey")
 })
 public class User {
     @Id
@@ -61,6 +76,19 @@ public class User {
     @NotNull(message = "User role cannot be null")
     private UserRole role;
 
+    @Column(name = "api_key", columnDefinition = "TEXT")
+    private String apiKey;
+
+    @Transient
+    private static ApiKeyEncryption apiKeyEncryption;
+
+    @Transient
+    private static final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    public static void setApiKeyEncryption(ApiKeyEncryption encryption) {
+        apiKeyEncryption = encryption;
+    }
+
     public User() {}
 
     public User(String username, String name, String password, String mobilePhoneNumber, String nationalCode, UserRole role) {
@@ -103,7 +131,11 @@ public class User {
     }
 
     public void setPassword(String password) {
-        this.password = password;
+        this.password = passwordEncoder.encode(password);
+    }
+
+    public boolean matchesPassword(String rawPassword) {
+        return passwordEncoder.matches(rawPassword, this.password);
     }
 
     public String getMobilePhoneNumber() {
@@ -160,5 +192,23 @@ public class User {
 
     public void setRole(UserRole role) {
         this.role = role;
+    }
+
+    public String getApiKey() {
+        return apiKeyEncryption != null ? apiKeyEncryption.decrypt(apiKey) : apiKey;
+    }
+
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKeyEncryption != null ? apiKeyEncryption.encrypt(apiKey) : apiKey;
+    }
+
+    public boolean hasApiKey() {
+        return apiKey != null && !apiKey.trim().isEmpty();
+    }
+
+    public boolean canUseApiKey() {
+        return role != null && (com.pars.financial.enums.UserRole.API_USER.name().equals(role.getName()) || 
+                               com.pars.financial.enums.UserRole.ADMIN.name().equals(role.getName()) ||
+                               com.pars.financial.enums.UserRole.SUPERADMIN.name().equals(role.getName()));
     }
 } 

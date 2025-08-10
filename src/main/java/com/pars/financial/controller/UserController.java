@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import com.pars.financial.dto.UserStatistics;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -141,6 +142,36 @@ public class UserController {
         return response;
     }
 
+    @PostMapping("/{id}/api-key/generate")
+    public GenericResponse<UserDto> generateApiKey(@PathVariable Long id) {
+        logger.info("POST /api/v1/users/{}/api-key/generate called", id);
+        var response = new GenericResponse<UserDto>();
+        try {
+            var userWithApiKey = userService.generateApiKey(id);
+            response.data = userWithApiKey;
+        } catch (Exception e) {
+            logger.error("Error generating API key for user with id {}: {}", id, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+        }
+        return response;
+    }
+
+    @PostMapping("/{id}/api-key/revoke")
+    public GenericResponse<UserDto> revokeApiKey(@PathVariable Long id) {
+        logger.info("POST /api/v1/users/{}/api-key/revoke called", id);
+        var response = new GenericResponse<UserDto>();
+        try {
+            var userWithoutApiKey = userService.revokeApiKey(id);
+            response.data = userWithoutApiKey;
+        } catch (Exception e) {
+            logger.error("Error revoking API key for user with id {}: {}", id, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+        }
+        return response;
+    }
+
     @GetMapping("/role/{roleId}")
     public GenericResponse<List<UserDto>> getUsersByRole(@PathVariable Long roleId) {
         logger.info("GET /api/v1/users/role/{} called", roleId);
@@ -165,6 +196,82 @@ public class UserController {
             response.data = users;
         } catch (Exception e) {
             logger.error("Error fetching active users: {}", e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+        }
+        return response;
+    }
+
+    @PostMapping("/initialize-super-admin")
+    public GenericResponse<Void> initializeDefaultSuperAdmin() {
+        logger.info("POST /api/v1/users/initialize-super-admin called");
+        var response = new GenericResponse<Void>();
+        try {
+            userService.initializeDefaultSuperAdmin();
+            response.message = "Default super admin user initialized successfully";
+        } catch (Exception e) {
+            logger.error("Error initializing default super admin: {}", e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+        }
+        return response;
+    }
+
+    @GetMapping("/api-key-capable")
+    public GenericResponse<List<UserDto>> getUsersWithApiKeyCapability() {
+        logger.info("GET /api/v1/users/api-key-capable called");
+        var response = new GenericResponse<List<UserDto>>();
+        try {
+            var users = userService.getUsersWithApiKeyCapability();
+            response.data = users;
+        } catch (Exception e) {
+            logger.error("Error fetching users with API key capability: {}", e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+        }
+        return response;
+    }
+
+    @GetMapping("/with-active-api-keys")
+    public GenericResponse<List<UserDto>> getUsersWithActiveApiKeys() {
+        logger.info("GET /api/v1/users/with-active-api-keys called");
+        var response = new GenericResponse<List<UserDto>>();
+        try {
+            var users = userService.getUsersWithActiveApiKeys();
+            response.data = users;
+        } catch (Exception e) {
+            logger.error("Error fetching users with active API keys: {}", e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+        }
+        return response;
+    }
+
+    @PostMapping("/validate-api-key")
+    public GenericResponse<UserDto> validateApiKey(@RequestBody String apiKey) {
+        logger.info("POST /api/v1/users/validate-api-key called");
+        var response = new GenericResponse<UserDto>();
+        try {
+            var user = userService.getUserByApiKey(apiKey);
+            response.data = user;
+            response.message = "API key is valid";
+        } catch (Exception e) {
+            logger.error("Error validating API key: {}", e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+        }
+        return response;
+    }
+
+    @GetMapping("/statistics")
+    public GenericResponse<UserStatistics> getUserStatistics() {
+        logger.info("GET /api/v1/users/statistics called");
+        var response = new GenericResponse<UserStatistics>();
+        try {
+            var statistics = userService.getUserStatistics();
+            response.data = statistics;
+        } catch (Exception e) {
+            logger.error("Error fetching user statistics: {}", e.getMessage());
             response.status = -1;
             response.message = e.getMessage();
         }

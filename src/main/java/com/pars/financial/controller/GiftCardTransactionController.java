@@ -2,7 +2,7 @@ package com.pars.financial.controller;
 
 import com.pars.financial.dto.GenericResponse;
 import com.pars.financial.dto.GiftCardTransactionDto;
-import com.pars.financial.entity.ApiUser;
+import com.pars.financial.entity.User;
 import com.pars.financial.service.GiftCardTransactionService;
 import com.pars.financial.utils.ApiUserUtil;
 
@@ -26,7 +26,7 @@ public class GiftCardTransactionController {
     public GenericResponse<GiftCardTransactionDto> debit(@RequestBody GiftCardTransactionDto dto) {
         logger.info("POST /api/v1/giftcard/transaction/debit called with request: {}", dto);
         var res = new GenericResponse<GiftCardTransactionDto>();
-        ApiUser apiUser = ApiUserUtil.getApiUser();
+        User apiUser = ApiUserUtil.getApiUser();
         if (apiUser == null) {
             logger.error("Api User is null");
             res.message = "Api User is null";
@@ -49,7 +49,7 @@ public class GiftCardTransactionController {
     public GenericResponse<GiftCardTransactionDto> reverse(@RequestBody GiftCardTransactionDto dto) {
         logger.info("POST /api/v1/giftcard/transaction/reverse called with request: {}", dto);
         var res = new GenericResponse<GiftCardTransactionDto>();
-        ApiUser apiUser = ApiUserUtil.getApiUser();
+        User apiUser = ApiUserUtil.getApiUser();
         if (apiUser == null) {
             logger.error("Api User is null");
             res.message = "Api User is null";
@@ -71,7 +71,7 @@ public class GiftCardTransactionController {
     public GenericResponse<GiftCardTransactionDto> confirm(@RequestBody GiftCardTransactionDto dto) {
         logger.info("POST /api/v1/giftcard/transaction/confirm called with request: {}", dto);
         var res = new GenericResponse<GiftCardTransactionDto>();
-        ApiUser apiUser = ApiUserUtil.getApiUser();
+        User apiUser = ApiUserUtil.getApiUser();
         if (apiUser == null) {
             logger.error("Api User is null");
             res.message = "Api User is null";
@@ -93,7 +93,7 @@ public class GiftCardTransactionController {
     public GenericResponse<GiftCardTransactionDto> refund(@RequestBody GiftCardTransactionDto dto) {
         logger.info("POST /api/v1/giftcard/transaction/refund called with request: {}", dto);
         var res = new GenericResponse<GiftCardTransactionDto>();
-        ApiUser apiUser = ApiUserUtil.getApiUser();
+        User apiUser = ApiUserUtil.getApiUser();
         if (apiUser == null) {
             logger.error("Api User is null");
             res.message = "Api User is null";

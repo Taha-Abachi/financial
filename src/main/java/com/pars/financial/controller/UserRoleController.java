@@ -108,4 +108,19 @@ public class UserRoleController {
         }
         return response;
     }
+
+    @PostMapping("/initialize-defaults")
+    public GenericResponse<Void> initializeDefaultRoles() {
+        logger.info("POST /api/v1/user-roles/initialize-defaults called");
+        var response = new GenericResponse<Void>();
+        try {
+            userRoleService.initializeDefaultRoles();
+            response.message = "Default roles initialized successfully";
+        } catch (Exception e) {
+            logger.error("Error initializing default roles: {}", e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+        }
+        return response;
+    }
 } 

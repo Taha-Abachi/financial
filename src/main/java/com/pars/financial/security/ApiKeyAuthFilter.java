@@ -6,9 +6,9 @@ import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.pars.financial.entity.ApiUser;
+import com.pars.financial.entity.User;
 import com.pars.financial.enums.UserRole;
-import com.pars.financial.repository.ApiUserRepository;
+import com.pars.financial.repository.UserRepository;
 import com.pars.financial.utils.ApiKeyEncryption;
 
 import jakarta.servlet.FilterChain;
@@ -18,11 +18,11 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public class ApiKeyAuthFilter extends OncePerRequestFilter {
     private final String apiKeyHeader = "X-API-KEY";
-    private final ApiUserRepository apiUserRepository;
+    private final UserRepository userRepository;
     private final ApiKeyEncryption apiKeyEncryption;
 
-    public ApiKeyAuthFilter(ApiUserRepository apiKeyRepository, ApiKeyEncryption apiKeyEncryption) {
-        this.apiUserRepository = apiKeyRepository;
+    public ApiKeyAuthFilter(UserRepository userRepository, ApiKeyEncryption apiKeyEncryption) {
+        this.userRepository = userRepository;
         this.apiKeyEncryption = apiKeyEncryption;
     }
 
@@ -40,14 +40,14 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
         String apiKey = request.getHeader(apiKeyHeader);
         if (apiKey != null) {
             String encryptedApiKey = apiKeyEncryption.encrypt(apiKey);
-            ApiUser apiUser = apiUserRepository.findByApiKey(encryptedApiKey);
-            if (apiUser != null) {
+            User user = userRepository.findByApiKey(encryptedApiKey).orElse(null);
+            if (user != null && user.isActive() && user.canUseApiKey()) {
                 // API key is valid; set authentication with userId
                 ApiKeyAuthenticationToken auth = new ApiKeyAuthenticationToken(
                         apiKey,
-                        apiUser.getId(),
-                        AuthorityUtils.createAuthorityList(apiUser.getUserRole() == UserRole.API_USER ? "ROLE_API_USER" : "ROLE_ADMIN"),
-                        apiUser
+                        user.getId(),
+                        AuthorityUtils.createAuthorityList(user.getRole().getName().equals(UserRole.API_USER.name()) ? "ROLE_API_USER" : "ROLE_ADMIN"),
+                        user
                 );
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
