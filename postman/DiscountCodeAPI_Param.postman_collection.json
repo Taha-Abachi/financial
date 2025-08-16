@@ -1019,7 +1019,16 @@
 									"var jsonData = JSON.parse(responseBody);\r",
 									"\r",
 									"pm.environment.set(\"transactionId\", jsonData.data.transactionId);\r",
-									"pm.environment.set(\"clienttransactionid\", jsonData.data.clientTransactionId);"
+									"pm.environment.set(\"clienttransactionid\", jsonData.data.clientTransactionId);\r",
+									"\r",
+									"pm.test(\"response has correct structure\",  ()=>{\r",
+									"    pm.expect(jsonData.data).to.have.property('transactionId');\r",
+									"    pm.expect(jsonData.data.transactionId).to.not.be.null;\r",
+									"    pm.expect(jsonData.data).to.have.property('discountAmount');\r",
+									"    pm.expect(jsonData.data).to.have.property('code');\r",
+									"    pm.expect(jsonData.data).to.have.property('orderno');\r",
+									"    pm.expect(jsonData.data).to.have.property('description');\r",
+									"})"
 								],
 								"type": "text/javascript",
 								"packages": {}
@@ -1047,7 +1056,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"code\": \"{{discountCode}}\",\n    \"originalAmount\": 1000,\n    \"storeId\": 1,\n    \"phoneNo\": \"1234567890\",\n    \"clientTransactionId\": \"{{clienttransactionid}}\"\n}"
+							"raw": "{\n    \"code\": \"{{discountCode}}\",\n    \"originalAmount\": 1000,\n    \"storeId\": 1,\n    \"phoneNo\": \"1234567890\",\n    \"clientTransactionId\": \"{{clienttransactionid}}\",\n    \"orderno\": \"ORD123\",\n    \"description\": \"Test order for redemption\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/discountcode/transaction/redeem",
@@ -1072,7 +1081,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"code\": \"ABC123\",\n    \"originalAmount\": 1000,\n    \"storeId\": 1,\n    \"phoneNo\": \"1234567890\",\n    \"clientTransactionId\": \"TRX123\"\n}"
+									"raw": "{\n    \"code\": \"ABC123\",\n    \"originalAmount\": 1000,\n    \"storeId\": 1,\n    \"phoneNo\": \"1234567890\",\n    \"clientTransactionId\": \"TRX123\",\n    \"orderno\": \"ORD123\",\n    \"description\": \"Test order for redemption\"\n}"
 								},
 								"url": {
 									"raw": ""
@@ -1089,6 +1098,144 @@
 							],
 							"cookie": [],
 							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Check Discount Code",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"const moment = pm.environment.get('moment') ? pm.environment.get('moment') : require('moment');\r",
+									"const timestamp = moment().format('YYYYMMDDHHmmss');\r",
+									"\r",
+									"pm.environment.set(\"clienttransactionid\", timestamp);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"response is ok\",  ()=>{\r",
+									"    pm.response.to.have.status(200)\r",
+									"})\r",
+									"\r",
+									"pm.test(\"response has correct structure\",  ()=>{\r",
+									"    var jsonData = pm.response.json();\r",
+									"    pm.expect(jsonData).to.have.property('status');\r",
+									"    pm.expect(jsonData).to.have.property('data');\r",
+									"    pm.expect(jsonData.data).to.have.property('transactionId');\r",
+									"    pm.expect(jsonData.data.transactionId).to.be.null;\r",
+									"    pm.expect(jsonData.data).to.have.property('discountAmount');\r",
+									"    pm.expect(jsonData.data).to.have.property('code');\r",
+									"})\r",
+									"\r",
+									"pm.test(\"check endpoint returns same structure as redeem\",  ()=>{\r",
+									"    var jsonData = pm.response.json();\r",
+									"    var requiredFields = ['code', 'originalAmount', 'discountAmount', 'percentage', 'maxDiscountAmount', 'discountType', 'trxType', 'status', 'storeId', 'phoneNo', 'clientTransactionId', 'storeName', 'orderno', 'description'];\r",
+									"    requiredFields.forEach(field => {\r",
+									"        pm.expect(jsonData.data).to.have.property(field);\r",
+									"    });\r",
+									"})"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{API_USER_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"code\": \"{{discountCode}}\",\n    \"originalAmount\": 1000,\n    \"storeId\": 1,\n    \"phoneNo\": \"1234567890\",\n    \"clientTransactionId\": \"{{clienttransactionid}}\",\n    \"orderno\": \"ORD123\",\n    \"description\": \"Test order for validation\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discountcode/transaction/check",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"discountcode",
+								"transaction",
+								"check"
+							]
+						},
+						"description": "Check discount code validity without affecting the database. Returns the same structure as redeem but with transactionId = null. Use this to validate discount codes before actual redemption."
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"code\": \"ABC123\",\n    \"originalAmount\": 1000,\n    \"storeId\": 1,\n    \"phoneNo\": \"1234567890\",\n    \"clientTransactionId\": \"TRX123\",\n    \"orderno\": \"ORD123\",\n    \"description\": \"Test order for validation\"\n}"
+								},
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": 0,\n    \"message\": null,\n    \"data\": {\n        \"code\": \"ABC123\",\n        \"originalAmount\": 1000,\n        \"discountAmount\": 200,\n        \"percentage\": 20,\n        \"maxDiscountAmount\": 500,\n        \"discountType\": \"PERCENTAGE\",\n        \"trxType\": \"Redeem\",\n        \"status\": \"Pending\",\n        \"storeId\": 1,\n        \"phoneNo\": \"1234567890\",\n        \"clientTransactionId\": \"TRX123\",\n        \"storeName\": \"Test Store\",\n        \"orderno\": \"ORD123\",\n        \"description\": \"Test order for validation\",\n        \"transactionId\": null\n    }\n}"
+						},
+						{
+							"name": "Validation Error Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"code\": \"INVALID\",\n    \"originalAmount\": 500,\n    \"storeId\": 1,\n    \"phoneNo\": \"1234567890\",\n    \"clientTransactionId\": \"TRX123\",\n    \"orderno\": \"ORD123\",\n    \"description\": \"Test order with invalid code\"\n}"
+								},
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": -1,\n    \"message\": \"Discount Code not found.\",\n    \"data\": null\n}"
 						}
 					]
 				},
