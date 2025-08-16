@@ -115,6 +115,27 @@ public class DiscountCodeTransactionController {
         return response;
     }
 
+    @PostMapping("/check")
+    public GenericResponse<DiscountCodeTransactionDto> check(@RequestBody DiscountCodeTransactionDto transactionDto) {
+        logger.info("POST /api/v1/discountcode/transaction/check called with request: {}", transactionDto);
+        GenericResponse<DiscountCodeTransactionDto> response = new GenericResponse<>();
+        User apiUser = ApiUserUtil.getApiUser();
+        if (apiUser == null) {
+            logger.error("Api User is null");
+            response.message = "Api User is null";
+            response.status = -1;
+            return response;
+        }
+        var dto = discountCodeTransactionService.checkDiscountCode(apiUser, transactionDto);
+        if(dto == null){
+            logger.warn("Discount code check failed for transaction: {}", transactionDto);
+            response.status = -1;
+            response.message = "Discount code check failed";
+        }
+        response.data = dto;
+        return response;
+    }
+
     @GetMapping("/followup/{transactionId}")
     public GenericResponse<DiscountCodeTransactionDto> get(@PathVariable UUID transactionId) {
         logger.info("GET /api/v1/discountcode/transaction/followup/{} called", transactionId);

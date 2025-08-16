@@ -1,6 +1,5 @@
 package com.pars.financial.service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -14,8 +13,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.pars.financial.dto.DiscountCodeTransactionDto;
-import com.pars.financial.entity.User;
 import com.pars.financial.entity.DiscountCodeTransaction;
+import com.pars.financial.entity.User;
 import com.pars.financial.enums.TransactionStatus;
 import com.pars.financial.enums.TransactionType;
 import com.pars.financial.exception.CustomerNotFoundException;
@@ -41,15 +40,17 @@ public class DiscountCodeTransactionService {
     private final StoreRepository storeRepository;
 
     private final CustomerService customerService;
+    private final DiscountCodeService discountCodeService;
 
     private final DiscountCodeTransactionMapper mapper;
 
-    public DiscountCodeTransactionService(DiscountCodeRepository discountCodeRepository, DiscountCodeTransactionRepository discountCodeTransactionRepository, CustomerRepository customerRepository, StoreRepository storeRepository, CustomerService customerService, DiscountCodeTransactionMapper mapper) {
+    public DiscountCodeTransactionService(DiscountCodeRepository discountCodeRepository, DiscountCodeTransactionRepository discountCodeTransactionRepository, CustomerRepository customerRepository, StoreRepository storeRepository, CustomerService customerService, DiscountCodeTransactionMapper mapper, DiscountCodeService discountCodeService) {
         this.codeRepository = discountCodeRepository;
         this.transactionRepository = discountCodeTransactionRepository;
         this.customerRepository = customerRepository;
         this.storeRepository = storeRepository;
         this.customerService = customerService;
+        this.discountCodeService = discountCodeService;
         this.mapper = mapper;
     }
 
@@ -67,58 +68,24 @@ public class DiscountCodeTransactionService {
         logger.info("Processing redeem request for discount code: {}, amount: {}, store: {}, phone: {}", 
             dto.code, dto.originalAmount, dto.storeId, dto.phoneNo);
             
-        var code = codeRepository.findByCode(dto.code);
-        if(code == null) {
-            logger.warn("Discount code not found: {}", dto.code);
-            throw new ValidationException("Discount Code not found.", PersianErrorMessages.DISCOUNT_CODE_NOT_FOUND, null, -104);
-        }
-        else if(LocalDate.now().isAfter(code.getExpiryDate())){
-            logger.warn("Discount code is expired: {}", dto.code);
-            throw new ValidationException("Discount code is expired.", PersianErrorMessages.DISCOUNT_CODE_EXPIRED, null, -141);
-        }
-        else if(!code.isActive()) {
-            logger.warn("Discount code is inactive: {}", dto.code);
-            throw new ValidationException("Discount code is inactive.", PersianErrorMessages.DISCOUNT_CODE_INACTIVE, null, -105);
-        }
-        else if(code.isUsed()) {
-            logger.warn("Discount code already used: {}", dto.code);
-            throw new ValidationException("Discount already used.", PersianErrorMessages.DISCOUNT_CODE_ALREADY_USED, null, -106);
+        // Use shared validation method
+        var validationResult = discountCodeService.validateDiscountCodeRules(dto);
+        if (!validationResult.isValid) {
+            logger.warn("Discount code validation failed: {}", validationResult.message);
+            throw new ValidationException(validationResult.message, null, getErrorCode(validationResult.errorCode));
         }
         
-        if (code.getCurrentUsageCount() >= code.getUsageLimit()) {
-            logger.warn("Discount code usage limit reached: {} (current: {}, limit: {})", 
-                dto.code, code.getCurrentUsageCount(), code.getUsageLimit());
-            throw new ValidationException("Discount code usage limit reached.", PersianErrorMessages.DISCOUNT_CODE_USAGE_LIMIT_REACHED, null, -107);
-        }
-        
-        if (code.getMinimumBillAmount() > 0 && dto.originalAmount < code.getMinimumBillAmount()) {
-            logger.warn("Original amount {} is less than minimum bill amount {} for discount code: {}", 
-                dto.originalAmount, code.getMinimumBillAmount(), dto.code);
-            throw new ValidationException("Original amount is less than minimum bill amount required.", PersianErrorMessages.MINIMUM_BILL_AMOUNT_NOT_MET, null, -108);
-        }
-        
+        // Check for duplicate client transaction ID
         var transaction = transactionRepository.findByClientTransactionIdAndTrxType(dto.clientTransactionId, TransactionType.Redeem);
         if(transaction != null){
             logger.warn("Duplicate client transaction ID: {}", dto.clientTransactionId);
             throw new ValidationException("ClientTransactionId should be unique.", PersianErrorMessages.DUPLICATE_TRANSACTION_ID, null, -109);
         }
         
-        var store = storeRepository.findById(dto.storeId);
-        if (store.isEmpty()) {
-            logger.warn("Store not found: {}", dto.storeId);
-            throw new ValidationException("Store Not Found", PersianErrorMessages.STORE_NOT_FOUND, null, -110);
-        }
-        // Store limitation check
-        if (code.isStoreLimited()) {
-            boolean storeAllowed = code.getAllowedStores().stream()
-                .anyMatch(s -> s.getId().equals(dto.storeId));
-            if (!storeAllowed) {
-                logger.warn("Store {} not allowed for discount code {}", dto.storeId, code.getCode());
-                throw new ValidationException("Discount code cannot be used in this store", PersianErrorMessages.STORE_NOT_ALLOWED, null, -117);
-            }
-        }
-        
+        var code = codeRepository.findByCode(dto.code);
+        var store = storeRepository.findById(dto.storeId).get();
         var customer = customerRepository.findByPrimaryPhoneNumber(dto.phoneNo);
+        
         if(customer == null){
             if (!autoDefineCustomer) {
                 logger.warn("Customer not found for phone number: {} and auto-define is disabled", dto.phoneNo);
@@ -130,47 +97,46 @@ public class DiscountCodeTransactionService {
             }
         }
 
-        long discount;
-        switch (code.getDiscountType()) {
-            case FREEDELIVERY -> {
-                discount = 0;
-                logger.debug("Using free delivery discount amount: {}", discount);
-            }
-            case CONSTANT -> {
-                discount = code.getConstantDiscountAmount();
-                logger.debug("Using constant discount amount: {}", discount);
-            }
-            default -> {
-                // PERCENTAGE
-                discount = (long) (code.getPercentage() * dto.originalAmount / 100);
-                if(code.getMaxDiscountAmount() > 0) {
-                    discount = Math.min(discount, code.getMaxDiscountAmount());
-                }
-                logger.debug("Calculated percentage-based discount amount: {} ({}% of {})", discount, code.getPercentage(), dto.originalAmount);
-            }
-        }
-
+        // Create and save transaction
         transaction = new DiscountCodeTransaction();
         transaction.setDiscountCode(code);
         transaction.setTrxType(TransactionType.Redeem);
         transaction.setClientTransactionId(dto.clientTransactionId);
-        transaction.setDiscountAmount(discount);
+        transaction.setDiscountAmount(validationResult.calculatedDiscountAmount);
         transaction.setOriginalAmount(dto.originalAmount);
         transaction.setApiUser(apiUser);
         transaction.setCustomer(customer);
-        transaction.setStore(store.get());
+        transaction.setStore(store);
         transaction.setTrxDate(LocalDateTime.now());
         transaction.setStatus(TransactionStatus.Pending);
         var savedTransaction = transactionRepository.save(transaction);
 
+        // Update discount code usage
         code.setRedeemDate(LocalDateTime.now());
         code.setUsed(code.getCurrentUsageCount() + 1 >= code.getUsageLimit());
         code.setCurrentUsageCount(code.getCurrentUsageCount() + 1);
         codeRepository.save(code);
 
         logger.info("Successfully processed redeem transaction: {}, discount amount: {}", 
-            savedTransaction.getTransactionId(), discount);
+            savedTransaction.getTransactionId(), validationResult.calculatedDiscountAmount);
         return mapper.getFrom(savedTransaction);
+    }
+    
+    /**
+     * Helper method to convert error codes to numeric values
+     */
+    private int getErrorCode(String errorCode) {
+        return switch (errorCode) {
+            case "DISCOUNT_CODE_NOT_FOUND" -> -104;
+            case "DISCOUNT_CODE_EXPIRED" -> -141;
+            case "DISCOUNT_CODE_INACTIVE" -> -105;
+            case "DISCOUNT_CODE_ALREADY_USED" -> -106;
+            case "DISCOUNT_CODE_USAGE_LIMIT_REACHED" -> -107;
+            case "MINIMUM_BILL_AMOUNT_NOT_MET" -> -108;
+            case "STORE_NOT_FOUND" -> -110;
+            case "STORE_NOT_ALLOWED" -> -117;
+            default -> -1;
+        };
     }
 
     public DiscountCodeTransaction settleTransaction(User apiUser, DiscountCodeTransactionDto dto, TransactionType trxType) {
@@ -280,6 +246,68 @@ public class DiscountCodeTransactionService {
         var transaction = settleTransaction(apiUser, dto, TransactionType.Refund);
 
         return mapper.getFrom(transaction);
+    }
+
+    /**
+     * Check discount code validity without affecting the database
+     * Returns the same DTO structure as redeem but with null transactionId
+     */
+    public DiscountCodeTransactionDto checkDiscountCode(User apiUser, DiscountCodeTransactionDto dto) {
+        logger.info("Checking discount code: {} for amount: {}, store: {}, phone: {}", 
+            dto.code, dto.originalAmount, dto.storeId, dto.phoneNo);
+            
+        // Use shared validation method
+        var validationResult = discountCodeService.validateDiscountCodeRules(dto);
+        if (!validationResult.isValid) {
+            logger.warn("Discount code validation failed: {}", validationResult.message);
+            throw new ValidationException(validationResult.message, null, getErrorCode(validationResult.errorCode));
+        }
+        
+        // Check for duplicate client transaction ID
+        var transaction = transactionRepository.findByClientTransactionIdAndTrxType(dto.clientTransactionId, TransactionType.Redeem);
+        if(transaction != null){
+            logger.warn("Duplicate client transaction ID: {}", dto.clientTransactionId);
+            throw new ValidationException("ClientTransactionId should be unique.", PersianErrorMessages.DUPLICATE_TRANSACTION_ID, null, -109);
+        }
+        
+        var code = codeRepository.findByCode(dto.code);
+        var store = storeRepository.findById(dto.storeId).get();
+        var customer = customerRepository.findByPrimaryPhoneNumber(dto.phoneNo);
+        
+        if(customer == null){
+            if (!autoDefineCustomer) {
+                logger.warn("Customer not found for phone number: {} and auto-define is disabled", dto.phoneNo);
+                throw new CustomerNotFoundException("Customer not found");
+            }
+            else {
+                logger.info("Auto-defining customer for phone number: {}", dto.phoneNo);
+                customer = customerService.createCustomer(dto.phoneNo);
+            }
+        }
+
+        // Create response DTO with same structure as redeem but no database changes
+        var responseDto = new DiscountCodeTransactionDto();
+        responseDto.code = dto.code;
+        responseDto.originalAmount = dto.originalAmount;
+        responseDto.discountAmount = validationResult.calculatedDiscountAmount;
+        responseDto.percentage = validationResult.percentage;
+        responseDto.maxDiscountAmount = validationResult.maxDiscountAmount;
+        responseDto.discountType = validationResult.discountType;
+        responseDto.trxType = TransactionType.Redeem;
+        responseDto.status = TransactionStatus.Pending;
+        responseDto.storeId = dto.storeId;
+        responseDto.phoneNo = dto.phoneNo;
+        responseDto.clientTransactionId = dto.clientTransactionId;
+        responseDto.storeName = store.getStore_name();
+        responseDto.orderno = dto.orderno;
+        responseDto.description = dto.description;
+        
+        // Set transactionId to null for check operations
+        responseDto.transactionId = null;
+        
+        logger.info("Successfully checked discount code: {}, calculated discount amount: {}", 
+            dto.code, validationResult.calculatedDiscountAmount);
+        return responseDto;
     }
 
     public List<DiscountCodeTransactionDto> getTransactions(int page, int size) {

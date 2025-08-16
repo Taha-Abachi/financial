@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+
 import com.pars.financial.dto.DiscountCodeDto;
 import com.pars.financial.dto.DiscountCodeIssueRequest;
 import com.pars.financial.dto.GenericResponse;
@@ -59,6 +60,8 @@ public class DiscountCodeController {
         response.data = codeService.generateList(discountCodeDto);
         return response;
     }
+
+
 
     @PostMapping("/{code}/limit-stores")
     public GenericResponse<Void> limitToStores(@PathVariable String code, @RequestBody StoreLimitationRequest request) {

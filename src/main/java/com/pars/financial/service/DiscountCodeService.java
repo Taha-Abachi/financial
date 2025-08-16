@@ -2,6 +2,9 @@ package com.pars.financial.service;
 
 import com.pars.financial.dto.DiscountCodeDto;
 import com.pars.financial.dto.DiscountCodeIssueRequest;
+import com.pars.financial.dto.DiscountCodeTransactionDto;
+import com.pars.financial.dto.DiscountCodeValidationResponse;
+
 import com.pars.financial.entity.DiscountCode;
 import com.pars.financial.enums.DiscountType;
 import com.pars.financial.exception.ValidationException;
@@ -10,6 +13,7 @@ import com.pars.financial.repository.CompanyRepository;
 import com.pars.financial.repository.DiscountCodeRepository;
 import com.pars.financial.repository.ItemCategoryRepository;
 import com.pars.financial.repository.StoreRepository;
+import com.pars.financial.repository.CustomerRepository;
 import com.pars.financial.utils.RandomStringGenerator;
 
 import org.slf4j.Logger;
@@ -36,13 +40,15 @@ public class DiscountCodeService {
     private final CompanyRepository companyRepository;
     private final StoreRepository storeRepository;
     private final ItemCategoryRepository itemCategoryRepository;
+    private final CustomerRepository customerRepository;
 
-    public DiscountCodeService(DiscountCodeRepository codeRepository, DiscountCodeMapper mapper, CompanyRepository companyRepository, StoreRepository storeRepository, ItemCategoryRepository itemCategoryRepository) {
+    public DiscountCodeService(DiscountCodeRepository codeRepository, DiscountCodeMapper mapper, CompanyRepository companyRepository, StoreRepository storeRepository, ItemCategoryRepository itemCategoryRepository, CustomerRepository customerRepository) {
         this.codeRepository = codeRepository;
         this.mapper = mapper;
         this.companyRepository = companyRepository;
         this.storeRepository = storeRepository;
         this.itemCategoryRepository = itemCategoryRepository;
+        this.customerRepository = customerRepository;
     }
 
     private DiscountCode issueDiscountCode(int percentage, long validityPeriod, long maxDiscountAmount, long minimumBillAmount, int usageLimit, long constantDiscountAmount, DiscountType discountType, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, String customCode, Long customSerialNo) {
@@ -280,4 +286,118 @@ public class DiscountCodeService {
         codeRepository.save(discountCode);
         logger.info("Successfully removed item category limitations for discount code: {}", code);
     }
+
+    /**
+     * Shared validation method for discount code redemption rules
+     * This method can be used by both check and redeem operations
+     */
+    public DiscountCodeValidationResponse validateDiscountCodeRules(DiscountCodeTransactionDto request) {
+        var response = new DiscountCodeValidationResponse();
+        
+        var code = codeRepository.findByCode(request.code);
+        if(code == null) {
+            response.isValid = false;
+            response.message = "Discount Code not found.";
+            response.errorCode = "DISCOUNT_CODE_NOT_FOUND";
+            return response;
+        }
+        
+        if(LocalDate.now().isAfter(code.getExpiryDate())){
+            response.isValid = false;
+            response.message = "Discount code is expired.";
+            response.errorCode = "DISCOUNT_CODE_EXPIRED";
+            return response;
+        }
+        
+        if(!code.isActive()) {
+            response.isValid = false;
+            response.message = "Discount code is inactive.";
+            response.errorCode = "DISCOUNT_CODE_INACTIVE";
+            return response;
+        }
+        
+        if(code.isUsed()) {
+            response.isValid = false;
+            response.message = "Discount already used.";
+            response.errorCode = "DISCOUNT_CODE_ALREADY_USED";
+            return response;
+        }
+        
+        if (code.getCurrentUsageCount() >= code.getUsageLimit()) {
+            response.isValid = false;
+            response.message = "Discount code usage limit reached.";
+            response.errorCode = "DISCOUNT_CODE_USAGE_LIMIT_REACHED";
+            return response;
+        }
+        
+        if (code.getMinimumBillAmount() > 0 && request.originalAmount < code.getMinimumBillAmount()) {
+            response.isValid = false;
+            response.message = "Original amount is less than minimum bill amount required.";
+            response.errorCode = "MINIMUM_BILL_AMOUNT_NOT_MET";
+            return response;
+        }
+        
+        var store = storeRepository.findById(request.storeId);
+        if (store.isEmpty()) {
+            response.isValid = false;
+            response.message = "Store Not Found";
+            response.errorCode = "STORE_NOT_FOUND";
+            return response;
+        }
+        
+        // Store limitation check
+        if (code.isStoreLimited()) {
+            boolean storeAllowed = code.getAllowedStores().stream()
+                .anyMatch(s -> s.getId().equals(request.storeId));
+            if (!storeAllowed) {
+                response.isValid = false;
+                response.message = "Discount code cannot be used in this store";
+                response.errorCode = "STORE_NOT_ALLOWED";
+                return response;
+            }
+        }
+        
+        // Item category limitation check (if implemented)
+        if (code.isItemCategoryLimited()) {
+            // This would need to be implemented based on your business logic
+            // For now, we'll just set the flag
+            response.itemCategoryLimited = true;
+        }
+        
+        // Calculate discount amount
+        long discount;
+        switch (code.getDiscountType()) {
+            case FREEDELIVERY -> {
+                discount = 0;
+            }
+            case CONSTANT -> {
+                discount = code.getConstantDiscountAmount();
+            }
+            default -> {
+                // PERCENTAGE
+                discount = (long) (code.getPercentage() * request.originalAmount / 100);
+                if(code.getMaxDiscountAmount() > 0) {
+                    discount = Math.min(discount, code.getMaxDiscountAmount());
+                }
+            }
+        }
+        
+        // Set response data
+        response.isValid = true;
+        response.message = "Discount code is valid";
+        response.calculatedDiscountAmount = discount;
+        response.discountType = code.getDiscountType();
+        response.percentage = code.getPercentage();
+        response.maxDiscountAmount = code.getMaxDiscountAmount();
+        response.minimumBillAmount = code.getMinimumBillAmount();
+        response.usageLimit = code.getUsageLimit();
+        response.currentUsageCount = code.getCurrentUsageCount();
+        response.constantDiscountAmount = code.getConstantDiscountAmount();
+        response.storeLimited = code.isStoreLimited();
+        response.itemCategoryLimited = code.isItemCategoryLimited();
+        
+        return response;
+    }
+    
+
 }
