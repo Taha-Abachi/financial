@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.pars.financial.entity.GiftCard;
 import com.pars.financial.entity.GiftCardTransaction;
+import com.pars.financial.enums.TransactionStatus;
 import com.pars.financial.enums.TransactionType;
 
 public interface GiftCardTransactionRepository extends JpaRepository<GiftCardTransaction, Integer> {
@@ -25,4 +26,9 @@ public interface GiftCardTransactionRepository extends JpaRepository<GiftCardTra
     GiftCardTransaction findTopByGiftCardOrderByTrxDateDesc(GiftCard giftCard);
 
     GiftCardTransaction findTopByTransactionIdOrderByTrxDateDesc(UUID transactionId);
+    
+    // New methods for data cleansing
+    List<GiftCardTransaction> findByTransactionTypeAndStatus(TransactionType transactionType, TransactionStatus status);
+    
+    List<GiftCardTransaction> findByTransactionType(TransactionType transactionType);
 }

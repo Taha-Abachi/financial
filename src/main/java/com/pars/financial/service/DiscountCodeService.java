@@ -40,7 +40,6 @@ public class DiscountCodeService {
     private final CompanyRepository companyRepository;
     private final StoreRepository storeRepository;
     private final ItemCategoryRepository itemCategoryRepository;
-    private final CustomerRepository customerRepository;
 
     public DiscountCodeService(DiscountCodeRepository codeRepository, DiscountCodeMapper mapper, CompanyRepository companyRepository, StoreRepository storeRepository, ItemCategoryRepository itemCategoryRepository, CustomerRepository customerRepository) {
         this.codeRepository = codeRepository;
@@ -48,7 +47,6 @@ public class DiscountCodeService {
         this.companyRepository = companyRepository;
         this.storeRepository = storeRepository;
         this.itemCategoryRepository = itemCategoryRepository;
-        this.customerRepository = customerRepository;
     }
 
     private DiscountCode issueDiscountCode(int percentage, long validityPeriod, long maxDiscountAmount, long minimumBillAmount, int usageLimit, long constantDiscountAmount, DiscountType discountType, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, String customCode, Long customSerialNo) {

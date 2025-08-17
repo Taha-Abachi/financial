@@ -143,17 +143,21 @@ public class DiscountCodeTransactionService {
         logger.info("Processing {} transaction for discount code transaction: {}", trxType, dto.transactionId);
         
         DiscountCodeTransaction transaction = null;
-        if(trxType == TransactionType.Confirmation) {
-            logger.debug("Looking up redeem transaction by transactionId: {}", dto.transactionId);
-            transaction = transactionRepository.findByTransactionIdAndTrxType(dto.transactionId, TransactionType.Redeem);
-        }
-        else if(trxType == TransactionType.Reversal) {
-            logger.debug("Looking up redeem transaction by clientTransactionId: {}", dto.clientTransactionId);
-            transaction = transactionRepository.findByClientTransactionIdAndTrxType(dto.clientTransactionId, TransactionType.Redeem);
-        }
-        else if(trxType == TransactionType.Refund) {
-            logger.debug("Looking up redeem transaction by transactionId: {}", dto.transactionId);
-            transaction = transactionRepository.findByTransactionIdAndTrxType(dto.transactionId, TransactionType.Redeem);
+        if(null != trxType) switch (trxType) {
+            case Confirmation -> {
+                logger.debug("Looking up redeem transaction by transactionId: {}", dto.transactionId);
+                transaction = transactionRepository.findByTransactionIdAndTrxType(dto.transactionId, TransactionType.Redeem);
+            }
+            case Reversal -> {
+                logger.debug("Looking up redeem transaction by clientTransactionId: {}", dto.clientTransactionId);
+                transaction = transactionRepository.findByClientTransactionIdAndTrxType(dto.clientTransactionId, TransactionType.Redeem);
+            }
+            case Refund -> {
+                logger.debug("Looking up redeem transaction by transactionId: {}", dto.transactionId);
+                transaction = transactionRepository.findByTransactionIdAndTrxType(dto.transactionId, TransactionType.Redeem);
+            }
+            default -> {
+            }
         }
 
         if(transaction == null) {
@@ -270,7 +274,6 @@ public class DiscountCodeTransactionService {
             throw new ValidationException("ClientTransactionId should be unique.", PersianErrorMessages.DUPLICATE_TRANSACTION_ID, null, -109);
         }
         
-        var code = codeRepository.findByCode(dto.code);
         var store = storeRepository.findById(dto.storeId).get();
         var customer = customerRepository.findByPrimaryPhoneNumber(dto.phoneNo);
         

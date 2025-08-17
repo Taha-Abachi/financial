@@ -245,7 +245,6 @@ public class GiftCardTransactionService {
         transaction.setClientTransactionId(debitTransaction.getClientTransactionId());
         transaction.setTransactionId(debitTransaction.getTransactionId());
         transaction.setTransactionType(trxType);
-        transaction.setDebitTransaction(debitTransaction);
         transaction.setGiftCard(gc);
         transaction.setAmount(amount);
         transaction.setBalanceBefore(gc.getBalance());
@@ -258,21 +257,29 @@ public class GiftCardTransactionService {
         gc.setLastUsed(LocalDateTime.now());
         
         giftCardRepository.save(gc);
-        var savedTransaction = transactionRepository.save(transaction);
         
         switch (trxType) {
             case Reversal -> {
+                transaction.setStatus(TransactionStatus.Reversed);
                 debitTransaction.setStatus(TransactionStatus.Reversed);
             }
             case Refund -> {
+                transaction.setStatus(TransactionStatus.Refunded);
+                confirmation.setStatus(TransactionStatus.Refunded);
                 debitTransaction.setStatus(TransactionStatus.Refunded);
             }
             case Confirmation -> {
+                transaction.setStatus(TransactionStatus.Confirmed);
                 debitTransaction.setStatus(TransactionStatus.Confirmed);
             }
         }
+        var savedTransaction = transactionRepository.save(transaction);
         transactionRepository.save(debitTransaction);
         
+        if(trxType == TransactionType.Refund) {
+            transactionRepository.save(confirmation);
+        }
+
         logger.info("Successfully processed {} transaction: {}, new balance: {}", 
             trxType, savedTransaction.getTransactionId(), gc.getBalance());
             

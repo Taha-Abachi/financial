@@ -101,6 +101,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/user-roles/**").hasAnyRole("ADMIN", "SUPERADMIN")
                         // Batch endpoints - restricted to ADMIN and SUPERADMIN
                         .requestMatchers("/api/v1/batches/**").hasAnyRole("ADMIN", "SUPERADMIN")
+                        // Admin endpoints - restricted to ADMIN and SUPERADMIN only
+                        .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN", "SUPERADMIN")
                         .anyRequest().permitAll()
                 )
                 .anonymous(anonymous -> anonymous
