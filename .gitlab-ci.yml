@@ -1,0 +1,12 @@
+stages:
+  - build
+  - push
+
+build_image:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  script:
+    - docker build -t 192.168.0.214:5000/my-app:$CI_COMMIT_SHORT_SHA .
+    - docker push 192.168.0.214:5000/my-app:$CI_COMMIT_SHORT_SHA
