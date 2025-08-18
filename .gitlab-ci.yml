@@ -5,14 +5,14 @@ stages:
 variables:
   DOCKER_IMAGE: "192.168.0.214:5002/my-app:$CI_COMMIT_SHORT_SHA"
 
-before_script:
+#before_script:
   # ستاپ SSH
-  - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
-  - eval $(ssh-agent -s)
-  - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-  - mkdir -p ~/.ssh
-  - chmod 700 ~/.ssh
-  - ssh-keyscan 192.168.0.222 >> ~/.ssh/known_hosts
+  #- 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+  #- eval $(ssh-agent -s)
+  #- echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+  #- mkdir -p ~/.ssh
+  #- chmod 700 ~/.ssh
+  #- ssh-keyscan 192.168.0.222 >> ~/.ssh/known_hosts
 
 build:
   stage: build
