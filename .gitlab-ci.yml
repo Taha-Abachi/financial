@@ -1,12 +1,35 @@
 stages:
   - build
-  - push
+  - deploy
 
-build_image:
+variables:
+  DOCKER_IMAGE: "192.168.0.214:5002/my-app:$CI_COMMIT_SHORT_SHA"
+
+before_script:
+  # ستاپ SSH
+  - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+  - eval $(ssh-agent -s)
+  - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+  - mkdir -p ~/.ssh
+  - chmod 700 ~/.ssh
+  - ssh-keyscan 192.168.0.222 >> ~/.ssh/known_hosts
+
+build:
   stage: build
-  image: docker:latest
-  services:
-    - docker:dind
+  tags:
+    - docker-runner
   script:
-    - docker build -t 192.168.0.214:5002/my-app:$CI_COMMIT_SHORT_SHA .
-    - docker push 192.168.0.214:5002/my-app:$CI_COMMIT_SHORT_SHA
+    - docker build -t $DOCKER_IMAGE .
+    - docker push $DOCKER_IMAGE
+
+deploy:
+  stage: deploy
+  tags:
+    - docker-runner
+  script:
+    - ssh deploy@192.168.0.222 "
+        docker pull $DOCKER_IMAGE &&
+        docker stop my-app || true &&
+        docker rm my-app || true &&
+        docker run -d --name my-app -p 8080:8080 $DOCKER_IMAGE
+      "
