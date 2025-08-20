@@ -22,7 +22,7 @@ build:
     - name: dind:27.3.1-1
       alias: docker
   tags:
-    - gift-runner
+    # - gift-runner
   script:
     - docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD 192.168.0.214:5002
     - docker build -t $DOCKER_IMAGE .
@@ -35,7 +35,7 @@ deploy:
     - name: dind:27.3.1-1
       alias: docker
   tags:
-    - gift-runner
+    # - gift-runner
   script:
     - ssh root@192.168.0.222 "
         docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD 192.168.0.214:5002 &&
