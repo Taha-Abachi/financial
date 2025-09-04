@@ -17,6 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 import com.pars.financial.repository.UserRepository;
 import com.pars.financial.security.ApiKeyAuthFilter;
@@ -34,15 +35,17 @@ public class SecurityConfig {
     private final RateLimitProperties rateLimitProperties;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserDetailsService userDetailsService;
+    private final CorsConfigurationSource corsConfigurationSource;
 
     public SecurityConfig(UserRepository userRepository, ApiKeyEncryption apiKeyEncryption, 
                          RateLimitProperties rateLimitProperties, JwtAuthenticationFilter jwtAuthenticationFilter,
-                         UserDetailsService userDetailsService) {
+                         UserDetailsService userDetailsService, CorsConfigurationSource corsConfigurationSource) {
         this.userRepository = userRepository;
         this.apiKeyEncryption = apiKeyEncryption;
         this.rateLimitProperties = rateLimitProperties;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.userDetailsService = userDetailsService;
+        this.corsConfigurationSource = corsConfigurationSource;
     }
 
     @Bean
@@ -63,9 +66,11 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .addFilterBefore(new SecurityContextFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new RateLimitFilter(rateLimitProperties), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new ApiKeyAuthFilter(userRepository, apiKeyEncryption), UsernamePasswordAuthenticationFilter.class)

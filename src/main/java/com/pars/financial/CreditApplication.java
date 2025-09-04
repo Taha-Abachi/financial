@@ -48,14 +48,14 @@ public class CreditApplication {
         System.out.println(RandomStringGenerator.generateRandomHexString(32));
 
         SpringApplication.run(CreditApplication.class, args);
-        String[] ops_strs = new String[]{
+        String[] ops_apiKeys = new String[]{
                 "TELKZWCWUCP64JQE",
                 "5DFC9XTRWCWG5HP5",
                 "2FTTI6ANF8TNCN5U",
                 "IIQ4G8A1IPB8KA8S"
         };
 
-        String[] test_strs = new String[]//[4];
+        String[] test_apiKeys = new String[]//[4];
         {
                 "1A1603AE1C9B62A3",
                 "AC004E2BC35D92A4",
@@ -64,20 +64,24 @@ public class CreditApplication {
 
         };
 
-//        for (int i = 0; i < ops_strs.length; i++) {
-//            ops_strs[i] = RandomStringGenerator.generateRandomHexString(16);
-//            System.out.println("\"" + ops_strs[i] + "\",");
+//        for (int i = 0; i < ops_apiKeys.length; i++) {
+//            ops_apiKeys[i] = RandomStringGenerator.generateRandomHexString(16);
+//            System.out.println("\"" + ops_apiKeys[i] + "\",");
 //        }
+        var debug_SecretKey = "0123456789ABCDEF0123456789ABCDEF";
+        var ops_SecretKey = "969382DCD1578F69B1C983AE0A18397E";
+        var test_SecretKey = "888882DCD1578F69B1C983AE0A18397E";
 
-        var OPS_SecretKey = "969382DCD1578F69B1C983AE0A18397E";
-        var Test_SecretKey = "888882DCD1578F69B1C983AE0A18397E";
-
+        showEncryptedApiKey(ops_SecretKey, ops_apiKeys);
+        showEncryptedApiKey(debug_SecretKey, ops_apiKeys);
+        //showEncryptedApiKey(test_SecretKey, test_apiKeys);
+    }
+    private static void showEncryptedApiKey(String secretKey, String[] apiKeys) {
         ApiKeyEncryption crypt = new ApiKeyEncryption();
         crypt.setAlgorithm("AES/GCM/NoPadding");
-        crypt.setSecretKey(Test_SecretKey);
-        for (String str : test_strs) {
+        crypt.setSecretKey(secretKey);
+        for (String str : apiKeys) {
             System.out.println(crypt.encrypt(str));
         }
     }
-
 }
