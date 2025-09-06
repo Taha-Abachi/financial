@@ -1,0 +1,46 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  DOCKER_IMAGE: "192.168.0.214:5002/my-app:$CI_COMMIT_SHORT_SHA"
+  DOCKER_HOST: tcp://docker:2375  # برای اتصال به Docker Daemon سرویس DinD
+
+before_script:
+  - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
+  - eval $(ssh-agent -s)
+  - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+  - mkdir -p ~/.ssh
+  - chmod 700 ~/.ssh
+  - ssh-keyscan 192.168.0.222 >> ~/.ssh/known_hosts
+  - chmod 644 ~/.ssh/known_hosts
+
+build:
+  stage: build
+  image: docker:stable
+  services:
+    - name: dind:27.3.1-1
+      alias: docker
+  tags:
+    # - gift-runner
+  script:
+    - docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD 192.168.0.214:5002
+    - docker build -t $DOCKER_IMAGE .
+    - docker push $DOCKER_IMAGE
+
+deploy:
+  stage: deploy
+  image: docker:stable
+  services:
+    - name: dind:27.3.1-1
+      alias: docker
+  tags:
+    # - gift-runner
+  script:
+    - ssh root@192.168.0.222 "
+        docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD 192.168.0.214:5002 &&
+        docker pull $DOCKER_IMAGE &&
+        docker stop my-app || true &&
+        docker rm my-app || true &&
+        docker run -d --name my-app -p 8080:8080 $DOCKER_IMAGE
+      "
