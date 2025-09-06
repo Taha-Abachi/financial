@@ -10,6 +10,7 @@ public class LoginResponse {
     private String loginIp;
     private String userAgent;
     private String referrer;
+    private UserInfoDto user;
 
     public LoginResponse() {}
 
@@ -20,6 +21,16 @@ public class LoginResponse {
         this.loginIp = loginIp;
         this.userAgent = userAgent;
         this.referrer = referrer;
+    }
+
+    public LoginResponse(String accessToken, String refreshToken, LocalDateTime expiresAt, String loginIp, String userAgent, String referrer, UserInfoDto user) {
+        this.accessToken = accessToken;
+        this.refreshToken = refreshToken;
+        this.expiresAt = expiresAt;
+        this.loginIp = loginIp;
+        this.userAgent = userAgent;
+        this.referrer = referrer;
+        this.user = user;
     }
 
     public String getAccessToken() {
@@ -76,5 +87,13 @@ public class LoginResponse {
 
     public void setReferrer(String referrer) {
         this.referrer = referrer;
+    }
+
+    public UserInfoDto getUser() {
+        return user;
+    }
+
+    public void setUser(UserInfoDto user) {
+        this.user = user;
     }
 }

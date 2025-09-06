@@ -5,6 +5,8 @@ import com.pars.financial.dto.LoginRequest;
 import com.pars.financial.dto.LoginResponse;
 import com.pars.financial.dto.RefreshTokenRequest;
 import com.pars.financial.dto.RefreshTokenResponse;
+import com.pars.financial.dto.UserInfoDto;
+import com.pars.financial.mapper.UserMapper;
 import com.pars.financial.entity.RefreshToken;
 import com.pars.financial.entity.User;
 import com.pars.financial.exception.GenericException;
@@ -28,17 +30,20 @@ public class AuthenticationService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final UserRepository userRepository;
     private final JwtProperties jwtProperties;
+    private final UserMapper userMapper;
 
     public AuthenticationService(AuthenticationManager authenticationManager,
                                JwtService jwtService,
                                RefreshTokenRepository refreshTokenRepository,
                                UserRepository userRepository,
-                               JwtProperties jwtProperties) {
+                               JwtProperties jwtProperties,
+                               UserMapper userMapper) {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.refreshTokenRepository = refreshTokenRepository;
         this.userRepository = userRepository;
         this.jwtProperties = jwtProperties;
+        this.userMapper = userMapper;
     }
 
     @Transactional
@@ -66,13 +71,17 @@ public class AuthenticationService {
             RefreshToken refreshToken = new RefreshToken(refreshTokenValue, user, refreshTokenExpiry, loginIp, userAgent, referrer);
             refreshTokenRepository.save(refreshToken);
 
+            // Convert user to non-confidential DTO
+            UserInfoDto userInfo = userMapper.toUserInfoDto(user);
+
             return new LoginResponse(
                 accessToken,
                 refreshTokenValue,
                 jwtService.getTokenExpirationTime(accessToken),
                 loginIp,
                 userAgent,
-                referrer
+                referrer,
+                userInfo
             );
 
         } catch (Exception e) {
