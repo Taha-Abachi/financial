@@ -150,9 +150,120 @@ public class ItemCategoryController {
             if (apiUser == null) {
                 return response;
             }
-            itemCategoryService.deleteCategory(id);
+            itemCategoryService.deleteCategory(id, apiUser.getUsername());
         } catch (Exception e) {
             logger.error("Error deleting item category with id {}: {}", id, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+        }
+        return response;
+    }
+
+    @PostMapping("/deactivate/{id}")
+    public GenericResponse<Void> deactivateItemCategory(@PathVariable Long id) {
+        logger.info("POST /api/v1/item-category/deactivate/{} called", id);
+        var response = new GenericResponse<Void>();
+        try {
+            User apiUser = ApiUserUtil.getApiUserOrSetError(response, logger, "API user not found");
+            if (apiUser == null) {
+                return response;
+            }
+            itemCategoryService.deactivateCategory(id, apiUser.getUsername());
+        } catch (Exception e) {
+            logger.error("Error deactivating item category with id {}: {}", id, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+        }
+        return response;
+    }
+
+    @PostMapping("/activate/{id}")
+    public GenericResponse<Void> activateItemCategory(@PathVariable Long id) {
+        logger.info("POST /api/v1/item-category/activate/{} called", id);
+        var response = new GenericResponse<Void>();
+        try {
+            User apiUser = ApiUserUtil.getApiUserOrSetError(response, logger, "API user not found");
+            if (apiUser == null) {
+                return response;
+            }
+            itemCategoryService.activateCategory(id);
+        } catch (Exception e) {
+            logger.error("Error activating item category with id {}: {}", id, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+        }
+        return response;
+    }
+
+    @GetMapping("/inactive")
+    public GenericResponse<List<ItemCategoryDto>> getInactiveItemCategories() {
+        logger.info("GET /api/v1/item-category/inactive called");
+        var response = new GenericResponse<List<ItemCategoryDto>>();
+        try {
+            User apiUser = ApiUserUtil.getApiUserOrSetError(response, logger, "API user not found");
+            if (apiUser == null) {
+                return response;
+            }
+            var itemCategories = itemCategoryService.getAllInactiveCategoryDtos();
+            response.data = itemCategories;
+        } catch (Exception e) {
+            logger.error("Error fetching inactive item categories: {}", e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+        }
+        return response;
+    }
+
+    @GetMapping("/all-including-inactive")
+    public GenericResponse<List<ItemCategoryDto>> getAllItemCategoriesIncludingInactive() {
+        logger.info("GET /api/v1/item-category/all-including-inactive called");
+        var response = new GenericResponse<List<ItemCategoryDto>>();
+        try {
+            User apiUser = ApiUserUtil.getApiUserOrSetError(response, logger, "API user not found");
+            if (apiUser == null) {
+                return response;
+            }
+            var itemCategories = itemCategoryService.getAllCategoryDtosIncludingInactive();
+            response.data = itemCategories;
+        } catch (Exception e) {
+            logger.error("Error fetching all item categories including inactive: {}", e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+        }
+        return response;
+    }
+
+    @GetMapping("/deleted")
+    public GenericResponse<List<ItemCategoryDto>> getDeletedItemCategories() {
+        logger.info("GET /api/v1/item-category/deleted called");
+        var response = new GenericResponse<List<ItemCategoryDto>>();
+        try {
+            User apiUser = ApiUserUtil.getApiUserOrSetError(response, logger, "API user not found");
+            if (apiUser == null) {
+                return response;
+            }
+            var itemCategories = itemCategoryService.getAllDeletedCategoryDtos();
+            response.data = itemCategories;
+        } catch (Exception e) {
+            logger.error("Error fetching deleted item categories: {}", e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+        }
+        return response;
+    }
+
+    @PostMapping("/restore/{id}")
+    public GenericResponse<Void> restoreItemCategory(@PathVariable Long id) {
+        logger.info("POST /api/v1/item-category/restore/{} called", id);
+        var response = new GenericResponse<Void>();
+        try {
+            User apiUser = ApiUserUtil.getApiUserOrSetError(response, logger, "API user not found");
+            if (apiUser == null) {
+                return response;
+            }
+            itemCategoryService.restoreCategory(id);
+        } catch (Exception e) {
+            logger.error("Error restoring item category with id {}: {}", id, e.getMessage());
             response.status = -1;
             response.message = e.getMessage();
         }

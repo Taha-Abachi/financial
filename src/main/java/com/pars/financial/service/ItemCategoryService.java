@@ -25,14 +25,14 @@ public class ItemCategoryService {
     }
 
     /**
-     * Find item category by ID
+     * Find item category by ID (only non-deleted)
      * @param categoryId the category ID
      * @return the category if found
      * @throws ValidationException if category not found
      */
     public ItemCategory findById(Long categoryId) {
         logger.debug("Finding item category by ID: {}", categoryId);
-        Optional<ItemCategory> category = itemCategoryRepository.findById(categoryId);
+        Optional<ItemCategory> category = itemCategoryRepository.findByIdNonDeleted(categoryId);
         if (category.isEmpty()) {
             logger.warn("Item category not found with ID: {}", categoryId);
             throw new ValidationException("Item category not found", null, -200);
@@ -51,21 +51,33 @@ public class ItemCategoryService {
     }
 
     /**
-     * Get all item categories
-     * @return list of all item categories
+     * Get all non-deleted item categories
+     * @return list of all non-deleted item categories
      */
     public List<ItemCategory> getAllCategories() {
-        logger.debug("Fetching all item categories");
-        return itemCategoryRepository.findAll();
+        logger.debug("Fetching all non-deleted item categories");
+        return itemCategoryRepository.findAllNonDeleted();
     }
 
     /**
-     * Get all item categories as DTOs
-     * @return list of all item category DTOs
+     * Get all non-deleted item categories as DTOs
+     * @return list of all non-deleted item category DTOs
      */
     public List<ItemCategoryDto> getAllCategoryDtos() {
-        logger.debug("Fetching all item category DTOs");
-        return itemCategoryRepository.findAll()
+        logger.debug("Fetching all non-deleted item category DTOs");
+        return itemCategoryRepository.findAllNonDeleted()
+                .stream()
+                .map(ItemCategoryDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get all deleted item categories as DTOs
+     * @return list of all deleted item category DTOs
+     */
+    public List<ItemCategoryDto> getAllDeletedCategoryDtos() {
+        logger.debug("Fetching all deleted item category DTOs");
+        return itemCategoryRepository.findAllDeleted()
                 .stream()
                 .map(ItemCategoryDto::fromEntity)
                 .collect(Collectors.toList());
@@ -89,9 +101,22 @@ public class ItemCategoryService {
      */
     public ItemCategory createCategory(ItemCategory category) {
         logger.info("Creating new item category: {}", category.getName());
-        if (itemCategoryRepository.existsByName(category.getName())) {
-            throw new ValidationException("Category with name '" + category.getName() + "' already exists", null, -201);
+        
+        // Check if a category with this name exists (including deleted ones)
+        ItemCategory existingCategory = itemCategoryRepository.findByNameIncludingDeleted(category.getName());
+        if (existingCategory != null) {
+            if (existingCategory.getIsDeleted()) {
+                // If it's deleted, restore it instead of creating a new one
+                logger.info("Restoring deleted category with name: {}", category.getName());
+                existingCategory.setIsDeleted(false);
+                existingCategory.setDescription(category.getDescription());
+                return itemCategoryRepository.save(existingCategory);
+            } else {
+                throw new ValidationException("Category with name '" + category.getName() + "' already exists", null, -201);
+            }
         }
+        
+        category.setIsDeleted(false);
         return itemCategoryRepository.save(category);
     }
 
@@ -103,11 +128,13 @@ public class ItemCategoryService {
     public List<ItemCategory> createCategories(List<ItemCategory> categories) {
         logger.info("Creating {} new item categories", categories.size());
         
-        // Check for duplicate names
+        // Check for duplicate names and handle deleted categories
         for (ItemCategory category : categories) {
-            if (itemCategoryRepository.existsByName(category.getName())) {
+            ItemCategory existingCategory = itemCategoryRepository.findByNameIncludingDeleted(category.getName());
+            if (existingCategory != null && !existingCategory.getIsDeleted()) {
                 throw new ValidationException("Category with name '" + category.getName() + "' already exists", null, -201);
             }
+            category.setIsDeleted(false);
         }
         
         return itemCategoryRepository.saveAll(categories);
@@ -124,28 +151,66 @@ public class ItemCategoryService {
             throw new ValidationException("Category ID is required for update", null, -202);
         }
         
-        // Check if category exists
-        if (!itemCategoryRepository.existsById(category.getId())) {
-            throw new ValidationException("Category not found", null, -200);
-        }
+        // Check if category exists (non-deleted)
+        ItemCategory existingCategory = findById(category.getId());
         
         // Check if name is being changed and if new name already exists
-        ItemCategory existingCategory = itemCategoryRepository.findById(category.getId()).get();
         if (!existingCategory.getName().equals(category.getName()) && 
             itemCategoryRepository.existsByName(category.getName())) {
             throw new ValidationException("Category with name '" + category.getName() + "' already exists", null, -201);
         }
         
+        category.setIsDeleted(false);
         return itemCategoryRepository.save(category);
     }
 
     /**
-     * Delete an item category
+     * Logical delete an item category
+     * @param categoryId the category ID to delete
+     * @param deleteUser the user performing the deletion
+     */
+    public void deleteCategory(Long categoryId, String deleteUser) {
+        logger.info("Logically deleting item category with ID: {} by user: {}", categoryId, deleteUser);
+        // Check if category exists (non-deleted)
+        findById(categoryId);
+        itemCategoryRepository.logicalDeleteByIdWithAudit(categoryId, java.time.LocalDateTime.now(), deleteUser);
+    }
+
+    /**
+     * Logical delete an item category (without user info)
      * @param categoryId the category ID to delete
      */
     public void deleteCategory(Long categoryId) {
-        logger.info("Deleting item category with ID: {}", categoryId);
-        if (!itemCategoryRepository.existsById(categoryId)) {
+        logger.info("Logically deleting item category with ID: {}", categoryId);
+        // Check if category exists (non-deleted)
+        findById(categoryId);
+        itemCategoryRepository.logicalDeleteById(categoryId);
+    }
+
+    /**
+     * Restore a deleted item category
+     * @param categoryId the category ID to restore
+     */
+    public void restoreCategory(Long categoryId) {
+        logger.info("Restoring item category with ID: {}", categoryId);
+        Optional<ItemCategory> category = itemCategoryRepository.findById(categoryId);
+        if (category.isEmpty()) {
+            throw new ValidationException("Category not found", null, -200);
+        }
+        if (!category.get().getIsDeleted()) {
+            throw new ValidationException("Category is not deleted", null, -203);
+        }
+        itemCategoryRepository.restoreById(categoryId);
+    }
+
+    /**
+     * Permanently delete an item category (physical delete)
+     * @param categoryId the category ID to permanently delete
+     */
+    public void permanentDeleteCategory(Long categoryId) {
+        logger.info("Permanently deleting item category with ID: {}", categoryId);
+        Optional<ItemCategory> category = itemCategoryRepository.findById(categoryId);
+        if (category.isEmpty()) {
             throw new ValidationException("Category not found", null, -200);
         }
         itemCategoryRepository.deleteById(categoryId);
@@ -158,5 +223,52 @@ public class ItemCategoryService {
      */
     public boolean existsByName(String categoryName) {
         return itemCategoryRepository.existsByName(categoryName);
+    }
+
+    /**
+     * Deactivate an item category
+     * @param categoryId the category ID to deactivate
+     * @param deactiveUser the user performing the deactivation
+     */
+    public void deactivateCategory(Long categoryId, String deactiveUser) {
+        logger.info("Deactivating item category with ID: {} by user: {}", categoryId, deactiveUser);
+        // Check if category exists (non-deleted)
+        findById(categoryId);
+        itemCategoryRepository.deactivateById(categoryId, java.time.LocalDateTime.now());
+    }
+
+    /**
+     * Activate an item category
+     * @param categoryId the category ID to activate
+     */
+    public void activateCategory(Long categoryId) {
+        logger.info("Activating item category with ID: {}", categoryId);
+        // Check if category exists (non-deleted)
+        findById(categoryId);
+        itemCategoryRepository.activateById(categoryId);
+    }
+
+    /**
+     * Get all inactive item categories as DTOs
+     * @return list of all inactive item category DTOs
+     */
+    public List<ItemCategoryDto> getAllInactiveCategoryDtos() {
+        logger.debug("Fetching all inactive item category DTOs");
+        return itemCategoryRepository.findAllInactive()
+                .stream()
+                .map(ItemCategoryDto::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get all item categories including inactive ones as DTOs
+     * @return list of all non-deleted item category DTOs (including inactive)
+     */
+    public List<ItemCategoryDto> getAllCategoryDtosIncludingInactive() {
+        logger.debug("Fetching all non-deleted item category DTOs including inactive");
+        return itemCategoryRepository.findAllNonDeletedIncludingInactive()
+                .stream()
+                .map(ItemCategoryDto::fromEntity)
+                .collect(Collectors.toList());
     }
 } 
