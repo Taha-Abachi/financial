@@ -35,11 +35,8 @@ public class DiscountCodeTransactionController {
     public GenericResponse<DiscountCodeTransactionDto> redeem(@RequestBody DiscountCodeTransactionDto transactionDto) {
         logger.info("POST /api/v1/discountcode/transaction/redeem called with request: {}", transactionDto);
         GenericResponse<DiscountCodeTransactionDto> response = new GenericResponse<>();
-        User apiUser = ApiUserUtil.getApiUser();
+        User apiUser = ApiUserUtil.getApiUserOrSetError(response, logger);
         if (apiUser == null) {
-            logger.error("Api User is null");
-            response.message = "Api User is null";
-            response.status = -1;
             return response;
         }
         var dto = discountCodeTransactionService.redeem(apiUser, transactionDto);
@@ -56,11 +53,8 @@ public class DiscountCodeTransactionController {
     public GenericResponse<DiscountCodeTransactionDto> confirm(@RequestBody DiscountCodeTransactionDto transactionDto) {
         logger.info("POST /api/v1/discountcode/transaction/confirm called with request: {}", transactionDto);
         GenericResponse<DiscountCodeTransactionDto> response = new GenericResponse<>();
-        User apiUser = ApiUserUtil.getApiUser();
+        User apiUser = ApiUserUtil.getApiUserOrSetError(response, logger);
         if (apiUser == null) {
-            logger.error("Api User is null");
-            response.message = "Api User is null";
-            response.status = -1;
             return response;
         }
         var dto = discountCodeTransactionService.confirm(apiUser, transactionDto);
@@ -77,11 +71,8 @@ public class DiscountCodeTransactionController {
     public GenericResponse<DiscountCodeTransactionDto> reverse(@RequestBody DiscountCodeTransactionDto transactionDto) {
         logger.info("POST /api/v1/discountcode/transaction/reverse called with request: {}", transactionDto);
         GenericResponse<DiscountCodeTransactionDto> response = new GenericResponse<>();
-        User apiUser = ApiUserUtil.getApiUser();
+        User apiUser = ApiUserUtil.getApiUserOrSetError(response, logger);
         if (apiUser == null) {
-            logger.error("Api User is null");
-            response.message = "Api User is null";
-            response.status = -1;
             return response;
         }
         var dto = discountCodeTransactionService.reverse(apiUser, transactionDto);
@@ -98,11 +89,8 @@ public class DiscountCodeTransactionController {
     public GenericResponse<DiscountCodeTransactionDto> refund(@RequestBody DiscountCodeTransactionDto transactionDto) {
         logger.info("POST /api/v1/discountcode/transaction/refund called with request: {}", transactionDto);
         GenericResponse<DiscountCodeTransactionDto> response = new GenericResponse<>();
-        User apiUser = ApiUserUtil.getApiUser();
+        User apiUser = ApiUserUtil.getApiUserOrSetError(response, logger);
         if (apiUser == null) {
-            logger.error("Api User is null");
-            response.message = "Api User is null";
-            response.status = -1;
             return response;
         }
         var dto = discountCodeTransactionService.refund(apiUser, transactionDto);
@@ -119,11 +107,8 @@ public class DiscountCodeTransactionController {
     public GenericResponse<DiscountCodeTransactionDto> check(@RequestBody DiscountCodeTransactionDto transactionDto) {
         logger.info("POST /api/v1/discountcode/transaction/check called with request: {}", transactionDto);
         GenericResponse<DiscountCodeTransactionDto> response = new GenericResponse<>();
-        User apiUser = ApiUserUtil.getApiUser();
+        User apiUser = ApiUserUtil.getApiUserOrSetError(response, logger);
         if (apiUser == null) {
-            logger.error("Api User is null");
-            response.message = "Api User is null";
-            response.status = -1;
             return response;
         }
         var dto = discountCodeTransactionService.checkDiscountCode(apiUser, transactionDto);
@@ -140,11 +125,8 @@ public class DiscountCodeTransactionController {
     public GenericResponse<DiscountCodeTransactionDto> get(@PathVariable UUID transactionId) {
         logger.info("GET /api/v1/discountcode/transaction/followup/{} called", transactionId);
         GenericResponse<DiscountCodeTransactionDto> response = new GenericResponse<>();
-        User apiUser = ApiUserUtil.getApiUser();
+        User apiUser = ApiUserUtil.getApiUserOrSetError(response, logger);
         if (apiUser == null) {
-            logger.error("Api User is null");
-            response.message = "Api User is null";
-            response.status = -1;
             return response;
         }
         var dto = discountCodeTransactionService.getTransaction(transactionId);
@@ -163,11 +145,8 @@ public class DiscountCodeTransactionController {
             @RequestParam(defaultValue = "10") int size) {
         logger.info("GET /api/v1/discountcode/transaction/list called with page: {}, size: {}", page, size);
         GenericResponse<List<DiscountCodeTransactionDto>> response = new GenericResponse<>();
-        User apiUser = ApiUserUtil.getApiUser();
+        User apiUser = ApiUserUtil.getApiUserOrSetError(response, logger);
         if (apiUser == null) {
-            logger.error("Api User is null");
-            response.message = "Api User is null";
-            response.status = -1;
             return response;
         }
         var transactions = discountCodeTransactionService.getTransactions(page, size);

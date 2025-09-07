@@ -8,6 +8,8 @@ import com.pars.financial.utils.ApiUserUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,92 +25,95 @@ public class GiftCardTransactionController {
     }
 
     @PostMapping("/debit")
-    public GenericResponse<GiftCardTransactionDto> debit(@RequestBody GiftCardTransactionDto dto) {
+    public ResponseEntity<GenericResponse<GiftCardTransactionDto>> debit(@RequestBody GiftCardTransactionDto dto) {
         logger.info("POST /api/v1/giftcard/transaction/debit called with request: {}", dto);
         var res = new GenericResponse<GiftCardTransactionDto>();
-        User apiUser = ApiUserUtil.getApiUser();
-        if (apiUser == null) {
-            logger.error("Api User is null");
-            res.message = "Api User is null";
-            res.status = -1;
-            return res;
+        
+        ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+        if (userResult.isError()) {
+            res.message = userResult.errorMessage;
+            res.status = 401;
+            return ResponseEntity.status(userResult.httpStatus).body(res);
         }
 
-        var trx = transactionService.debitGiftCard(apiUser, dto.clientTransactionId, dto.amount, dto.giftCardSerialNo, dto.storeId, dto.phoneNo);
+        var trx = transactionService.debitGiftCard(userResult.user, dto.clientTransactionId, dto.amount, dto.giftCardSerialNo, dto.storeId, dto.phoneNo);
         if (trx == null) {
             logger.warn("Failed to debit gift card for clientTransactionId: {}", dto.clientTransactionId);
             res.message = "Failed to debit gift card";
             res.status = -1;
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
         }
-        assert trx != null;
         res.data = trx;
-        return res;
+        return ResponseEntity.ok(res);
     }
 
     @PostMapping("/reverse")
-    public GenericResponse<GiftCardTransactionDto> reverse(@RequestBody GiftCardTransactionDto dto) {
+    public ResponseEntity<GenericResponse<GiftCardTransactionDto>> reverse(@RequestBody GiftCardTransactionDto dto) {
         logger.info("POST /api/v1/giftcard/transaction/reverse called with request: {}", dto);
         var res = new GenericResponse<GiftCardTransactionDto>();
-        User apiUser = ApiUserUtil.getApiUser();
-        if (apiUser == null) {
-            logger.error("Api User is null");
-            res.message = "Api User is null";
-            res.status = -1;
-            return res;
+        
+        ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+        if (userResult.isError()) {
+            res.message = userResult.errorMessage;
+            res.status = 401;
+            return ResponseEntity.status(userResult.httpStatus).body(res);
         }
-        var trx = transactionService.reverseTransaction(apiUser, dto.clientTransactionId, dto.amount, dto.giftCardSerialNo, dto.transactionId);
+        
+        var trx = transactionService.reverseTransaction(userResult.user, dto.clientTransactionId, dto.amount, dto.giftCardSerialNo, dto.transactionId);
         if (trx == null) {
             logger.warn("Failed to reverse gift card transaction for clientTransactionId: {}", dto.clientTransactionId);
             res.message = "Failed to reverse gift card transaction.";
             res.status = -1;
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
         }
-        assert trx != null;
         res.data = trx;
-        return res;
+        return ResponseEntity.ok(res);
     }
 
     @PostMapping("/confirm")
-    public GenericResponse<GiftCardTransactionDto> confirm(@RequestBody GiftCardTransactionDto dto) {
+    public ResponseEntity<GenericResponse<GiftCardTransactionDto>> confirm(@RequestBody GiftCardTransactionDto dto) {
         logger.info("POST /api/v1/giftcard/transaction/confirm called with request: {}", dto);
         var res = new GenericResponse<GiftCardTransactionDto>();
-        User apiUser = ApiUserUtil.getApiUser();
-        if (apiUser == null) {
-            logger.error("Api User is null");
-            res.message = "Api User is null";
-            res.status = -1;
-            return res;
+        
+        ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+        if (userResult.isError()) {
+            res.message = userResult.errorMessage;
+            res.status = 401;
+            return ResponseEntity.status(userResult.httpStatus).body(res);
         }
-        var trx = transactionService.confirmTransaction(apiUser, dto.clientTransactionId, dto.amount, dto.giftCardSerialNo, dto.transactionId);
+        
+        var trx = transactionService.confirmTransaction(userResult.user, dto.clientTransactionId, dto.amount, dto.giftCardSerialNo, dto.transactionId);
         if (trx == null) {
             logger.warn("Failed to confirm gift card transaction for clientTransactionId: {}", dto.clientTransactionId);
             res.message = "Failed to confirm gift card transaction.";
             res.status = -1;
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
         }
-        assert trx != null;
         res.data = trx;
-        return res;
+        return ResponseEntity.ok(res);
     }
 
     @PostMapping("/refund")
-    public GenericResponse<GiftCardTransactionDto> refund(@RequestBody GiftCardTransactionDto dto) {
+    public ResponseEntity<GenericResponse<GiftCardTransactionDto>> refund(@RequestBody GiftCardTransactionDto dto) {
         logger.info("POST /api/v1/giftcard/transaction/refund called with request: {}", dto);
         var res = new GenericResponse<GiftCardTransactionDto>();
-        User apiUser = ApiUserUtil.getApiUser();
-        if (apiUser == null) {
-            logger.error("Api User is null");
-            res.message = "Api User is null";
-            res.status = -1;
-            return res;
+        
+        ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+        if (userResult.isError()) {
+            res.message = userResult.errorMessage;
+            res.status = 401;
+            return ResponseEntity.status(userResult.httpStatus).body(res);
         }
-        var trx = transactionService.refundTransaction(apiUser, dto.clientTransactionId, dto.amount, dto.giftCardSerialNo, dto.transactionId);
+        
+        var trx = transactionService.refundTransaction(userResult.user, dto.clientTransactionId, dto.amount, dto.giftCardSerialNo, dto.transactionId);
         if (trx == null) {
             logger.warn("Failed to refund gift card transaction for clientTransactionId: {}", dto.clientTransactionId);
             res.message = "Failed to refund gift card transaction.";
             res.status = -1;
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
         }
-        assert trx != null;
         res.data = trx;
-        return res;
+        return ResponseEntity.ok(res);
     }
 
     @GetMapping("/checkStatus/{clientTransactionId}")

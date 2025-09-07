@@ -31,10 +31,8 @@ public class ItemCategoryController {
         logger.info("POST /api/v1/item-category/create called");
         var response = new GenericResponse<ItemCategoryDto>();
         try {
-            User apiUser = ApiUserUtil.getApiUser();
+            User apiUser = ApiUserUtil.getApiUserOrSetError(response, logger, "API user not found");
             if (apiUser == null) {
-                response.status = -1;
-                response.message = "API user not found";
                 return response;
             }
             
@@ -58,10 +56,8 @@ public class ItemCategoryController {
         logger.info("POST /api/v1/item-category/create-bulk called");
         var response = new GenericResponse<List<ItemCategoryDto>>();
         try {
-            User apiUser = ApiUserUtil.getApiUser();
+            User apiUser = ApiUserUtil.getApiUserOrSetError(response, logger, "API user not found");
             if (apiUser == null) {
-                response.status = -1;
-                response.message = "API user not found";
                 return response;
             }
             var entities = request.stream()
@@ -89,10 +85,8 @@ public class ItemCategoryController {
         logger.info("GET /api/v1/item-category/list called");
         var response = new GenericResponse<List<ItemCategoryDto>>();
         try {
-            User apiUser = ApiUserUtil.getApiUser();
+            User apiUser = ApiUserUtil.getApiUserOrSetError(response, logger, "API user not found");
             if (apiUser == null) {
-                response.status = -1;
-                response.message = "API user not found";
                 return response;
             }
             var itemCategories = itemCategoryService.getAllCategoryDtos();
@@ -110,10 +104,8 @@ public class ItemCategoryController {
         logger.info("GET /api/v1/item-category/{} called", id);
         var response = new GenericResponse<ItemCategoryDto>();
         try {
-            User apiUser = ApiUserUtil.getApiUser();
+            User apiUser = ApiUserUtil.getApiUserOrSetError(response, logger, "API user not found");
             if (apiUser == null) {
-                response.status = -1;
-                response.message = "API user not found";
                 return response;
             }
             var itemCategory = itemCategoryService.getCategoryDtoById(id);
@@ -131,10 +123,8 @@ public class ItemCategoryController {
         logger.info("PUT /api/v1/item-category/update/{} called", id);
         var response = new GenericResponse<ItemCategoryDto>();
         try {
-            User apiUser = ApiUserUtil.getApiUser();
+            User apiUser = ApiUserUtil.getApiUserOrSetError(response, logger, "API user not found");
             if (apiUser == null) {
-                response.status = -1;
-                response.message = "API user not found";
                 return response;
             }
             ItemCategory category = new ItemCategory();
@@ -156,10 +146,8 @@ public class ItemCategoryController {
         logger.info("DELETE /api/v1/item-category/delete/{} called", id);
         var response = new GenericResponse<Void>();
         try {
-            User apiUser = ApiUserUtil.getApiUser();
+            User apiUser = ApiUserUtil.getApiUserOrSetError(response, logger, "API user not found");
             if (apiUser == null) {
-                response.status = -1;
-                response.message = "API user not found";
                 return response;
             }
             itemCategoryService.deleteCategory(id);
