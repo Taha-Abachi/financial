@@ -95,14 +95,20 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/giftcard/*").hasAnyRole("ADMIN","API_USER")
                         .requestMatchers("/api/v1/giftcard/identifier/*").hasAnyRole("ADMIN","API_USER")
                         .requestMatchers("/api/v1/giftcard/transaction/checkStatus/").hasAnyRole("ADMIN", "API_USER")
-                        // Item Category endpoints - POST, PUT, DELETE operations restricted to ADMIN only
+                        // Item Category endpoints - POST, PUT, DELETE operations restricted to SUPERADMIN only
                         .requestMatchers("/api/v1/item-category/create").hasRole("SUPERADMIN")
                         .requestMatchers("/api/v1/item-category/create-bulk").hasRole("SUPERADMIN")
                         .requestMatchers("/api/v1/item-category/update/*").hasRole("SUPERADMIN")
                         .requestMatchers("/api/v1/item-category/delete/*").hasRole("SUPERADMIN")
-                        // Item Category endpoints - GET operations accessible to both ADMIN and API_USER
-                        .requestMatchers("/api/v1/item-category/list").hasAnyRole("ADMIN", "API_USER")
-                        .requestMatchers("/api/v1/item-category/*").hasAnyRole("ADMIN", "API_USER")
+                        .requestMatchers("/api/v1/item-category/deactivate/*").hasRole("SUPERADMIN")
+                        .requestMatchers("/api/v1/item-category/activate/*").hasRole("SUPERADMIN")
+                        .requestMatchers("/api/v1/item-category/restore/*").hasRole("SUPERADMIN")
+                        // Item Category endpoints - GET operations accessible to ADMIN, API_USER, and SUPERADMIN
+                        .requestMatchers("/api/v1/item-category/list").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN")
+                        .requestMatchers("/api/v1/item-category/inactive").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN")
+                        .requestMatchers("/api/v1/item-category/all-including-inactive").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN")
+                        .requestMatchers("/api/v1/item-category/deleted").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN")
+                        .requestMatchers("/api/v1/item-category/*").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN")
                         // User and UserRole endpoints - restricted to ADMIN and SUPERADMIN
                         .requestMatchers("/api/v1/users/**").hasAnyRole("ADMIN", "SUPERADMIN")
                         .requestMatchers("/api/v1/user-roles/**").hasAnyRole("ADMIN", "SUPERADMIN")
