@@ -112,7 +112,7 @@ public class UserService {
         user.setEmail(request.getEmail());
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
-
+        user.setApiKey(generateSecureApiKey());
         var savedUser = userRepository.save(user);
         logger.info("Created user with id: {}", savedUser.getId());
         return convertToUserDto(savedUser);
@@ -412,7 +412,7 @@ public class UserService {
         userDto.setActive(user.isActive());
         userDto.setCreatedAt(user.getCreatedAt());
         userDto.setUpdatedAt(user.getUpdatedAt());
-        userDto.setApiKey(user.getApiKey()); // Include API key in DTO
+        userDto.setApiKey(user.getApiKey() == null ? "" : user.getApiKey()); // Include API key in DTO
         
         if (user.getRole() != null) {
             UserRoleDto roleDto = new UserRoleDto();

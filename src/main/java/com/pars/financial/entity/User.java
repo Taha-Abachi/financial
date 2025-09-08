@@ -195,7 +195,7 @@ public class User {
     }
 
     public String getApiKey() {
-        return apiKeyEncryption != null ? apiKeyEncryption.decrypt(apiKey) : apiKey;
+        return apiKeyEncryption != null && (apiKey != null) && (!apiKey.isEmpty())  ? apiKeyEncryption.decrypt(apiKey) : "";
     }
 
     public void setApiKey(String apiKey) {
