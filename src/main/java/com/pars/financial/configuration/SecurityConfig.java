@@ -70,6 +70,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .authenticationProvider(authenticationProvider())
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .addFilterBefore(new SecurityContextFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new RateLimitFilter(rateLimitProperties), UsernamePasswordAuthenticationFilter.class)
@@ -95,10 +96,10 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/giftcard/identifier/*").hasAnyRole("ADMIN","API_USER")
                         .requestMatchers("/api/v1/giftcard/transaction/checkStatus/").hasAnyRole("ADMIN", "API_USER")
                         // Item Category endpoints - POST, PUT, DELETE operations restricted to ADMIN only
-                        .requestMatchers("/api/v1/item-category/create").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/item-category/create-bulk").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/item-category/update/*").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/item-category/delete/*").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/item-category/create").hasRole("SUPERADMIN")
+                        .requestMatchers("/api/v1/item-category/create-bulk").hasRole("SUPERADMIN")
+                        .requestMatchers("/api/v1/item-category/update/*").hasRole("SUPERADMIN")
+                        .requestMatchers("/api/v1/item-category/delete/*").hasRole("SUPERADMIN")
                         // Item Category endpoints - GET operations accessible to both ADMIN and API_USER
                         .requestMatchers("/api/v1/item-category/list").hasAnyRole("ADMIN", "API_USER")
                         .requestMatchers("/api/v1/item-category/*").hasAnyRole("ADMIN", "API_USER")

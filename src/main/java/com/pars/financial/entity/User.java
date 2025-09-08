@@ -2,7 +2,6 @@ package com.pars.financial.entity;
 
 import java.time.LocalDateTime;
 
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.pars.financial.utils.ApiKeyEncryption;
 
@@ -82,9 +81,6 @@ public class User {
     @Transient
     private static ApiKeyEncryption apiKeyEncryption;
 
-    @Transient
-    private static final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
-
     public static void setApiKeyEncryption(ApiKeyEncryption encryption) {
         apiKeyEncryption = encryption;
     }
@@ -94,7 +90,7 @@ public class User {
     public User(String username, String name, String password, String mobilePhoneNumber, String nationalCode, UserRole role) {
         this.username = username;
         this.name = name;
-        this.password = password;
+        this.password = password; // Store raw password, will be encoded by service
         this.mobilePhoneNumber = mobilePhoneNumber;
         this.nationalCode = nationalCode;
         this.role = role;
@@ -131,10 +127,14 @@ public class User {
     }
 
     public void setPassword(String password) {
-        this.password = passwordEncoder.encode(password);
+        this.password = password; // Store raw password, encoding will be done by service
     }
 
-    public boolean matchesPassword(String rawPassword) {
+    public void setEncodedPassword(String encodedPassword) {
+        this.password = encodedPassword;
+    }
+
+    public boolean matchesPassword(String rawPassword, org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         return passwordEncoder.matches(rawPassword, this.password);
     }
 

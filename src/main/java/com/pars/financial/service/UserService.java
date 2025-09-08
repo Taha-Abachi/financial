@@ -28,14 +28,12 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserRoleRepository userRoleRepository;
     private final PasswordEncoder passwordEncoder;
-    private final ApiKeyEncryption apiKeyEncryption;
 
     public UserService(UserRepository userRepository, UserRoleRepository userRoleRepository, 
                       PasswordEncoder passwordEncoder, ApiKeyEncryption apiKeyEncryption) {
         this.userRepository = userRepository;
         this.userRoleRepository = userRoleRepository;
         this.passwordEncoder = passwordEncoder;
-        this.apiKeyEncryption = apiKeyEncryption;
         
         // Set the API key encryption in the User entity
         User.setApiKeyEncryption(apiKeyEncryption);
@@ -100,7 +98,7 @@ public class UserService {
             throw new ValidationException("User role not found", null, -119);
         }
 
-        // Create user - password encoding is handled by the User entity
+        // Create user
         var user = new User(
             request.getUsername(),
             request.getName(),
@@ -113,6 +111,10 @@ public class UserService {
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         user.setApiKey(generateSecureApiKey());
+        
+        // Encode password before saving
+        user.setEncodedPassword(passwordEncoder.encode(request.getPassword()));
+        
         var savedUser = userRepository.save(user);
         logger.info("Created user with id: {}", savedUser.getId());
         return convertToUserDto(savedUser);
@@ -136,7 +138,7 @@ public class UserService {
         }
 
         if (request.getPassword() != null) {
-            user.setPassword(request.getPassword()); // Password encoding handled by User entity
+            user.setEncodedPassword(passwordEncoder.encode(request.getPassword()));
         }
 
         if (request.getMobilePhoneNumber() != null) {
@@ -387,7 +389,7 @@ public class UserService {
         var superAdminUser = new User(
             "superadmin",
             "System Super Administrator",
-            "admin123", // This will be encoded by the User entity
+            "admin123",
             "09123456789",
             "0000000000",
             superAdminRole.get()
@@ -396,6 +398,9 @@ public class UserService {
         superAdminUser.setActive(true);
         superAdminUser.setCreatedAt(LocalDateTime.now());
         superAdminUser.setUpdatedAt(LocalDateTime.now());
+        
+        // Encode password before saving
+        superAdminUser.setEncodedPassword(passwordEncoder.encode("admin123"));
         
         var savedUser = userRepository.save(superAdminUser);
         logger.info("Created default super admin user with id: {}", savedUser.getId());
