@@ -83,6 +83,7 @@ public class SecurityConfig {
                         // API endpoints
                         .requestMatchers("/api/v1/customer").hasRole("ADMIN")
                         .requestMatchers("/api/v1/store").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/companies").hasRole("ADMIN")
                         .requestMatchers("/api/v1/giftcard/issue*").hasRole("ADMIN")
                         .requestMatchers("/api/v1/discountcode/issue*").hasRole("ADMIN")
                         .requestMatchers("/api/v1/discountcode/transaction/list").hasRole("ADMIN")
