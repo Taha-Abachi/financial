@@ -10,6 +10,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import com.pars.financial.dto.BatchCreateRequest;
 import com.pars.financial.dto.BatchDto;
 import com.pars.financial.entity.Batch;
@@ -28,13 +31,15 @@ public class BatchService {
     private final UserRepository userRepository;
     private final DiscountCodeService discountCodeService;
     private final GiftCardService giftCardService;
+    private final ObjectMapper objectMapper;
 
-    public BatchService(BatchRepository batchRepository, CompanyRepository companyRepository, UserRepository userRepository, DiscountCodeService discountCodeService, GiftCardService giftCardService) {
+    public BatchService(BatchRepository batchRepository, CompanyRepository companyRepository, UserRepository userRepository, DiscountCodeService discountCodeService, GiftCardService giftCardService, ObjectMapper objectMapper) {
         this.batchRepository = batchRepository;
         this.companyRepository = companyRepository;
         this.userRepository = userRepository;
         this.discountCodeService = discountCodeService;
         this.giftCardService = giftCardService;
+        this.objectMapper = objectMapper;
     }
 
     public List<BatchDto> getAllBatches() {
@@ -94,6 +99,9 @@ public class BatchService {
         // Create batch
         var batch = new Batch(batchNumber, request.getBatchType(), request.getDescription(), 
                              request.getTotalCount(), user.get(), company.get());
+        
+        // Set request details for persistence
+        setRequestDetails(batch, request);
         
         var savedBatch = batchRepository.save(batch);
         logger.info("Created batch with id: {} and batch number: {}", savedBatch.getId(), savedBatch.getBatchNumber());
@@ -231,6 +239,20 @@ public class BatchService {
             batchNumber = "BATCH" + RandomStringGenerator.generateRandomUppercaseStringWithNumbers(8);
         } while (batchRepository.existsByBatchNumber(batchNumber));
         return batchNumber;
+    }
+
+    private void setRequestDetails(Batch batch, BatchCreateRequest request) {
+        try {
+            if (request.getGiftCardRequests() != null && !request.getGiftCardRequests().isEmpty()) {
+                batch.setGiftCardRequestsJson(objectMapper.writeValueAsString(request.getGiftCardRequests()));
+            }
+            if (request.getDiscountCodeRequests() != null && !request.getDiscountCodeRequests().isEmpty()) {
+                batch.setDiscountCodeRequestsJson(objectMapper.writeValueAsString(request.getDiscountCodeRequests()));
+            }
+        } catch (JsonProcessingException e) {
+            logger.error("Error serializing request details for batch {}: {}", batch.getBatchNumber(), e.getMessage());
+            // Don't throw exception here as it's not critical for batch processing
+        }
     }
 
     @Transactional

@@ -19,10 +19,12 @@ public class BatchDto {
     private LocalDateTime updatedAt;
     private SimpleUserDto requestUser;
     private SimpleCompanyDto company;
+    private String giftCardRequestsJson;
+    private String discountCodeRequestsJson;
 
     public BatchDto() {}
 
-    public BatchDto(Long id, String batchNumber, Batch.BatchType batchType, String description, LocalDateTime requestDate, Integer totalCount, Batch.BatchStatus status, Integer processedCount, Integer failedCount, String errorMessage, LocalDateTime createdAt, LocalDateTime updatedAt, SimpleUserDto requestUser, SimpleCompanyDto company) {
+    public BatchDto(Long id, String batchNumber, Batch.BatchType batchType, String description, LocalDateTime requestDate, Integer totalCount, Batch.BatchStatus status, Integer processedCount, Integer failedCount, String errorMessage, LocalDateTime createdAt, LocalDateTime updatedAt, SimpleUserDto requestUser, SimpleCompanyDto company, String giftCardRequestsJson, String discountCodeRequestsJson) {
         this.id = id;
         this.batchNumber = batchNumber;
         this.batchType = batchType;
@@ -37,6 +39,8 @@ public class BatchDto {
         this.updatedAt = updatedAt;
         this.requestUser = requestUser;
         this.company = company;
+        this.giftCardRequestsJson = giftCardRequestsJson;
+        this.discountCodeRequestsJson = discountCodeRequestsJson;
     }
 
     public static BatchDto fromEntity(Batch batch) {
@@ -57,7 +61,9 @@ public class BatchDto {
             batch.getCreatedAt(),
             batch.getUpdatedAt(),
             SimpleUserDto.fromEntity(batch.getRequestUser()),
-            SimpleCompanyDto.fromEntity(batch.getCompany())
+            SimpleCompanyDto.fromEntity(batch.getCompany()),
+            batch.getGiftCardRequestsJson(),
+            batch.getDiscountCodeRequestsJson()
         );
     }
 
@@ -171,5 +177,21 @@ public class BatchDto {
 
     public void setCompany(SimpleCompanyDto company) {
         this.company = company;
+    }
+
+    public String getGiftCardRequestsJson() {
+        return giftCardRequestsJson;
+    }
+
+    public void setGiftCardRequestsJson(String giftCardRequestsJson) {
+        this.giftCardRequestsJson = giftCardRequestsJson;
+    }
+
+    public String getDiscountCodeRequestsJson() {
+        return discountCodeRequestsJson;
+    }
+
+    public void setDiscountCodeRequestsJson(String discountCodeRequestsJson) {
+        this.discountCodeRequestsJson = discountCodeRequestsJson;
     }
 } 

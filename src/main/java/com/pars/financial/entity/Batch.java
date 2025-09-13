@@ -64,6 +64,12 @@ public class Batch {
     @JoinColumn(name = "company_id", nullable = false)
     private Company company;
 
+    @Column(name = "gift_card_requests", columnDefinition = "TEXT")
+    private String giftCardRequestsJson;
+
+    @Column(name = "discount_code_requests", columnDefinition = "TEXT")
+    private String discountCodeRequestsJson;
+
     public enum BatchType {
         DISCOUNT_CODE,
         GIFT_CARD
@@ -201,5 +207,21 @@ public class Batch {
 
     public void setCompany(Company company) {
         this.company = company;
+    }
+
+    public String getGiftCardRequestsJson() {
+        return giftCardRequestsJson;
+    }
+
+    public void setGiftCardRequestsJson(String giftCardRequestsJson) {
+        this.giftCardRequestsJson = giftCardRequestsJson;
+    }
+
+    public String getDiscountCodeRequestsJson() {
+        return discountCodeRequestsJson;
+    }
+
+    public void setDiscountCodeRequestsJson(String discountCodeRequestsJson) {
+        this.discountCodeRequestsJson = discountCodeRequestsJson;
     }
 } 
