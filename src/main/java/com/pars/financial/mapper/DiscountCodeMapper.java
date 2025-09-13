@@ -43,6 +43,13 @@ public class DiscountCodeMapper {
         dto.companyId = code.getCompany() != null ? code.getCompany().getId() : null;
         dto.storeLimited = code.isStoreLimited();
         dto.itemCategoryLimited = code.isItemCategoryLimited();
+        
+        // Map batch information
+        var batch = code.getBatch();
+        if (batch != null) {
+            dto.batchId = batch.getId();
+            dto.batchNumber = batch.getBatchNumber();
+        }
         ArrayList<DiscountCodeTransactionDto> transactions = new ArrayList<>();
         code.getTransactions().stream().filter(t->t.getTrxType() == TransactionType.Redeem).forEach(p->
         {

@@ -27,4 +27,22 @@ public class DiscountCodeDto {
     public Long companyId;
     public boolean storeLimited;
     public boolean itemCategoryLimited;
+    public Long batchId;
+    public String batchNumber;
+
+    public Long getBatchId() {
+        return batchId;
+    }
+
+    public void setBatchId(Long batchId) {
+        this.batchId = batchId;
+    }
+
+    public String getBatchNumber() {
+        return batchNumber;
+    }
+
+    public void setBatchNumber(String batchNumber) {
+        this.batchNumber = batchNumber;
+    }
 }

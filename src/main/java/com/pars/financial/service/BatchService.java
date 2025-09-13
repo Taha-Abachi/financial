@@ -146,7 +146,7 @@ public class BatchService {
             for (int i = 0; i < request.getDiscountCodeRequests().size(); i++) {
                 var discountCodeRequest = request.getDiscountCodeRequests().get(i);
                 try {
-                    discountCodeService.generate(discountCodeRequest);
+                    discountCodeService.generateList(discountCodeRequest, batch);
                     processed += discountCodeRequest.count;
                 } catch (Exception e) {
                     logger.error("Error processing discount code {} in batch {}: {}", i + 1, batch.getBatchNumber(), e.getMessage());
@@ -165,7 +165,7 @@ public class BatchService {
                     defaultRequest.remainingValidityPeriod = 30L;
                     defaultRequest.count = 1;
                     
-                    discountCodeService.generate(defaultRequest);
+                    discountCodeService.generateList(defaultRequest, batch);
                     processed++;
                 } catch (Exception e) {
                     logger.error("Error processing discount code {} in batch {}: {}", i + 1, batch.getBatchNumber(), e.getMessage());

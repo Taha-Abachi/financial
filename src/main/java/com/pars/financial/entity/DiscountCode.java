@@ -85,6 +85,10 @@ public class DiscountCode {
     @JoinColumn(name = "company_id")
     private Company company;
 
+    @ManyToOne
+    @JoinColumn(name = "batch_id")
+    private Batch batch;
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -251,6 +255,14 @@ public class DiscountCode {
 
     public void setCompany(Company company) {
         this.company = company;
+    }
+
+    public Batch getBatch() {
+        return batch;
+    }
+
+    public void setBatch(Batch batch) {
+        this.batch = batch;
     }
 
     /**
