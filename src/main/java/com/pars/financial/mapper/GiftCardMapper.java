@@ -41,6 +41,14 @@ public class GiftCardMapper {
         }
         dto.storeLimited = gc.isStoreLimited();
         dto.itemCategoryLimited = gc.isItemCategoryLimited();
+        
+        // Map batch information
+        var batch = gc.getBatch();
+        if (batch != null) {
+            dto.batchId = batch.getId();
+            dto.batchNumber = batch.getBatchNumber();
+        }
+        
         dto.transactions = new ArrayList<>();
         var debits = gc.getTransactions().stream().filter(p->p.getTransactionType() == TransactionType.Debit).toList();
         for(GiftCardTransaction transaction : debits) {

@@ -82,6 +82,10 @@ public class GiftCard {
     @JoinColumn(name = "company_id")
     private Company company;
 
+    @ManyToOne
+    @JoinColumn(name = "batch_id")
+    private Batch batch;
+
     public Customer getCustomer() {
         return customer;
     }
@@ -96,6 +100,14 @@ public class GiftCard {
 
     public void setCompany(Company company) {
         this.company = company;
+    }
+
+    public Batch getBatch() {
+        return batch;
+    }
+
+    public void setBatch(Batch batch) {
+        this.batch = batch;
     }
 
     public void setId(Long id) {

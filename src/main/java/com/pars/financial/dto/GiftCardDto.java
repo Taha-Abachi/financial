@@ -17,6 +17,8 @@ public class GiftCardDto {
     public Long companyId;
     public boolean storeLimited;
     public boolean itemCategoryLimited;
+    public Long batchId;
+    public String batchNumber;
 
     public List<GiftCardTransactionDto> transactions;
 
@@ -58,5 +60,21 @@ public class GiftCardDto {
 
     public void setIdentifier(Long identifier) {
         this.identifier = identifier;
+    }
+
+    public Long getBatchId() {
+        return batchId;
+    }
+
+    public void setBatchId(Long batchId) {
+        this.batchId = batchId;
+    }
+
+    public String getBatchNumber() {
+        return batchNumber;
+    }
+
+    public void setBatchNumber(String batchNumber) {
+        this.batchNumber = batchNumber;
     }
 }

@@ -190,7 +190,7 @@ public class BatchService {
             for (int i = 0; i < request.getGiftCardRequests().size(); i++) {
                 var giftCardRequest = request.getGiftCardRequests().get(i);
                 try {
-                    giftCardService.generateGiftCards(giftCardRequest);
+                    giftCardService.generateGiftCards(giftCardRequest, batch);
                     processed += giftCardRequest.getCount();
                 } catch (Exception e) {
                     logger.error("Error processing gift card {} in batch {}: {}", i + 1, batch.getBatchNumber(), e.getMessage());
@@ -210,7 +210,7 @@ public class BatchService {
                     defaultRequest.setRemainingValidityPeriod(30L);
                     defaultRequest.setCount(1);
                     
-                    giftCardService.generateGiftCards(defaultRequest);
+                    giftCardService.generateGiftCards(defaultRequest, batch);
                     processed++;
                 } catch (Exception e) {
                     logger.error("Error processing gift card {} in batch {}: {}", i + 1, batch.getBatchNumber(), e.getMessage());
