@@ -202,7 +202,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{token}}",
+								"value": "Bearer {{accessToken}}",
 								"type": "text"
 							}
 						],
@@ -267,12 +267,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{token}}",
-								"type": "text"
-							},
-							{
-								"key": "x-api-key",
-								"value": "{{ADMIN_API_KEY}}",
+								"value": "Bearer {{accessToken}}",
 								"type": "text"
 							}
 						],
@@ -321,12 +316,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{token}}",
-								"type": "text"
-							},
-							{
-								"key": "x-api-key",
-								"value": "{{ADMIN_API_KEY}}",
+								"value": "Bearer {{accessToken}}",
 								"type": "text"
 							}
 						],
@@ -375,7 +365,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{token}}",
+								"value": "Bearer {{accessToken}}",
 								"type": "text"
 							},
 							{
@@ -442,7 +432,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{token}}",
+								"value": "Bearer {{accessToken}}",
 								"type": "text"
 							},
 							{
@@ -510,12 +500,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{token}}",
-								"type": "text"
-							},
-							{
-								"key": "x-api-key",
-								"value": "{{ADMIN_API_KEY}}",
+								"value": "Bearer {{accessToken}}",
 								"type": "text"
 							}
 						],
@@ -570,12 +555,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{token}}",
-								"type": "text"
-							},
-							{
-								"key": "x-api-key",
-								"value": "{{ADMIN_API_KEY}}",
+								"value": "Bearer {{accessToken}}",
 								"type": "text"
 							}
 						],
@@ -624,12 +604,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{token}}",
-								"type": "text"
-							},
-							{
-								"key": "x-api-key",
-								"value": "{{ADMIN_API_KEY}}",
+								"value": "Bearer {{accessToken}}",
 								"type": "text"
 							}
 						],
@@ -678,7 +653,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{token}}",
+								"value": "Bearer {{accessToken}}",
 								"type": "text"
 							},
 							{
@@ -745,7 +720,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{token}}",
+								"value": "Bearer {{accessToken}}",
 								"type": "text"
 							},
 							{
@@ -813,12 +788,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{token}}",
-								"type": "text"
-							},
-							{
-								"key": "x-api-key",
-								"value": "{{ADMIN_API_KEY}}",
+								"value": "Bearer {{accessToken}}",
 								"type": "text"
 							}
 						],
@@ -868,12 +838,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{token}}",
-								"type": "text"
-							},
-							{
-								"key": "x-api-key",
-								"value": "{{ADMIN_API_KEY}}",
+								"value": "Bearer {{accessToken}}",
 								"type": "text"
 							}
 						],
@@ -923,12 +888,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{token}}",
-								"type": "text"
-							},
-							{
-								"key": "x-api-key",
-								"value": "{{ADMIN_API_KEY}}",
+								"value": "Bearer {{accessToken}}",
 								"type": "text"
 							}
 						],
@@ -978,12 +938,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{token}}",
-								"type": "text"
-							},
-							{
-								"key": "x-api-key",
-								"value": "{{ADMIN_API_KEY}}",
+								"value": "Bearer {{accessToken}}",
 								"type": "text"
 							}
 						],
@@ -1033,12 +988,7 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{token}}",
-								"type": "text"
-							},
-							{
-								"key": "x-api-key",
-								"value": "{{ADMIN_API_KEY}}",
+								"value": "Bearer {{accessToken}}",
 								"type": "text"
 							}
 						],

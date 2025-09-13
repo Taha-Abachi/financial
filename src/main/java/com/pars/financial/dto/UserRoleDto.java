@@ -1,7 +1,5 @@
 package com.pars.financial.dto;
 
-import java.time.LocalDateTime;
-
 public class UserRoleDto {
     private Long id;
     private String name;

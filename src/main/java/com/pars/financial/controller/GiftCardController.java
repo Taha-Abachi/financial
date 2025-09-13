@@ -3,11 +3,15 @@ package com.pars.financial.controller;
 import com.pars.financial.dto.GenericResponse;
 import com.pars.financial.dto.GiftCardDto;
 import com.pars.financial.dto.GiftCardIssueRequest;
+import com.pars.financial.dto.GiftCardReportDto;
 import com.pars.financial.dto.StoreLimitationRequest;
 import com.pars.financial.service.GiftCardService;
+import com.pars.financial.utils.ApiUserUtil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -159,5 +163,67 @@ public class GiftCardController {
             response.message = e.getMessage();
         }
         return response;
+    }
+
+    @GetMapping("/report")
+    public ResponseEntity<GenericResponse<GiftCardReportDto>> getGiftCardReport() {
+        logger.info("GET /api/v1/giftcard/report called");
+        var response = new GenericResponse<GiftCardReportDto>();
+        
+        try {
+            // Check authentication
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+            
+            // Generate report
+            GiftCardReportDto report = giftCardService.generateGiftCardReport();
+            response.data = report;
+            response.status = 200;
+            response.message = "Gift card report generated successfully";
+            
+            logger.info("Successfully generated gift card report");
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            logger.error("Error generating gift card report: {}", e.getMessage(), e);
+            response.status = -1;
+            response.message = "Failed to generate gift card report: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @GetMapping("/report/company/{companyId}")
+    public ResponseEntity<GenericResponse<GiftCardReportDto>> getGiftCardReportByCompany(@PathVariable Long companyId) {
+        logger.info("GET /api/v1/giftcard/report/company/{} called", companyId);
+        var response = new GenericResponse<GiftCardReportDto>();
+        
+        try {
+            // Check authentication
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+            
+            // Generate company-specific report
+            GiftCardReportDto report = giftCardService.generateGiftCardReportByCompany(companyId);
+            response.data = report;
+            response.status = 200;
+            response.message = "Gift card report for company " + companyId + " generated successfully";
+            
+            logger.info("Successfully generated gift card report for company: {}", companyId);
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            logger.error("Error generating gift card report for company {}: {}", companyId, e.getMessage(), e);
+            response.status = -1;
+            response.message = "Failed to generate gift card report for company: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 }

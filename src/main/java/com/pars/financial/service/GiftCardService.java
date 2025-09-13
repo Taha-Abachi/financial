@@ -2,6 +2,7 @@ package com.pars.financial.service;
 
 import com.pars.financial.dto.GiftCardDto;
 import com.pars.financial.dto.GiftCardIssueRequest;
+import com.pars.financial.dto.GiftCardReportDto;
 import com.pars.financial.entity.GiftCard;
 import com.pars.financial.entity.Store;
 import com.pars.financial.exception.GiftCardNotFoundException;
@@ -9,6 +10,7 @@ import com.pars.financial.exception.ValidationException;
 import com.pars.financial.mapper.GiftCardMapper;
 import com.pars.financial.repository.CompanyRepository;
 import com.pars.financial.repository.GiftCardRepository;
+import com.pars.financial.repository.GiftCardTransactionRepository;
 import com.pars.financial.repository.ItemCategoryRepository;
 import com.pars.financial.repository.StoreRepository;
 import com.pars.financial.utils.RandomStringGenerator;
@@ -39,13 +41,15 @@ public class GiftCardService {
     final StoreRepository storeRepository;
     final CompanyRepository companyRepository;
     final ItemCategoryRepository itemCategoryRepository;
+    final GiftCardTransactionRepository giftCardTransactionRepository;
 
-    public GiftCardService(GiftCardRepository giftCardRepository, GiftCardMapper giftCardMapper, StoreRepository storeRepository, CompanyRepository companyRepository, ItemCategoryRepository itemCategoryRepository) {
+    public GiftCardService(GiftCardRepository giftCardRepository, GiftCardMapper giftCardMapper, StoreRepository storeRepository, CompanyRepository companyRepository, ItemCategoryRepository itemCategoryRepository, GiftCardTransactionRepository giftCardTransactionRepository) {
         this.giftCardRepository = giftCardRepository;
         this.giftCardMapper = giftCardMapper;
         this.storeRepository = storeRepository;
         this.companyRepository = companyRepository;
         this.itemCategoryRepository = itemCategoryRepository;
+        this.giftCardTransactionRepository = giftCardTransactionRepository;
     }
 
     private void validateRealAmount(long realAmount) {
@@ -349,6 +353,96 @@ public class GiftCardService {
         var savedGiftCard = giftCardRepository.save(giftCard);
         logger.info("Successfully removed company assignment from gift card: {}", serialNo);
         return giftCardMapper.getFrom(savedGiftCard);
+    }
+
+    /**
+     * Generate comprehensive gift card report for all gift cards
+     * @return GiftCardReportDto containing all statistics
+     */
+    public GiftCardReportDto generateGiftCardReport() {
+        logger.info("Generating comprehensive gift card report");
+        
+        try {
+            // Get basic statistics
+            Long totalCount = giftCardRepository.countAllGiftCards();
+            Long totalBalance = giftCardRepository.sumTotalBalance();
+            Long totalInitialAmount = giftCardRepository.sumTotalInitialAmount();
+            Long activeCount = giftCardRepository.countActiveGiftCards();
+            Long blockedCount = giftCardRepository.countBlockedGiftCards();
+            Long expiredCount = giftCardRepository.countExpiredGiftCards(LocalDate.now());
+            Long usedCount = giftCardRepository.countUsedGiftCards();
+            Double averageBalance = giftCardRepository.getAverageBalance();
+            Double averageInitialAmount = giftCardRepository.getAverageInitialAmount();
+            
+            // Get debit transaction statistics
+            Long totalDebitTransactions = giftCardTransactionRepository.countDebitTransactions();
+            Long totalDebitAmount = giftCardTransactionRepository.sumDebitAmount();
+            
+            GiftCardReportDto report = new GiftCardReportDto(
+                totalCount, totalBalance, totalInitialAmount,
+                totalDebitTransactions, totalDebitAmount,
+                activeCount, blockedCount, expiredCount, usedCount,
+                averageBalance, averageInitialAmount
+            );
+            
+            logger.info("Successfully generated gift card report: totalCount={}, totalBalance={}, totalInitialAmount={}, totalDebitTransactions={}", 
+                       totalCount, totalBalance, totalInitialAmount, totalDebitTransactions);
+            
+            return report;
+            
+        } catch (Exception e) {
+            logger.error("Error generating gift card report: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to generate gift card report", e);
+        }
+    }
+
+    /**
+     * Generate gift card report for a specific company
+     * @param companyId the company ID
+     * @return GiftCardReportDto containing company-specific statistics
+     */
+    public GiftCardReportDto generateGiftCardReportByCompany(Long companyId) {
+        logger.info("Generating gift card report for company: {}", companyId);
+        
+        try {
+            // Validate company exists
+            if (!companyRepository.existsById(companyId)) {
+                throw new ValidationException("Company not found with ID: " + companyId, null, -1);
+            }
+            
+            // Get company-specific statistics
+            Long totalCount = giftCardRepository.countGiftCardsByCompany(companyId);
+            Long totalBalance = giftCardRepository.sumBalanceByCompany(companyId);
+            Long totalInitialAmount = giftCardRepository.sumInitialAmountByCompany(companyId);
+            Long activeCount = giftCardRepository.countActiveGiftCardsByCompany(companyId);
+            Long blockedCount = giftCardRepository.countBlockedGiftCardsByCompany(companyId);
+            Long expiredCount = giftCardRepository.countExpiredGiftCardsByCompany(companyId, LocalDate.now());
+            Long usedCount = giftCardRepository.countUsedGiftCardsByCompany(companyId);
+            Double averageBalance = giftCardRepository.getAverageBalanceByCompany(companyId);
+            Double averageInitialAmount = giftCardRepository.getAverageInitialAmountByCompany(companyId);
+            
+            // Get company-specific debit transaction statistics
+            Long totalDebitTransactions = giftCardTransactionRepository.countDebitTransactionsByCompany(companyId);
+            Long totalDebitAmount = giftCardTransactionRepository.sumDebitAmountByCompany(companyId);
+            
+            GiftCardReportDto report = new GiftCardReportDto(
+                totalCount, totalBalance, totalInitialAmount,
+                totalDebitTransactions, totalDebitAmount,
+                activeCount, blockedCount, expiredCount, usedCount,
+                averageBalance, averageInitialAmount
+            );
+            
+            logger.info("Successfully generated gift card report for company {}: totalCount={}, totalBalance={}, totalInitialAmount={}, totalDebitTransactions={}", 
+                       companyId, totalCount, totalBalance, totalInitialAmount, totalDebitTransactions);
+            
+            return report;
+            
+        } catch (ValidationException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error generating gift card report for company {}: {}", companyId, e.getMessage(), e);
+            throw new RuntimeException("Failed to generate gift card report for company", e);
+        }
     }
 }
 

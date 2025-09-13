@@ -50,17 +50,12 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{token}}",
+								"value": "Bearer {{accessToken}}",
 								"type": "text"
 							},
 							{
 								"key": "Content-Type",
 								"value": "application/json",
-								"type": "text"
-							},
-							{
-								"key": "x-api-key",
-								"value": "{{ADMIN_API_KEY}}",
 								"type": "text"
 							}
 						],
@@ -165,17 +160,12 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{token}}",
+								"value": "Bearer {{accessToken}}",
 								"type": "text"
 							},
 							{
 								"key": "Content-Type",
 								"value": "application/json",
-								"type": "text"
-							},
-							{
-								"key": "x-api-key",
-								"value": "{{ADMIN_API_KEY}}",
 								"type": "text"
 							}
 						],
@@ -305,17 +295,12 @@
 						"header": [
 							{
 								"key": "Authorization",
-								"value": "Bearer {{token}}",
+								"value": "Bearer {{accessToken}}",
 								"type": "text"
 							},
 							{
 								"key": "Content-Type",
 								"value": "application/json",
-								"type": "text"
-							},
-							{
-								"key": "x-api-key",
-								"value": "{{ADMIN_API_KEY}}",
 								"type": "text"
 							}
 						],

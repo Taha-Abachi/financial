@@ -2,6 +2,7 @@ package com.pars.financial.service;
 
 import com.pars.financial.dto.DiscountCodeDto;
 import com.pars.financial.dto.DiscountCodeIssueRequest;
+import com.pars.financial.dto.DiscountCodeReportDto;
 import com.pars.financial.dto.DiscountCodeTransactionDto;
 import com.pars.financial.dto.DiscountCodeValidationResponse;
 
@@ -11,6 +12,7 @@ import com.pars.financial.exception.ValidationException;
 import com.pars.financial.mapper.DiscountCodeMapper;
 import com.pars.financial.repository.CompanyRepository;
 import com.pars.financial.repository.DiscountCodeRepository;
+import com.pars.financial.repository.DiscountCodeTransactionRepository;
 import com.pars.financial.repository.ItemCategoryRepository;
 import com.pars.financial.repository.StoreRepository;
 import com.pars.financial.repository.CustomerRepository;
@@ -40,13 +42,15 @@ public class DiscountCodeService {
     private final CompanyRepository companyRepository;
     private final StoreRepository storeRepository;
     private final ItemCategoryRepository itemCategoryRepository;
+    private final DiscountCodeTransactionRepository discountCodeTransactionRepository;
 
-    public DiscountCodeService(DiscountCodeRepository codeRepository, DiscountCodeMapper mapper, CompanyRepository companyRepository, StoreRepository storeRepository, ItemCategoryRepository itemCategoryRepository, CustomerRepository customerRepository) {
+    public DiscountCodeService(DiscountCodeRepository codeRepository, DiscountCodeMapper mapper, CompanyRepository companyRepository, StoreRepository storeRepository, ItemCategoryRepository itemCategoryRepository, CustomerRepository customerRepository, DiscountCodeTransactionRepository discountCodeTransactionRepository) {
         this.codeRepository = codeRepository;
         this.mapper = mapper;
         this.companyRepository = companyRepository;
         this.storeRepository = storeRepository;
         this.itemCategoryRepository = itemCategoryRepository;
+        this.discountCodeTransactionRepository = discountCodeTransactionRepository;
     }
 
     private DiscountCode issueDiscountCode(int percentage, long validityPeriod, long maxDiscountAmount, long minimumBillAmount, int usageLimit, long constantDiscountAmount, DiscountType discountType, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, String customCode, Long customSerialNo) {
@@ -444,6 +448,103 @@ public class DiscountCodeService {
         
         return response;
     }
-    
+
+    /**
+     * Generate comprehensive discount code report for all discount codes
+     * @return DiscountCodeReportDto containing all statistics
+     */
+    public DiscountCodeReportDto generateDiscountCodeReport() {
+        logger.info("Generating comprehensive discount code report");
+        
+        try {
+            // Get basic statistics
+            Long totalCount = codeRepository.countAllDiscountCodes();
+            Long totalUsedCount = codeRepository.countUsedDiscountCodes();
+            Long totalUnusedCount = codeRepository.countUnusedDiscountCodes();
+            Long totalActiveCount = codeRepository.countActiveDiscountCodes();
+            Long totalInactiveCount = codeRepository.countInactiveDiscountCodes();
+            Long totalExpiredCount = codeRepository.countExpiredDiscountCodes(LocalDate.now());
+            Double averagePercentage = codeRepository.getAveragePercentage();
+            Double averageMaxDiscountAmount = codeRepository.getAverageMaxDiscountAmount();
+            Double averageMinimumBillAmount = codeRepository.getAverageMinimumBillAmount();
+            Double averageUsageCount = codeRepository.getAverageUsageCount();
+            Double averageUsageLimit = codeRepository.getAverageUsageLimit();
+            
+            // Get redeem transaction statistics
+            Long totalRedeemTransactions = discountCodeTransactionRepository.countRedeemTransactions();
+            Long totalDiscountAmount = discountCodeTransactionRepository.sumDiscountAmount();
+            Long totalOriginalAmount = discountCodeTransactionRepository.sumOriginalAmount();
+            
+            DiscountCodeReportDto report = new DiscountCodeReportDto(
+                totalCount, totalUsedCount, totalUnusedCount,
+                totalActiveCount, totalInactiveCount, totalExpiredCount,
+                totalRedeemTransactions, totalDiscountAmount, totalOriginalAmount,
+                averagePercentage, averageMaxDiscountAmount, averageMinimumBillAmount,
+                averageUsageCount, averageUsageLimit
+            );
+            
+            logger.info("Successfully generated discount code report: totalCount={}, totalUsedCount={}, totalRedeemTransactions={}", 
+                       totalCount, totalUsedCount, totalRedeemTransactions);
+            
+            return report;
+            
+        } catch (Exception e) {
+            logger.error("Error generating discount code report: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to generate discount code report", e);
+        }
+    }
+
+    /**
+     * Generate discount code report for a specific company
+     * @param companyId the company ID
+     * @return DiscountCodeReportDto containing company-specific statistics
+     */
+    public DiscountCodeReportDto generateDiscountCodeReportByCompany(Long companyId) {
+        logger.info("Generating discount code report for company: {}", companyId);
+        
+        try {
+            // Validate company exists
+            if (!companyRepository.existsById(companyId)) {
+                throw new ValidationException("Company not found with ID: " + companyId, null, -1);
+            }
+            
+            // Get company-specific statistics
+            Long totalCount = codeRepository.countDiscountCodesByCompany(companyId);
+            Long totalUsedCount = codeRepository.countUsedDiscountCodesByCompany(companyId);
+            Long totalUnusedCount = codeRepository.countUnusedDiscountCodesByCompany(companyId);
+            Long totalActiveCount = codeRepository.countActiveDiscountCodesByCompany(companyId);
+            Long totalInactiveCount = codeRepository.countInactiveDiscountCodesByCompany(companyId);
+            Long totalExpiredCount = codeRepository.countExpiredDiscountCodesByCompany(companyId, LocalDate.now());
+            Double averagePercentage = codeRepository.getAveragePercentageByCompany(companyId);
+            Double averageMaxDiscountAmount = codeRepository.getAverageMaxDiscountAmountByCompany(companyId);
+            Double averageMinimumBillAmount = codeRepository.getAverageMinimumBillAmountByCompany(companyId);
+            Double averageUsageCount = codeRepository.getAverageUsageCountByCompany(companyId);
+            Double averageUsageLimit = codeRepository.getAverageUsageLimitByCompany(companyId);
+            
+            // Get company-specific redeem transaction statistics
+            Long totalRedeemTransactions = discountCodeTransactionRepository.countRedeemTransactionsByCompany(companyId);
+            Long totalDiscountAmount = discountCodeTransactionRepository.sumDiscountAmountByCompany(companyId);
+            Long totalOriginalAmount = discountCodeTransactionRepository.sumOriginalAmountByCompany(companyId);
+            
+            DiscountCodeReportDto report = new DiscountCodeReportDto(
+                totalCount, totalUsedCount, totalUnusedCount,
+                totalActiveCount, totalInactiveCount, totalExpiredCount,
+                totalRedeemTransactions, totalDiscountAmount, totalOriginalAmount,
+                averagePercentage, averageMaxDiscountAmount, averageMinimumBillAmount,
+                averageUsageCount, averageUsageLimit
+            );
+            
+            logger.info("Successfully generated discount code report for company {}: totalCount={}, totalUsedCount={}, totalRedeemTransactions={}", 
+                       companyId, totalCount, totalUsedCount, totalRedeemTransactions);
+            
+            return report;
+            
+        } catch (ValidationException e) {
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error generating discount code report for company {}: {}", companyId, e.getMessage(), e);
+            throw new RuntimeException("Failed to generate discount code report for company", e);
+        }
+    }
 
 }

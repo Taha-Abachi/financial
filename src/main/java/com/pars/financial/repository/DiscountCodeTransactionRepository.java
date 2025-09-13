@@ -21,5 +21,25 @@ public interface DiscountCodeTransactionRepository extends JpaRepository<Discoun
     DiscountCodeTransaction findByTransactionIdAndTrxType(UUID transactionId, TransactionType trxType);
 
     @Override
-    Page<DiscountCodeTransaction> findAll(Pageable pageable);
+    @org.springframework.lang.NonNull
+    Page<DiscountCodeTransaction> findAll(@org.springframework.lang.NonNull Pageable pageable);
+    
+    // Statistics methods for discount code reports
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(t) FROM DiscountCodeTransaction t WHERE t.trxType = 'Redeem'")
+    Long countRedeemTransactions();
+    
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(t.discountAmount), 0) FROM DiscountCodeTransaction t WHERE t.trxType = 'Redeem'")
+    Long sumDiscountAmount();
+    
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(t.originalAmount), 0) FROM DiscountCodeTransaction t WHERE t.trxType = 'Redeem'")
+    Long sumOriginalAmount();
+    
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(t) FROM DiscountCodeTransaction t WHERE t.trxType = 'Redeem' AND t.discountCode.company.id = :companyId")
+    Long countRedeemTransactionsByCompany(@org.springframework.data.repository.query.Param("companyId") Long companyId);
+    
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(t.discountAmount), 0) FROM DiscountCodeTransaction t WHERE t.trxType = 'Redeem' AND t.discountCode.company.id = :companyId")
+    Long sumDiscountAmountByCompany(@org.springframework.data.repository.query.Param("companyId") Long companyId);
+    
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(t.originalAmount), 0) FROM DiscountCodeTransaction t WHERE t.trxType = 'Redeem' AND t.discountCode.company.id = :companyId")
+    Long sumOriginalAmountByCompany(@org.springframework.data.repository.query.Param("companyId") Long companyId);
 }
