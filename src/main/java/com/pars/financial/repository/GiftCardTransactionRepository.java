@@ -36,12 +36,12 @@ public interface GiftCardTransactionRepository extends JpaRepository<GiftCardTra
     @org.springframework.data.jpa.repository.Query("SELECT COUNT(t) FROM GiftCardTransaction t WHERE t.transactionType = 'Debit'")
     Long countDebitTransactions();
     
-    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(t.amount), 0) FROM GiftCardTransaction t WHERE t.transactionType = 'Debit'")
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(t.Amount), 0) FROM GiftCardTransaction t WHERE t.transactionType = 'Debit'")
     Long sumDebitAmount();
     
     @org.springframework.data.jpa.repository.Query("SELECT COUNT(t) FROM GiftCardTransaction t WHERE t.transactionType = 'Debit' AND t.giftCard.company.id = :companyId")
     Long countDebitTransactionsByCompany(@org.springframework.data.repository.query.Param("companyId") Long companyId);
     
-    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(t.amount), 0) FROM GiftCardTransaction t WHERE t.transactionType = 'Debit' AND t.giftCard.company.id = :companyId")
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(t.Amount), 0) FROM GiftCardTransaction t WHERE t.transactionType = 'Debit' AND t.giftCard.company.id = :companyId")
     Long sumDebitAmountByCompany(@org.springframework.data.repository.query.Param("companyId") Long companyId);
 }

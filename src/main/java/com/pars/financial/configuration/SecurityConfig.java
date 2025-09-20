@@ -66,7 +66,6 @@ public class SecurityConfig {
         return config.getAuthenticationManager();
     }
 
-
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -89,13 +88,13 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/discountcode/issue*").hasRole("ADMIN")
                         .requestMatchers("/api/v1/discountcode/transaction/list").hasRole("ADMIN")
                         .requestMatchers("/api/v1/discountcode/transaction/").hasAnyRole("ADMIN","API_USER")
-                        .requestMatchers("/api/v1/discountcode/report").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN")
-                        .requestMatchers("/api/v1/discountcode/report/company/*").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN")
+                        .requestMatchers("/api/v1/discountcode/report").hasAnyRole("ADMIN", "API_USER")
+                        .requestMatchers("/api/v1/discountcode/report/company/*").hasAnyRole("ADMIN", "API_USER")
                         .requestMatchers("/api/v1/discountcode/*").hasAnyRole("ADMIN","API_USER")
                         .requestMatchers("/api/v1/giftcard/all").hasRole("ADMIN")
                         .requestMatchers("/api/v1/giftcard/transaction").hasRole("API_USER")
-                        .requestMatchers("/api/v1/giftcard/report").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN")
-                        .requestMatchers("/api/v1/giftcard/report/company/*").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN")
+                        .requestMatchers("/api/v1/giftcard/report").hasAnyRole("ADMIN", "API_USER")
+                        .requestMatchers("/api/v1/giftcard/report/company/*").hasAnyRole("ADMIN", "API_USER")
                         .requestMatchers("/api/v1/giftcard/*").hasAnyRole("ADMIN","API_USER")
                         .requestMatchers("/api/v1/giftcard/identifier/*").hasAnyRole("ADMIN","API_USER")
                         .requestMatchers("/api/v1/giftcard/transaction/checkStatus/").hasAnyRole("ADMIN", "API_USER")
@@ -107,23 +106,23 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/item-category/deactivate/*").hasRole("SUPERADMIN")
                         .requestMatchers("/api/v1/item-category/activate/*").hasRole("SUPERADMIN")
                         .requestMatchers("/api/v1/item-category/restore/*").hasRole("SUPERADMIN")
-                        // Item Category endpoints - GET operations accessible to ADMIN, API_USER, and SUPERADMIN
-                        .requestMatchers("/api/v1/item-category/list").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN")
-                        .requestMatchers("/api/v1/item-category/inactive").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN")
-                        .requestMatchers("/api/v1/item-category/all-including-inactive").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN")
-                        .requestMatchers("/api/v1/item-category/deleted").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN")
-                        .requestMatchers("/api/v1/item-category/*").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN")
-                        // User and UserRole endpoints - restricted to ADMIN and SUPERADMIN
-                        .requestMatchers("/api/v1/users/**").hasAnyRole("ADMIN", "SUPERADMIN")
-                        .requestMatchers("/api/v1/user-roles/**").hasAnyRole("ADMIN", "SUPERADMIN")
-                        // Batch endpoints - restricted to ADMIN and SUPERADMIN
-                        .requestMatchers("/api/v1/batches/**").hasAnyRole("ADMIN", "SUPERADMIN")
-                        // Batch report endpoints - accessible to ADMIN, API_USER, and SUPERADMIN
-                        .requestMatchers("/api/v1/batches/*/report").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN")
-                        .requestMatchers("/api/v1/batches/*/summary").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN")
-                        .requestMatchers("/api/v1/batches/reports/**").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN")
-                        // Admin endpoints - restricted to ADMIN and SUPERADMIN only
-                        .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN", "SUPERADMIN")
+                        // Item Category endpoints - GET operations accessible to ADMIN and API_USER
+                        .requestMatchers("/api/v1/item-category/list").hasAnyRole("ADMIN", "API_USER")
+                        .requestMatchers("/api/v1/item-category/inactive").hasAnyRole("ADMIN", "API_USER")
+                        .requestMatchers("/api/v1/item-category/all-including-inactive").hasAnyRole("ADMIN", "API_USER")
+                        .requestMatchers("/api/v1/item-category/deleted").hasAnyRole("ADMIN", "API_USER")
+                        .requestMatchers("/api/v1/item-category/*").hasAnyRole("ADMIN", "API_USER")
+                        // User and UserRole endpoints - restricted to ADMIN only
+                        .requestMatchers("/api/v1/users/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/user-roles/**").hasRole("ADMIN")
+                        // Batch endpoints - restricted to ADMIN only
+                        .requestMatchers("/api/v1/batches/**").hasRole("ADMIN")
+                        // Batch report endpoints - accessible to ADMIN and API_USER
+                        .requestMatchers("/api/v1/batches/*/report").hasAnyRole("ADMIN", "API_USER")
+                        .requestMatchers("/api/v1/batches/*/summary").hasAnyRole("ADMIN", "API_USER")
+                        .requestMatchers("/api/v1/batches/reports/**").hasAnyRole("ADMIN", "API_USER")
+                        // Admin endpoints - restricted to ADMIN only
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .anyRequest().permitAll()
                 )
                 .anonymous(anonymous -> anonymous

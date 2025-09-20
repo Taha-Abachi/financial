@@ -2,12 +2,12 @@ package com.pars.financial.security;
 
 import java.io.IOException;
 
+import org.springframework.lang.NonNull;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.pars.financial.entity.User;
-import com.pars.financial.enums.UserRole;
 import com.pars.financial.repository.UserRepository;
 import com.pars.financial.utils.ApiKeyEncryption;
 
@@ -27,7 +27,7 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
             throws ServletException, IOException {
         
         // Skip API key processing if JWT authentication is already present
@@ -43,10 +43,11 @@ public class ApiKeyAuthFilter extends OncePerRequestFilter {
             User user = userRepository.findByApiKey(encryptedApiKey).orElse(null);
             if (user != null && user.isActive() && user.canUseApiKey()) {
                 // API key is valid; set authentication with userId
+                String roleName = "ROLE_" + user.getRole().getName();
                 ApiKeyAuthenticationToken auth = new ApiKeyAuthenticationToken(
                         apiKey,
                         user.getId(),
-                        AuthorityUtils.createAuthorityList(user.getRole().getName().equals(UserRole.API_USER.name()) ? "ROLE_API_USER" : "ROLE_ADMIN"),
+                        AuthorityUtils.createAuthorityList(roleName),
                         user
                 );
                 SecurityContextHolder.getContext().setAuthentication(auth);
