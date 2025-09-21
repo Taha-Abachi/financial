@@ -127,8 +127,8 @@ public class GiftCardTransactionService {
         }
     }
 
-    public GiftCardTransactionDto debitGiftCard(User user, String clientTransactionId, long amount, String serialNo, Long storeId, String phoneNumber) {
-        logger.info("Processing debit request for gift card: {}, amount: {}, store: {}, phone: {}", serialNo, amount, storeId, phoneNumber);
+    public GiftCardTransactionDto debitGiftCard(User user, String clientTransactionId, long amount, String serialNo, Long storeId, String phoneNumber, long orderAmount) {
+        logger.info("Processing debit request for gift card: {}, amount: {}, store: {}, phone: {}, orderAmount: {}", serialNo, amount, storeId, phoneNumber, orderAmount);
         
         if((phoneNumber == null) || (phoneNumber.length() != 11)) {
             logger.warn("Invalid phone number: {}", phoneNumber);
@@ -185,6 +185,7 @@ public class GiftCardTransactionService {
                 transaction.setStore(store.get());
                 transaction.setAmount(amount);
                 transaction.setBalanceBefore(gc.getBalance());
+                transaction.setOrderAmount(orderAmount);
                 transaction.setClientTransactionId(clientTransactionId);
                 transaction.setTrxDate(LocalDateTime.now());
                 transaction.setStatus(TransactionStatus.Pending);
@@ -208,9 +209,9 @@ public class GiftCardTransactionService {
         throw new GenericException("General Failure", null, -121);
     }
 
-    public GiftCardTransactionDto settleTransaction(User user, String clientTransactionId, long amount, String serialNo, UUID transactionId, TransactionType trxType) {
-        logger.info("Processing {} transaction for gift card: {}, amount: {}, transactionId: {}", 
-            trxType, serialNo, amount, transactionId);
+    public GiftCardTransactionDto settleTransaction(User user, String clientTransactionId, long amount, String serialNo, UUID transactionId, TransactionType trxType, long orderAmount) {
+        logger.info("Processing {} transaction for gift card: {}, amount: {}, transactionId: {}, orderAmount: {}", 
+            trxType, serialNo, amount, transactionId, orderAmount);
             
         if(amount <= 0){
             logger.warn("Invalid amount: {}", amount);
@@ -306,6 +307,7 @@ public class GiftCardTransactionService {
         transaction.setGiftCard(gc);
         transaction.setAmount(amount);
         transaction.setBalanceBefore(gc.getBalance());
+        transaction.setOrderAmount(orderAmount);
         transaction.setTrxDate(LocalDateTime.now());
         transaction.setStore(debitTransaction.getStore());
         
@@ -344,19 +346,19 @@ public class GiftCardTransactionService {
         return giftCardTransactionMapper.getFrom(savedTransaction);
     }
 
-    public GiftCardTransactionDto reverseTransaction(User user, String clientTransactionId, long amount, String serialNo, UUID transactionId) {
-        logger.info("Initiating reverse transaction for gift card: {}, amount: {}", serialNo, amount);
-        return settleTransaction(user, clientTransactionId, amount, serialNo, transactionId, TransactionType.Reversal);
+    public GiftCardTransactionDto reverseTransaction(User user, String clientTransactionId, long amount, String serialNo, UUID transactionId, long orderAmount) {
+        logger.info("Initiating reverse transaction for gift card: {}, amount: {}, orderAmount: {}", serialNo, amount, orderAmount);
+        return settleTransaction(user, clientTransactionId, amount, serialNo, transactionId, TransactionType.Reversal, orderAmount);
     }
 
-    public GiftCardTransactionDto confirmTransaction(User user, String clientTransactionId, long amount, String serialNo, UUID transactionId) {
-        logger.info("Initiating confirm transaction for gift card: {}, amount: {}", serialNo, amount);
-        return settleTransaction(user, clientTransactionId, amount, serialNo, transactionId, TransactionType.Confirmation);
+    public GiftCardTransactionDto confirmTransaction(User user, String clientTransactionId, long amount, String serialNo, UUID transactionId, long orderAmount) {
+        logger.info("Initiating confirm transaction for gift card: {}, amount: {}, orderAmount: {}", serialNo, amount, orderAmount);
+        return settleTransaction(user, clientTransactionId, amount, serialNo, transactionId, TransactionType.Confirmation, orderAmount);
     }
 
-    public GiftCardTransactionDto refundTransaction(User user, String clientTransactionId, long amount, String serialNo, UUID transactionId) {
-        logger.info("Initiating refund transaction for gift card: {}, amount: {}", serialNo, amount);
-        return settleTransaction(user, clientTransactionId, amount, serialNo, transactionId, TransactionType.Refund);
+    public GiftCardTransactionDto refundTransaction(User user, String clientTransactionId, long amount, String serialNo, UUID transactionId, long orderAmount) {
+        logger.info("Initiating refund transaction for gift card: {}, amount: {}, orderAmount: {}", serialNo, amount, orderAmount);
+        return settleTransaction(user, clientTransactionId, amount, serialNo, transactionId, TransactionType.Refund, orderAmount);
     }
 
     public GiftCardTransactionDto get(String trxId) {

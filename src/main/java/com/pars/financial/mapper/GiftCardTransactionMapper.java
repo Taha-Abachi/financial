@@ -20,6 +20,7 @@ public class GiftCardTransactionMapper {
         dto.trxType = transaction.getTransactionType();
         dto.trxDate = transaction.getTrxDate();
         dto.amount = transaction.getAmount();
+        dto.orderAmount = transaction.getOrderAmount();
         dto.clientTransactionId = transaction.getClientTransactionId();
         dto.storeName = transaction.getStore().getStore_name();
         dto.storeId = transaction.getStore().getId();

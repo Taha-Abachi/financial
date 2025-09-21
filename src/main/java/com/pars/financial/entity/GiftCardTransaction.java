@@ -63,6 +63,7 @@ public class GiftCardTransaction {
     private LocalDateTime trxDate = LocalDateTime.now();
     private long Amount;
     private long balanceBefore;
+    private long orderAmount;
 
     private String clientTransactionId;
 
@@ -169,6 +170,14 @@ public class GiftCardTransaction {
 
     public void setBalanceBefore(long balanceBefore) {
         this.balanceBefore = balanceBefore;
+    }
+
+    public long getOrderAmount() {
+        return orderAmount;
+    }
+
+    public void setOrderAmount(long orderAmount) {
+        this.orderAmount = orderAmount;
     }
 
     public TransactionStatus getStatus() {

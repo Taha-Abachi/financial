@@ -2,7 +2,6 @@ package com.pars.financial.controller;
 
 import com.pars.financial.dto.GenericResponse;
 import com.pars.financial.dto.GiftCardTransactionDto;
-import com.pars.financial.entity.User;
 import com.pars.financial.service.GiftCardTransactionService;
 import com.pars.financial.utils.ApiUserUtil;
 
@@ -36,7 +35,7 @@ public class GiftCardTransactionController {
             return ResponseEntity.status(userResult.httpStatus).body(res);
         }
 
-        var trx = transactionService.debitGiftCard(userResult.user, dto.clientTransactionId, dto.amount, dto.giftCardSerialNo, dto.storeId, dto.phoneNo);
+        var trx = transactionService.debitGiftCard(userResult.user, dto.clientTransactionId, dto.amount, dto.giftCardSerialNo, dto.storeId, dto.phoneNo, dto.orderAmount);
         if (trx == null) {
             logger.warn("Failed to debit gift card for clientTransactionId: {}", dto.clientTransactionId);
             res.message = "Failed to debit gift card";
@@ -59,7 +58,7 @@ public class GiftCardTransactionController {
             return ResponseEntity.status(userResult.httpStatus).body(res);
         }
         
-        var trx = transactionService.reverseTransaction(userResult.user, dto.clientTransactionId, dto.amount, dto.giftCardSerialNo, dto.transactionId);
+        var trx = transactionService.reverseTransaction(userResult.user, dto.clientTransactionId, dto.amount, dto.giftCardSerialNo, dto.transactionId, dto.orderAmount);
         if (trx == null) {
             logger.warn("Failed to reverse gift card transaction for clientTransactionId: {}", dto.clientTransactionId);
             res.message = "Failed to reverse gift card transaction.";
@@ -82,7 +81,7 @@ public class GiftCardTransactionController {
             return ResponseEntity.status(userResult.httpStatus).body(res);
         }
         
-        var trx = transactionService.confirmTransaction(userResult.user, dto.clientTransactionId, dto.amount, dto.giftCardSerialNo, dto.transactionId);
+        var trx = transactionService.confirmTransaction(userResult.user, dto.clientTransactionId, dto.amount, dto.giftCardSerialNo, dto.transactionId, dto.orderAmount);
         if (trx == null) {
             logger.warn("Failed to confirm gift card transaction for clientTransactionId: {}", dto.clientTransactionId);
             res.message = "Failed to confirm gift card transaction.";
@@ -105,7 +104,7 @@ public class GiftCardTransactionController {
             return ResponseEntity.status(userResult.httpStatus).body(res);
         }
         
-        var trx = transactionService.refundTransaction(userResult.user, dto.clientTransactionId, dto.amount, dto.giftCardSerialNo, dto.transactionId);
+        var trx = transactionService.refundTransaction(userResult.user, dto.clientTransactionId, dto.amount, dto.giftCardSerialNo, dto.transactionId, dto.orderAmount);
         if (trx == null) {
             logger.warn("Failed to refund gift card transaction for clientTransactionId: {}", dto.clientTransactionId);
             res.message = "Failed to refund gift card transaction.";

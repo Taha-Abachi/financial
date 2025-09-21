@@ -16,6 +16,7 @@ public class GiftCardTransactionDto {
     public LocalDateTime trxDate = LocalDateTime.now();
     public Long storeId;
     public long amount;
+    public long orderAmount;
     public String clientTransactionId;
     public String storeName;
     public String orderno;
