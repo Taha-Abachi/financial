@@ -144,7 +144,7 @@ public class StoreUserService {
         logger.info("Searching discount code transactions by code {} for store user {} (store: {})", 
             discountCode, storeUser.getUsername(), storeId);
 
-        return discountCodeTransactionRepository.findByStoreIdAndDiscountCode(storeId, discountCode);
+        return discountCodeTransactionRepository.findByStoreIdAndDiscountCodeCode(storeId, discountCode);
     }
 
     /**

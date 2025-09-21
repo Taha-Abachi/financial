@@ -63,6 +63,8 @@ public class GiftCardTransaction {
     private LocalDateTime trxDate = LocalDateTime.now();
     private long Amount;
     private long balanceBefore;
+    
+    @Column(name = "order_amount")
     private long orderAmount;
 
     private String clientTransactionId;

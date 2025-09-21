@@ -46,5 +46,5 @@ public interface DiscountCodeTransactionRepository extends JpaRepository<Discoun
     // Store-specific methods
     java.util.List<DiscountCodeTransaction> findByStoreId(Long storeId);
     
-    java.util.List<DiscountCodeTransaction> findByStoreIdAndDiscountCode(Long storeId, String discountCode);
+    java.util.List<DiscountCodeTransaction> findByStoreIdAndDiscountCodeCode(Long storeId, String discountCode);
 }
