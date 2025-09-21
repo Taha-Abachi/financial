@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.pars.financial.entity.Company;
+import com.pars.financial.constants.ErrorCodes;
 import com.pars.financial.exception.ValidationException;
 import com.pars.financial.repository.CompanyRepository;
 
@@ -33,7 +34,7 @@ public class CompanyService {
         Optional<Company> company = companyRepository.findById(companyId);
         if (company.isEmpty()) {
             logger.warn("Company not found with ID: {}", companyId);
-            throw new ValidationException("Company not found", null, -134);
+            throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND);
         }
         return company.get();
     }
@@ -75,7 +76,7 @@ public class CompanyService {
     public Company updateCompany(Company company) {
         logger.info("Updating company: {}", company.getName());
         if (company.getId() == null) {
-            throw new ValidationException("Company ID is required for update", null, -135);
+            throw new ValidationException(ErrorCodes.REQUIRED_FIELD_MISSING, "Company ID is required for update");
         }
         return companyRepository.save(company);
     }
@@ -87,7 +88,7 @@ public class CompanyService {
     public void deleteCompany(Long companyId) {
         logger.info("Deleting company with ID: {}", companyId);
         if (!companyRepository.existsById(companyId)) {
-            throw new ValidationException("Company not found", null, -134);
+            throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND);
         }
         companyRepository.deleteById(companyId);
     }

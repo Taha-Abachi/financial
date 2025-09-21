@@ -6,6 +6,7 @@ import com.pars.financial.dto.GiftCardReportDto;
 import com.pars.financial.entity.GiftCard;
 import com.pars.financial.entity.Store;
 import com.pars.financial.exception.GiftCardNotFoundException;
+import com.pars.financial.constants.ErrorCodes;
 import com.pars.financial.exception.ValidationException;
 import com.pars.financial.mapper.GiftCardMapper;
 import com.pars.financial.repository.CompanyRepository;
@@ -55,7 +56,7 @@ public class GiftCardService {
     private void validateRealAmount(long realAmount) {
         if (realAmount <= 0) {
             logger.error("Invalid real amount: {}", realAmount);
-            throw new ValidationException("Real amount must be greater than 0", null, -115);
+            throw new ValidationException(ErrorCodes.INVALID_AMOUNT, "Real amount must be greater than 0");
         }
     }
 
@@ -69,7 +70,7 @@ public class GiftCardService {
         var company = companyRepository.findById(companyId);
         if(company.isEmpty()) {
             logger.error("Company not found while Issuing new gift card with realAmount: {}, amount: {}, validityPeriod: {}", realAmount, amount, validityPeriod);
-            throw new ValidationException("Invalid company", null, -115);
+            throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND);
         }
         var gc = new GiftCard();
         gc.setCompany(company.get());
@@ -220,7 +221,7 @@ public class GiftCardService {
                 var store = storeRepository.findById(storeId)
                     .orElseThrow(() -> {
                         logger.warn("Store not found with id: {}", storeId);
-                        return new ValidationException("Store not found with id: " + storeId, null, -116);
+                        return new ValidationException(ErrorCodes.STORE_NOT_FOUND, "Store not found with id: " + storeId);
                     });
                 stores.add(store);
             }
@@ -265,7 +266,7 @@ public class GiftCardService {
                 var itemCategory = itemCategoryRepository.findById(itemCategoryId)
                     .orElseThrow(() -> {
                         logger.warn("Item category not found with id: {}", itemCategoryId);
-                        return new ValidationException("Item category not found with id: " + itemCategoryId, null, -117);
+                        return new ValidationException(ErrorCodes.ITEM_CATEGORY_NOT_FOUND, "Item category not found with id: " + itemCategoryId);
                     });
                 itemCategories.add(itemCategory);
             }
@@ -301,7 +302,7 @@ public class GiftCardService {
         var company = companyRepository.findById(companyId);
         if (company.isEmpty()) {
             logger.warn("Company not found with ID: {}", companyId);
-            throw new ValidationException("Company not found", null, -134);
+            throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND);
         }
         
         var giftCards = giftCardRepository.findByCompany(company.get());
@@ -326,7 +327,7 @@ public class GiftCardService {
         var company = companyRepository.findById(companyId);
         if (company.isEmpty()) {
             logger.warn("Company not found with ID: {}", companyId);
-            throw new ValidationException("Company not found", null, -134);
+            throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND);
         }
 
         giftCard.setCompany(company.get());
@@ -407,7 +408,7 @@ public class GiftCardService {
         try {
             // Validate company exists
             if (!companyRepository.existsById(companyId)) {
-                throw new ValidationException("Company not found with ID: " + companyId, null, -1);
+                throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND);
             }
             
             // Get company-specific statistics

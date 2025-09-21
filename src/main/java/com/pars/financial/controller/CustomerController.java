@@ -86,7 +86,7 @@ public class CustomerController {
     ) {
         var genericResponseDto = new GenericResponse<Customer>();
         if(dto.phoneNumber == null){
-            throw new ValidationException("Phone number is required", null, -103);
+            throw ValidationException.requiredFieldMissing("phoneNumber");
         }
         genericResponseDto.data = customerService.createCustomer(dto);
         return genericResponseDto;

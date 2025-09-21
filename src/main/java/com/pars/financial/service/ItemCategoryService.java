@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.pars.financial.dto.ItemCategoryDto;
 import com.pars.financial.entity.ItemCategory;
+import com.pars.financial.constants.ErrorCodes;
 import com.pars.financial.exception.ValidationException;
 import com.pars.financial.repository.ItemCategoryRepository;
 
@@ -35,7 +36,7 @@ public class ItemCategoryService {
         Optional<ItemCategory> category = itemCategoryRepository.findByIdNonDeleted(categoryId);
         if (category.isEmpty()) {
             logger.warn("Item category not found with ID: {}", categoryId);
-            throw new ValidationException("Item category not found", null, -200);
+            throw new ValidationException(ErrorCodes.ITEM_CATEGORY_NOT_FOUND);
         }
         return category.get();
     }
@@ -112,7 +113,7 @@ public class ItemCategoryService {
                 existingCategory.setDescription(category.getDescription());
                 return itemCategoryRepository.save(existingCategory);
             } else {
-                throw new ValidationException("Category with name '" + category.getName() + "' already exists", null, -201);
+                throw new ValidationException(ErrorCodes.ITEM_CATEGORY_ALREADY_EXISTS, "Category with name '" + category.getName() + "' already exists");
             }
         }
         
@@ -132,7 +133,7 @@ public class ItemCategoryService {
         for (ItemCategory category : categories) {
             ItemCategory existingCategory = itemCategoryRepository.findByNameIncludingDeleted(category.getName());
             if (existingCategory != null && !existingCategory.getIsDeleted()) {
-                throw new ValidationException("Category with name '" + category.getName() + "' already exists", null, -201);
+                throw new ValidationException(ErrorCodes.ITEM_CATEGORY_ALREADY_EXISTS, "Category with name '" + category.getName() + "' already exists");
             }
             category.setIsDeleted(false);
         }
@@ -148,7 +149,7 @@ public class ItemCategoryService {
     public ItemCategory updateCategory(ItemCategory category) {
         logger.info("Updating item category: {}", category.getName());
         if (category.getId() == null) {
-            throw new ValidationException("Category ID is required for update", null, -202);
+            throw new ValidationException(ErrorCodes.REQUIRED_FIELD_MISSING, "Category ID is required for update");
         }
         
         // Check if category exists (non-deleted)
@@ -157,7 +158,7 @@ public class ItemCategoryService {
         // Check if name is being changed and if new name already exists
         if (!existingCategory.getName().equals(category.getName()) && 
             itemCategoryRepository.existsByName(category.getName())) {
-            throw new ValidationException("Category with name '" + category.getName() + "' already exists", null, -201);
+            throw new ValidationException(ErrorCodes.ITEM_CATEGORY_ALREADY_EXISTS, "Category with name '" + category.getName() + "' already exists");
         }
         
         category.setIsDeleted(false);
@@ -195,10 +196,10 @@ public class ItemCategoryService {
         logger.info("Restoring item category with ID: {}", categoryId);
         Optional<ItemCategory> category = itemCategoryRepository.findById(categoryId);
         if (category.isEmpty()) {
-            throw new ValidationException("Category not found", null, -200);
+            throw new ValidationException(ErrorCodes.ITEM_CATEGORY_NOT_FOUND);
         }
         if (!category.get().getIsDeleted()) {
-            throw new ValidationException("Category is not deleted", null, -203);
+            throw new ValidationException(ErrorCodes.ITEM_CATEGORY_CANNOT_BE_DELETED);
         }
         itemCategoryRepository.restoreById(categoryId);
     }
@@ -211,7 +212,7 @@ public class ItemCategoryService {
         logger.info("Permanently deleting item category with ID: {}", categoryId);
         Optional<ItemCategory> category = itemCategoryRepository.findById(categoryId);
         if (category.isEmpty()) {
-            throw new ValidationException("Category not found", null, -200);
+            throw new ValidationException(ErrorCodes.ITEM_CATEGORY_NOT_FOUND);
         }
         itemCategoryRepository.deleteById(categoryId);
     }

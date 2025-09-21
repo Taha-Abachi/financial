@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pars.financial.dto.BatchCreateRequest;
 import com.pars.financial.dto.BatchDto;
 import com.pars.financial.entity.Batch;
+import com.pars.financial.constants.ErrorCodes;
 import com.pars.financial.exception.ValidationException;
 import com.pars.financial.repository.BatchRepository;
 import com.pars.financial.repository.CompanyRepository;
@@ -54,7 +55,7 @@ public class BatchService {
         var batch = batchRepository.findById(id);
         if (batch.isEmpty()) {
             logger.warn("Batch not found with id: {}", id);
-            throw new ValidationException("Batch not found", null, -126);
+            throw new ValidationException(ErrorCodes.BATCH_NOT_FOUND);
         }
         return BatchDto.fromEntity(batch.get());
     }
@@ -64,7 +65,7 @@ public class BatchService {
         var batch = batchRepository.findByBatchNumber(batchNumber);
         if (batch.isEmpty()) {
             logger.warn("Batch not found with batch number: {}", batchNumber);
-            throw new ValidationException("Batch not found", null, -126);
+            throw new ValidationException(ErrorCodes.BATCH_NOT_FOUND);
         }
         return BatchDto.fromEntity(batch.get());
     }
@@ -83,14 +84,14 @@ public class BatchService {
         var company = companyRepository.findById(request.getCompanyId());
         if (company.isEmpty()) {
             logger.warn("Company not found with id: {}", request.getCompanyId());
-            throw new ValidationException("Company not found", null, -134);
+            throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND);
         }
 
         // Validate user exists
         var user = userRepository.findById(request.getRequestUserId());
         if (user.isEmpty()) {
             logger.warn("User not found with id: {}", request.getRequestUserId());
-            throw new ValidationException("User not found", null, -121);
+            throw new ValidationException(ErrorCodes.USER_NOT_FOUND);
         }
 
         // Generate unique batch number
@@ -262,7 +263,7 @@ public class BatchService {
         var batch = batchRepository.findById(id);
         if (batch.isEmpty()) {
             logger.warn("Batch not found with id: {}", id);
-            throw new ValidationException("Batch not found", null, -126);
+            throw new ValidationException(ErrorCodes.BATCH_NOT_FOUND);
         }
 
         var batchEntity = batch.get();
@@ -282,14 +283,14 @@ public class BatchService {
         var batch = batchRepository.findById(id);
         if (batch.isEmpty()) {
             logger.warn("Batch not found with id: {}", id);
-            throw new ValidationException("Batch not found", null, -126);
+            throw new ValidationException(ErrorCodes.BATCH_NOT_FOUND);
         }
 
         var batchEntity = batch.get();
         if (batchEntity.getStatus() == Batch.BatchStatus.COMPLETED || 
             batchEntity.getStatus() == Batch.BatchStatus.FAILED) {
             logger.warn("Cannot cancel batch {} with status: {}", id, batchEntity.getStatus());
-            throw new ValidationException("Cannot cancel batch with current status", null, -127);
+            throw new ValidationException(ErrorCodes.BATCH_CANNOT_BE_CANCELLED);
         }
 
         batchEntity.setStatus(Batch.BatchStatus.CANCELLED);

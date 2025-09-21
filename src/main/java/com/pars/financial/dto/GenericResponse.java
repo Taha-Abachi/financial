@@ -1,5 +1,6 @@
 package com.pars.financial.dto;
 
+import com.pars.financial.constants.ErrorCode;
 import com.pars.financial.exception.GenericException;
 
 public class GenericResponse<T> {
@@ -23,6 +24,20 @@ public class GenericResponse<T> {
         this.data = data;
     }
 
+    public GenericResponse(ErrorCode errorCode) {
+        this.status = errorCode.getCode();
+        this.message = errorCode.getMessageEn();
+        this.messageFa = errorCode.getMessageFa();
+        this.data = null;
+    }
+
+    public GenericResponse(ErrorCode errorCode, T data) {
+        this.status = errorCode.getCode();
+        this.message = errorCode.getMessageEn();
+        this.messageFa = errorCode.getMessageFa();
+        this.data = data;
+    }
+
     @SuppressWarnings("unchecked")
     public GenericResponse(GenericException genericException) {
         this.status = genericException.statusCode;
@@ -30,5 +45,6 @@ public class GenericResponse<T> {
         this.messageFa = genericException.messageFa != null ? genericException.messageFa : "خطا";
         this.data = (T) genericException.data;
     }
+
 }
 

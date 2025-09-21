@@ -18,13 +18,14 @@ import com.pars.financial.entity.User;
 import com.pars.financial.enums.TransactionStatus;
 import com.pars.financial.enums.TransactionType;
 import com.pars.financial.exception.CustomerNotFoundException;
+import com.pars.financial.constants.ErrorCode;
+import com.pars.financial.constants.ErrorCodes;
 import com.pars.financial.exception.ValidationException;
 import com.pars.financial.mapper.DiscountCodeTransactionMapper;
 import com.pars.financial.repository.CustomerRepository;
 import com.pars.financial.repository.DiscountCodeRepository;
 import com.pars.financial.repository.DiscountCodeTransactionRepository;
 import com.pars.financial.repository.StoreRepository;
-import com.pars.financial.utils.PersianErrorMessages;
 
 @Service
 public class DiscountCodeTransactionService {
@@ -72,14 +73,14 @@ public class DiscountCodeTransactionService {
         var validationResult = discountCodeService.validateDiscountCodeRules(dto);
         if (!validationResult.isValid) {
             logger.warn("Discount code validation failed: {}", validationResult.message);
-            throw new ValidationException(validationResult.message, null, getErrorCode(validationResult.errorCode));
+            throw new ValidationException(getErrorCode(validationResult.errorCode), validationResult.message);
         }
         
         // Check for duplicate client transaction ID
         var transaction = transactionRepository.findByClientTransactionIdAndTrxType(dto.clientTransactionId, TransactionType.Redeem);
         if(transaction != null){
             logger.warn("Duplicate client transaction ID: {}", dto.clientTransactionId);
-            throw new ValidationException("ClientTransactionId should be unique.", PersianErrorMessages.DUPLICATE_TRANSACTION_ID, null, -109);
+            throw new ValidationException(ErrorCodes.DUPLICATE_TRANSACTION_ID, "ClientTransactionId should be unique.");
         }
         
         var code = codeRepository.findByCode(dto.code);
@@ -123,19 +124,19 @@ public class DiscountCodeTransactionService {
     }
     
     /**
-     * Helper method to convert error codes to numeric values
+     * Helper method to convert error code strings to ErrorCode constants
      */
-    private int getErrorCode(String errorCode) {
+    private ErrorCode getErrorCode(String errorCode) {
         return switch (errorCode) {
-            case "DISCOUNT_CODE_NOT_FOUND" -> -104;
-            case "DISCOUNT_CODE_EXPIRED" -> -141;
-            case "DISCOUNT_CODE_INACTIVE" -> -105;
-            case "DISCOUNT_CODE_ALREADY_USED" -> -106;
-            case "DISCOUNT_CODE_USAGE_LIMIT_REACHED" -> -107;
-            case "MINIMUM_BILL_AMOUNT_NOT_MET" -> -108;
-            case "STORE_NOT_FOUND" -> -110;
-            case "STORE_NOT_ALLOWED" -> -117;
-            default -> -1;
+            case "DISCOUNT_CODE_NOT_FOUND" -> ErrorCodes.DISCOUNT_CODE_NOT_FOUND;
+            case "DISCOUNT_CODE_EXPIRED" -> ErrorCodes.DISCOUNT_CODE_EXPIRED;
+            case "DISCOUNT_CODE_INACTIVE" -> ErrorCodes.DISCOUNT_CODE_INACTIVE;
+            case "DISCOUNT_CODE_ALREADY_USED" -> ErrorCodes.DISCOUNT_CODE_ALREADY_USED;
+            case "DISCOUNT_CODE_USAGE_LIMIT_REACHED" -> ErrorCodes.DISCOUNT_CODE_USAGE_LIMIT_REACHED;
+            case "MINIMUM_BILL_AMOUNT_NOT_MET" -> ErrorCodes.MINIMUM_BILL_AMOUNT_NOT_MET;
+            case "STORE_NOT_FOUND" -> ErrorCodes.STORE_NOT_FOUND;
+            case "STORE_NOT_ALLOWED" -> ErrorCodes.STORE_NOT_ALLOWED;
+            default -> ErrorCodes.SYSTEM_ERROR;
         };
     }
 
@@ -164,19 +165,19 @@ public class DiscountCodeTransactionService {
             logger.warn("Redeem transaction not found for {}: {}", 
                 (trxType == TransactionType.Confirmation || trxType == TransactionType.Refund ? "transactionId" : "clientTransactionId"),
                 (trxType == TransactionType.Confirmation || trxType == TransactionType.Refund ? dto.transactionId : dto.clientTransactionId));
-            throw new ValidationException("Redeem Transaction Not Found.", null, -112);
+            throw new ValidationException(ErrorCodes.TRANSACTION_NOT_FOUND, "Redeem Transaction Not Found.");
         }
 
         var confirmation = transactionRepository.findByTransactionIdAndTrxType(transaction.getTransactionId(), TransactionType.Confirmation);
         if((confirmation != null) && (trxType != TransactionType.Refund)) {
             logger.warn("Transaction already confirmed: {}", transaction.getTransactionId());
-            throw new ValidationException("Transaction already confirmed.", null, -113);
+            throw new ValidationException(ErrorCodes.TRANSACTION_ALREADY_CONFIRMED);
         }
         
         var reversal = transactionRepository.findByTransactionIdAndTrxType(transaction.getTransactionId(), TransactionType.Reversal);
         if(reversal != null) {
             logger.warn("Transaction already reversed: {}", transaction.getTransactionId());
-            throw new ValidationException("Transaction already reversed.", null, -114);
+            throw new ValidationException(ErrorCodes.TRANSACTION_ALREADY_REVERSED);
         }
 
         // Additional validation for refund
@@ -184,13 +185,13 @@ public class DiscountCodeTransactionService {
             var refund = transactionRepository.findByTransactionIdAndTrxType(transaction.getTransactionId(), TransactionType.Refund);
             if (refund != null) {
                 logger.warn("Transaction already refunded: {}", transaction.getTransactionId());
-                throw new ValidationException("Transaction already refunded.", null, -115);
+                throw new ValidationException(ErrorCodes.TRANSACTION_ALREADY_REFUNDED);
             }
 
             //confirmation = transactionRepository.findByTransactionIdAndTrxType(transaction.getTransactionId(), TransactionType.Confirmation);
             if(confirmation == null) {
                 logger.warn("Transaction not confirmed yet: {}", transaction.getTransactionId());
-                throw new ValidationException("Transaction not confirmed yet.", null, -116);
+                throw new ValidationException(ErrorCodes.TRANSACTION_NOT_CONFIRMED);
             }
         }
 
@@ -264,14 +265,14 @@ public class DiscountCodeTransactionService {
         var validationResult = discountCodeService.validateDiscountCodeRules(dto);
         if (!validationResult.isValid) {
             logger.warn("Discount code validation failed: {}", validationResult.message);
-            throw new ValidationException(validationResult.message, null, getErrorCode(validationResult.errorCode));
+            throw new ValidationException(getErrorCode(validationResult.errorCode), validationResult.message);
         }
         
         // Check for duplicate client transaction ID
         var transaction = transactionRepository.findByClientTransactionIdAndTrxType(dto.clientTransactionId, TransactionType.Redeem);
         if(transaction != null){
             logger.warn("Duplicate client transaction ID: {}", dto.clientTransactionId);
-            throw new ValidationException("ClientTransactionId should be unique.", PersianErrorMessages.DUPLICATE_TRANSACTION_ID, null, -109);
+            throw new ValidationException(ErrorCodes.DUPLICATE_TRANSACTION_ID, "ClientTransactionId should be unique.");
         }
         
         var store = storeRepository.findById(dto.storeId).get();

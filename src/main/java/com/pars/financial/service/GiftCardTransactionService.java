@@ -20,6 +20,7 @@ import com.pars.financial.exception.ClientTransactionIdNotUniqueException;
 import com.pars.financial.exception.CustomerNotFoundException;
 import com.pars.financial.exception.GenericException;
 import com.pars.financial.exception.GiftCardNotFoundException;
+import com.pars.financial.constants.ErrorCodes;
 import com.pars.financial.exception.ValidationException;
 import com.pars.financial.mapper.GiftCardTransactionMapper;
 import com.pars.financial.repository.CompanyRepository;
@@ -65,7 +66,7 @@ public class GiftCardTransactionService {
                 .anyMatch(store -> store.getId().equals(storeId));
             if (!storeAllowed) {
                 logger.warn("Store {} not allowed for gift card {}", storeId, giftCard.getSerialNo());
-                throw new ValidationException("Gift card cannot be used in this store", null, -117);
+                throw new ValidationException(ErrorCodes.STORE_NOT_ALLOWED, "Gift card cannot be used in this store");
             }
         }
     }
@@ -91,7 +92,7 @@ public class GiftCardTransactionService {
         
         if((phoneNumber == null) || (phoneNumber.length() != 11)) {
             logger.warn("Invalid phone number: {}", phoneNumber);
-            throw new ValidationException("Customer Phone Number is incorrect", null, -118);
+            throw new ValidationException(ErrorCodes.INVALID_PHONE_NUMBER, "Customer Phone Number is incorrect");
         }
         
         var customer = customerRepository.findByPrimaryPhoneNumber(phoneNumber);
@@ -115,7 +116,7 @@ public class GiftCardTransactionService {
         var store = storeRepository.findById(storeId);
         if (store.isEmpty()) {
             logger.warn("Store not found with ID: {}", storeId);
-            throw new ValidationException("Store Not Found", null, -119);
+            throw new ValidationException(ErrorCodes.STORE_NOT_FOUND);
         }
 
         var gc = giftCardRepository.findBySerialNo(serialNo.toUpperCase());
@@ -163,7 +164,7 @@ public class GiftCardTransactionService {
             
         if(amount <= 0){
             logger.warn("Invalid amount: {}", amount);
-            throw new ValidationException("Amount must be greater than 0.", null, -122);
+            throw new ValidationException(ErrorCodes.INVALID_AMOUNT, "Amount must be greater than 0.");
         }
         
         var gc = giftCardRepository.findBySerialNo(serialNo.toUpperCase());
@@ -185,14 +186,14 @@ public class GiftCardTransactionService {
             logger.warn("Debit transaction not found for {}: {}", 
                 (trxType == TransactionType.Reversal ? "clientTransactionId" : "transactionId"),
                 (trxType == TransactionType.Reversal ? clientTransactionId : transactionId));
-            throw new ValidationException("Debit Transaction Not Found.", null, -123);
+            throw new ValidationException(ErrorCodes.TRANSACTION_NOT_FOUND, "Debit Transaction Not Found.");
         } else if (amount != debitTransaction.getAmount()) {    
             logger.warn("Amount mismatch. Expected: {}, Actual: {}", debitTransaction.getAmount(), amount);
-            throw new ValidationException("Debit Amount Not Matched.", null, -124);
+            throw new ValidationException(ErrorCodes.TRANSACTION_INVALID, "Debit Amount Not Matched.");
         } else if (!Objects.equals(debitTransaction.getGiftCard().getId(), gc.getId())) {
             logger.warn("Gift card mismatch. Expected: {}, Actual: {}", 
                 debitTransaction.getGiftCard().getSerialNo(), gc.getSerialNo());
-            throw new ValidationException("Debit Gift Card Not Matched.", null, -125);
+            throw new ValidationException(ErrorCodes.TRANSACTION_INVALID, "Debit Gift Card Not Matched.");
         }
 
         var confirmation = transactionRepository.findByTransactionTypeAndTransactionId(TransactionType.Confirmation, debitTransaction.getTransactionId());
@@ -202,31 +203,31 @@ public class GiftCardTransactionService {
         switch (trxType) {
             case Credit, Debit, Redeem -> {
                 logger.warn("Invalid transaction type: {}", trxType);
-                throw new ValidationException("Invalid Transaction", null, -126);
+                throw new ValidationException(ErrorCodes.TRANSACTION_INVALID);
             }
             case Reversal, Confirmation -> {
                 if (confirmation != null) {
                     logger.warn("Transaction already confirmed: {}", debitTransaction.getTransactionId());
-                    throw new ValidationException("Transaction already confirmed.", null, -127);
+                    throw new ValidationException(ErrorCodes.TRANSACTION_ALREADY_CONFIRMED);
                 }
                 if(reversal != null) {
                     logger.warn("Transaction already reversed: {}", debitTransaction.getTransactionId());
-                    throw new ValidationException("Transaction already reversed.", null, -128);
+                    throw new ValidationException(ErrorCodes.TRANSACTION_ALREADY_REVERSED);
                 }
             }
             case Refund -> {
                 var refund = transactionRepository.findByTransactionTypeAndTransactionId(TransactionType.Refund, debitTransaction.getTransactionId());
                 if (refund != null) {
                     logger.warn("Transaction already refunded: {}", debitTransaction.getTransactionId());
-                    throw new ValidationException("Transaction already refunded.", null, -129);
+                    throw new ValidationException(ErrorCodes.TRANSACTION_ALREADY_REFUNDED);
                 }
                 if(reversal != null) {
                     logger.warn("Transaction already reversed: {}", debitTransaction.getTransactionId());
-                    throw new ValidationException("Transaction already reversed.", null, -130);
+                    throw new ValidationException(ErrorCodes.TRANSACTION_ALREADY_REVERSED);
                 }
                 if(confirmation == null) {
                     logger.warn("Transaction not confirmed yet: {}", debitTransaction.getTransactionId());
-                    throw new ValidationException("Transaction not Confirmed yet.", null, -131);
+                    throw new ValidationException(ErrorCodes.TRANSACTION_NOT_CONFIRMED);
                 }
             }
         }
@@ -234,7 +235,7 @@ public class GiftCardTransactionService {
         if(((trxType == TransactionType.Reversal) || (trxType == TransactionType.Refund)) && (gc.getInitialAmount() < gc.getBalance() + amount)) {
             logger.warn("Amount error. Initial: {}, Current: {}, Add: {}", 
                 gc.getInitialAmount(), gc.getBalance(), amount);
-            throw new ValidationException("Amount Error.", null, -132); 
+            throw new ValidationException(ErrorCodes.INVALID_AMOUNT, "Amount Error."); 
         }
 
         logger.debug("Creating {} transaction for debit transaction: {}", trxType, debitTransaction.getTransactionId());
@@ -331,7 +332,7 @@ public class GiftCardTransactionService {
         var company = companyRepository.findById(companyId);
         if (company.isEmpty()) {
             logger.warn("Company not found with ID: {}", companyId);
-            throw new ValidationException("Company not found", null, -134);
+            throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND);
         }
         
         var giftCards = giftCardRepository.findByCompany(company.get());
@@ -355,7 +356,7 @@ public class GiftCardTransactionService {
         var company = companyRepository.findById(companyId);
         if (company.isEmpty()) {
             logger.warn("Company not found with ID: {}", companyId);
-            throw new ValidationException("Company not found", null, -134);
+            throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND);
         }
         
         var giftCards = giftCardRepository.findByCompany(company.get());

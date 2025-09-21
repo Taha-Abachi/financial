@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.pars.financial.dto.UserRoleDto;
 import com.pars.financial.entity.UserRole;
+import com.pars.financial.constants.ErrorCodes;
 import com.pars.financial.exception.ValidationException;
 import com.pars.financial.repository.UserRoleRepository;
 
@@ -35,7 +36,7 @@ public class UserRoleService {
         var role = userRoleRepository.findById(id);
         if (role.isEmpty()) {
             logger.warn("User role not found with id: {}", id);
-            throw new ValidationException("User role not found", null, -119);
+            throw new ValidationException(ErrorCodes.USER_ROLE_NOT_FOUND);
         }
         return convertToUserRoleDto(role.get());
     }
@@ -45,7 +46,7 @@ public class UserRoleService {
         var role = userRoleRepository.findByName(name);
         if (role.isEmpty()) {
             logger.warn("User role not found with name: {}", name);
-            throw new ValidationException("User role not found", null, -119);
+            throw new ValidationException(ErrorCodes.USER_ROLE_NOT_FOUND);
         }
         return convertToUserRoleDto(role.get());
     }
@@ -56,7 +57,7 @@ public class UserRoleService {
         
         if (userRoleRepository.existsByName(roleDto.getName())) {
             logger.warn("User role with name {} already exists", roleDto.getName());
-            throw new ValidationException("User role with this name already exists", null, -120);
+            throw new ValidationException(ErrorCodes.USER_ROLE_ALREADY_EXISTS, "User role with this name already exists");
         }
 
         var role = new UserRole(roleDto.getName(), roleDto.getDescription());
@@ -72,7 +73,7 @@ public class UserRoleService {
         var existingRole = userRoleRepository.findById(id);
         if (existingRole.isEmpty()) {
             logger.warn("User role not found with id: {}", id);
-            throw new ValidationException("User role not found", null, -119);
+            throw new ValidationException(ErrorCodes.USER_ROLE_NOT_FOUND);
         }
 
         var role = existingRole.get();
@@ -90,7 +91,7 @@ public class UserRoleService {
         
         if (!userRoleRepository.existsById(id)) {
             logger.warn("User role not found with id: {}", id);
-            throw new ValidationException("User role not found", null, -119);
+            throw new ValidationException(ErrorCodes.USER_ROLE_NOT_FOUND);
         }
 
         userRoleRepository.deleteById(id);

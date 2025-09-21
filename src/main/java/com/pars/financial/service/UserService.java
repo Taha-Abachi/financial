@@ -16,6 +16,7 @@ import com.pars.financial.dto.UserRoleDto;
 import com.pars.financial.dto.UserStatistics;
 import com.pars.financial.dto.UserUpdateRequest;
 import com.pars.financial.entity.User;
+import com.pars.financial.constants.ErrorCodes;
 import com.pars.financial.exception.ValidationException;
 import com.pars.financial.repository.UserRepository;
 import com.pars.financial.repository.UserRoleRepository;
@@ -51,7 +52,7 @@ public class UserService {
         var user = userRepository.findById(id);
         if (user.isEmpty()) {
             logger.warn("User not found with id: {}", id);
-            throw new ValidationException("User not found", null, -121);
+            throw new ValidationException(ErrorCodes.USER_NOT_FOUND);
         }
         return convertToUserDto(user.get());
     }
@@ -61,7 +62,7 @@ public class UserService {
         var user = userRepository.findByUsername(username);
         if (user.isEmpty()) {
             logger.warn("User not found with username: {}", username);
-            throw new ValidationException("User not found", null, -121);
+            throw new ValidationException(ErrorCodes.USER_NOT_FOUND);
         }
         return convertToUserDto(user.get());
     }
@@ -73,29 +74,29 @@ public class UserService {
         // Validate unique constraints
         if (userRepository.existsByUsername(request.getUsername())) {
             logger.warn("Username {} already exists", request.getUsername());
-            throw new ValidationException("Username already exists", null, -122);
+            throw new ValidationException(ErrorCodes.USER_ALREADY_EXISTS, "Username already exists");
         }
 
         if (userRepository.existsByMobilePhoneNumber(request.getMobilePhoneNumber())) {
             logger.warn("Mobile phone number {} already exists", request.getMobilePhoneNumber());
-            throw new ValidationException("Mobile phone number already exists", null, -123);
+            throw new ValidationException(ErrorCodes.USER_ALREADY_EXISTS, "Mobile phone number already exists");
         }
 
         if (userRepository.existsByNationalCode(request.getNationalCode())) {
             logger.warn("National code {} already exists", request.getNationalCode());
-            throw new ValidationException("National code already exists", null, -124);
+            throw new ValidationException(ErrorCodes.USER_ALREADY_EXISTS, "National code already exists");
         }
 
         if (request.getEmail() != null && userRepository.existsByEmail(request.getEmail())) {
             logger.warn("Email {} already exists", request.getEmail());
-            throw new ValidationException("Email already exists", null, -125);
+            throw new ValidationException(ErrorCodes.USER_ALREADY_EXISTS, "Email already exists");
         }
 
         // Validate role exists
         var role = userRoleRepository.findById(request.getRoleId());
         if (role.isEmpty()) {
             logger.warn("User role not found with id: {}", request.getRoleId());
-            throw new ValidationException("User role not found", null, -119);
+            throw new ValidationException(ErrorCodes.USER_ROLE_NOT_FOUND);
         }
 
         // Create user
@@ -127,7 +128,7 @@ public class UserService {
         var existingUser = userRepository.findById(id);
         if (existingUser.isEmpty()) {
             logger.warn("User not found with id: {}", id);
-            throw new ValidationException("User not found", null, -121);
+            throw new ValidationException(ErrorCodes.USER_NOT_FOUND);
         }
 
         var user = existingUser.get();
@@ -145,7 +146,7 @@ public class UserService {
             if (!request.getMobilePhoneNumber().equals(user.getMobilePhoneNumber()) && 
                 userRepository.existsByMobilePhoneNumber(request.getMobilePhoneNumber())) {
                 logger.warn("Mobile phone number {} already exists", request.getMobilePhoneNumber());
-                throw new ValidationException("Mobile phone number already exists", null, -123);
+                throw new ValidationException(ErrorCodes.USER_ALREADY_EXISTS, "Mobile phone number already exists");
             }
             user.setMobilePhoneNumber(request.getMobilePhoneNumber());
         }
@@ -154,7 +155,7 @@ public class UserService {
             if (!request.getNationalCode().equals(user.getNationalCode()) && 
                 userRepository.existsByNationalCode(request.getNationalCode())) {
                 logger.warn("National code {} already exists", request.getNationalCode());
-                throw new ValidationException("National code already exists", null, -124);
+                throw new ValidationException(ErrorCodes.USER_ALREADY_EXISTS, "National code already exists");
             }
             user.setNationalCode(request.getNationalCode());
         }
@@ -163,7 +164,7 @@ public class UserService {
             if (!request.getEmail().equals(user.getEmail()) && 
                 userRepository.existsByEmail(request.getEmail())) {
                 logger.warn("Email {} already exists", request.getEmail());
-                throw new ValidationException("Email already exists", null, -125);
+                throw new ValidationException(ErrorCodes.USER_ALREADY_EXISTS, "Email already exists");
             }
             user.setEmail(request.getEmail());
         }
@@ -172,7 +173,7 @@ public class UserService {
             var role = userRoleRepository.findById(request.getRoleId());
             if (role.isEmpty()) {
                 logger.warn("User role not found with id: {}", request.getRoleId());
-                throw new ValidationException("User role not found", null, -119);
+                throw new ValidationException(ErrorCodes.USER_ROLE_NOT_FOUND);
             }
             user.setRole(role.get());
         }
@@ -194,7 +195,7 @@ public class UserService {
 
         if (!userRepository.existsById(id)) {
             logger.warn("User not found with id: {}", id);
-            throw new ValidationException("User not found", null, -121);
+            throw new ValidationException(ErrorCodes.USER_NOT_FOUND);
         }
 
         userRepository.deleteById(id);
@@ -208,7 +209,7 @@ public class UserService {
         var user = userRepository.findById(id);
         if (user.isEmpty()) {
             logger.warn("User not found with id: {}", id);
-            throw new ValidationException("User not found", null, -121);
+            throw new ValidationException(ErrorCodes.USER_NOT_FOUND);
         }
 
         var userEntity = user.get();
@@ -227,7 +228,7 @@ public class UserService {
         var user = userRepository.findById(id);
         if (user.isEmpty()) {
             logger.warn("User not found with id: {}", id);
-            throw new ValidationException("User not found", null, -121);
+            throw new ValidationException(ErrorCodes.USER_NOT_FOUND);
         }
 
         var userEntity = user.get();
@@ -246,7 +247,7 @@ public class UserService {
         var user = userRepository.findById(userId);
         if (user.isEmpty()) {
             logger.warn("User not found with id: {}", userId);
-            throw new ValidationException("User not found", null, -121);
+            throw new ValidationException(ErrorCodes.USER_NOT_FOUND);
         }
 
         var userEntity = user.get();
@@ -254,7 +255,7 @@ public class UserService {
         // Check if user can use API keys
         if (!userEntity.canUseApiKey()) {
             logger.warn("User {} cannot use API keys", userEntity.getUsername());
-            throw new ValidationException("User role does not support API key usage", null, -126);
+            throw new ValidationException(ErrorCodes.INSUFFICIENT_PERMISSIONS, "User role does not support API key usage");
         }
 
         // Generate a new API key
@@ -278,7 +279,7 @@ public class UserService {
         var user = userRepository.findById(userId);
         if (user.isEmpty()) {
             logger.warn("User not found with id: {}", userId);
-            throw new ValidationException("User not found", null, -121);
+            throw new ValidationException(ErrorCodes.USER_NOT_FOUND);
         }
 
         var userEntity = user.get();
@@ -329,7 +330,7 @@ public class UserService {
         var user = userRepository.findByApiKey(apiKey);
         if (user.isEmpty()) {
             logger.warn("User not found with API key");
-            throw new ValidationException("Invalid API key", null, -127);
+            throw new ValidationException(ErrorCodes.API_KEY_INVALID);
         }
         return convertToUserDto(user.get());
     }

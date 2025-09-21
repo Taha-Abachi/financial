@@ -8,6 +8,7 @@ import com.pars.financial.dto.DiscountCodeValidationResponse;
 
 import com.pars.financial.entity.DiscountCode;
 import com.pars.financial.enums.DiscountType;
+import com.pars.financial.constants.ErrorCodes;
 import com.pars.financial.exception.ValidationException;
 import com.pars.financial.mapper.DiscountCodeMapper;
 import com.pars.financial.repository.CompanyRepository;
@@ -117,7 +118,7 @@ public class DiscountCodeService {
             var company = companyRepository.findById(companyId);
             if (company.isEmpty()) {
                 logger.warn("Company not found with ID: {}", companyId);
-                throw new ValidationException("Company not found", null, -134);
+                throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND);
             }
             code.setCompany(company.get());
             logger.debug("Assigned discount code to company: {}", company.get().getName());
@@ -145,11 +146,11 @@ public class DiscountCodeService {
             // Check if the provided code and serialNo are not already in the database
             if (codeRepository.existsByCode(dto.code)) {
                 logger.warn("Discount code already exists: {}", dto.code);
-                throw new ValidationException("Discount code already exists", null, -150);
+                throw new ValidationException(ErrorCodes.DISCOUNT_CODE_ALREADY_EXISTS);
             }
             if (codeRepository.existsBySerialNo(dto.serialNo)) {
                 logger.warn("Serial number already exists: {}", dto.serialNo);
-                throw new ValidationException("Serial number already exists", null, -151);
+                throw new ValidationException(ErrorCodes.SERIAL_NUMBER_ALREADY_EXISTS);
             }
             logger.info("Using provided custom code: {} and serial number: {}", dto.code, dto.serialNo);
         } else if (hasCustomCode || hasCustomSerialNo) {
@@ -180,11 +181,11 @@ public class DiscountCodeService {
             // Check if the provided code and serialNo are not already in the database
             if (codeRepository.existsByCode(request.code)) {
                 logger.warn("Discount code already exists: {}", request.code);
-                throw new ValidationException("Discount code already exists", null, -150);
+                throw new ValidationException(ErrorCodes.DISCOUNT_CODE_ALREADY_EXISTS);
             }
             if (codeRepository.existsBySerialNo(request.serialNo)) {
                 logger.warn("Serial number already exists: {}", request.serialNo);
-                throw new ValidationException("Serial number already exists", null, -151);
+                throw new ValidationException(ErrorCodes.SERIAL_NUMBER_ALREADY_EXISTS);
             }
             logger.info("Using provided custom code: {} and serial number: {}", request.code, request.serialNo);
         } else if (hasCustomCode || hasCustomSerialNo) {
@@ -218,11 +219,11 @@ public class DiscountCodeService {
             // Check if the provided code and serialNo are not already in the database
             if (codeRepository.existsByCode(request.code)) {
                 logger.warn("Discount code already exists: {}", request.code);
-                throw new ValidationException("Discount code already exists", null, -150);
+                throw new ValidationException(ErrorCodes.DISCOUNT_CODE_ALREADY_EXISTS);
             }
             if (codeRepository.existsBySerialNo(request.serialNo)) {
                 logger.warn("Serial number already exists: {}", request.serialNo);
-                throw new ValidationException("Serial number already exists", null, -151);
+                throw new ValidationException(ErrorCodes.SERIAL_NUMBER_ALREADY_EXISTS);
             }
             logger.info("Using provided custom code: {} and serial number: {}", request.code, request.serialNo);
         } else if (hasCustomCode || hasCustomSerialNo) {
@@ -256,7 +257,7 @@ public class DiscountCodeService {
         var discountCode = codeRepository.findByCode(code);
         if (discountCode == null) {
             logger.warn("Discount code not found with code: {}", code);
-            throw new ValidationException("Discount code not found", null, -118);
+                throw new ValidationException(ErrorCodes.DISCOUNT_CODE_NOT_FOUND);
         }
 
         if (storeIds == null || storeIds.isEmpty()) {
@@ -269,7 +270,7 @@ public class DiscountCodeService {
                 var store = storeRepository.findById(storeId)
                     .orElseThrow(() -> {
                         logger.warn("Store not found with id: {}", storeId);
-                        return new ValidationException("Store not found with id: " + storeId, null, -116);
+                        return new ValidationException(ErrorCodes.STORE_NOT_FOUND, "Store not found with id: " + storeId);
                     });
                 stores.add(store);
             }
@@ -286,7 +287,7 @@ public class DiscountCodeService {
         var discountCode = codeRepository.findByCode(code);
         if (discountCode == null) {
             logger.warn("Discount code not found with code: {}", code);
-            throw new ValidationException("Discount code not found", null, -118);
+                throw new ValidationException(ErrorCodes.DISCOUNT_CODE_NOT_FOUND);
         }
         discountCode.setStoreLimited(false);
         discountCode.setAllowedStores(new java.util.HashSet<>());
@@ -299,7 +300,7 @@ public class DiscountCodeService {
         var discountCode = codeRepository.findByCode(code);
         if (discountCode == null) {
             logger.warn("Discount code not found with code: {}", code);
-            throw new ValidationException("Discount code not found", null, -118);
+                throw new ValidationException(ErrorCodes.DISCOUNT_CODE_NOT_FOUND);
         }
 
         if (itemCategoryIds == null || itemCategoryIds.isEmpty()) {
@@ -312,7 +313,7 @@ public class DiscountCodeService {
                 var itemCategory = itemCategoryRepository.findById(itemCategoryId)
                     .orElseThrow(() -> {
                         logger.warn("Item category not found with id: {}", itemCategoryId);
-                        return new ValidationException("Item category not found with id: " + itemCategoryId, null, -117);
+                        return new ValidationException(ErrorCodes.ITEM_CATEGORY_NOT_FOUND, "Item category not found with id: " + itemCategoryId);
                     });
                 itemCategories.add(itemCategory);
             }
@@ -329,7 +330,7 @@ public class DiscountCodeService {
         var discountCode = codeRepository.findByCode(code);
         if (discountCode == null) {
             logger.warn("Discount code not found with code: {}", code);
-            throw new ValidationException("Discount code not found", null, -118);
+                throw new ValidationException(ErrorCodes.DISCOUNT_CODE_NOT_FOUND);
         }
         discountCode.setItemCategoryLimited(false);
         discountCode.setAllowedItemCategories(new java.util.HashSet<>());
@@ -505,7 +506,7 @@ public class DiscountCodeService {
         try {
             // Validate company exists
             if (!companyRepository.existsById(companyId)) {
-                throw new ValidationException("Company not found with ID: " + companyId, null, -1);
+                throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND);
             }
             
             // Get company-specific statistics
