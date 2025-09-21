@@ -731,7 +731,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"phoneNo\" : \"09357577482\",\n    \"giftCardSerialNo\":\"{{serialNo}}\",\n    \"amount\": 10,\n    \"clientTransactionId\" : \"{{clienttransactionid}}\",\n    \"storeId\" : 4\n}"
+							"raw": "{\n    \"phoneNo\" : \"09357577482\",\n    \"giftCardSerialNo\":\"{{serialNo}}\",\n    \"amount\": 10,\n    \"orderAmount\": {{orderAmount}},\n    \"clientTransactionId\" : \"{{clienttransactionid}}\",\n    \"storeId\" : 4\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/giftcard/transaction/debit",
@@ -756,7 +756,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"clientTransactionId\": \"TRX123\",\n    \"amount\": 100,\n    \"giftCardSerialNo\": \"GC12345678\",\n    \"storeId\": 1,\n    \"phoneNo\": \"1234567890\"\n}"
+									"raw": "{\n    \"clientTransactionId\": \"TRX123\",\n    \"amount\": 100,\n    \"orderAmount\": {{orderAmount}},\n    \"giftCardSerialNo\": \"GC12345678\",\n    \"storeId\": 1,\n    \"phoneNo\": \"1234567890\"\n}"
 								},
 								"url": {
 									"raw": ""
@@ -799,7 +799,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    //\"clientTransactionId\": \"clientTransactionId\",\n    \"amount\": 10,\n    \"giftCardSerialNo\": \"{{serialNo}}\",\n    \"transactionId\": \"{{transactionId}}\"\n}"
+							"raw": "{\n    //\"clientTransactionId\": \"clientTransactionId\",\n    \"amount\": 10,\n    \"orderAmount\": {{orderAmount}},\n    \"giftCardSerialNo\": \"{{serialNo}}\",\n    \"transactionId\": \"{{transactionId}}\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/giftcard/transaction/confirm",
@@ -824,7 +824,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"clientTransactionId\": \"TRX123\",\n    \"amount\": 100,\n    \"giftCardSerialNo\": \"GC12345678\",\n    \"transactionId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+									"raw": "{\n    \"clientTransactionId\": \"TRX123\",\n    \"amount\": 100,\n    \"orderAmount\": {{orderAmount}},\n    \"giftCardSerialNo\": \"GC12345678\",\n    \"transactionId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
 								},
 								"url": {
 									"raw": ""
@@ -867,7 +867,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"giftCardSerialNo\":\"{{serialNo}}\",\n    \"amount\": 10,\n    \"clientTransactionId\" : \"{{clienttransactionid}}\"//,\n    //\"transactionId\": \"{{transactionId}}\"\n}"
+							"raw": "{\n    \"giftCardSerialNo\":\"{{serialNo}}\",\n    \"amount\": 10,\n    \"orderAmount\": {{orderAmount}},\n    \"clientTransactionId\" : \"{{clienttransactionid}}\"//,\n    //\"transactionId\": \"{{transactionId}}\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/giftcard/transaction/reverse",
@@ -892,7 +892,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"clientTransactionId\": \"TRX123\",\n    \"amount\": 100,\n    \"giftCardSerialNo\": \"GC12345678\",\n    \"transactionId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+									"raw": "{\n    \"clientTransactionId\": \"TRX123\",\n    \"amount\": 100,\n    \"orderAmount\": {{orderAmount}},\n    \"giftCardSerialNo\": \"GC12345678\",\n    \"transactionId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
 								},
 								"url": {
 									"raw": ""
@@ -930,7 +930,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    //\"clientTransactionId\": {{clienttransactionid}},\n    \"giftCardSerialNo\":\"{{serialNo}}\",\n    \"amount\": 2000000,\n    \"transactionId\": \"{{transactionId}}\"\n}"
+							"raw": "{\n    //\"clientTransactionId\": {{clienttransactionid}},\n    \"giftCardSerialNo\":\"{{serialNo}}\",\n    \"amount\": 2000000,\n    \"orderAmount\": {{orderAmountLarge}},\n    \"transactionId\": \"{{transactionId}}\"\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/giftcard/transaction/refund",
@@ -955,7 +955,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"clientTransactionId\": \"TRX123\",\n    \"amount\": 100,\n    \"giftCardSerialNo\": \"GC12345678\",\n    \"transactionId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
+									"raw": "{\n    \"clientTransactionId\": \"TRX123\",\n    \"amount\": 100,\n    \"orderAmount\": {{orderAmount}},\n    \"giftCardSerialNo\": \"GC12345678\",\n    \"transactionId\": \"550e8400-e29b-41d4-a716-446655440000\"\n}"
 								},
 								"url": {
 									"raw": ""
@@ -1228,6 +1228,18 @@
 					]
 				}
 			]
+		}
+	],
+	"variable": [
+		{
+			"key": "orderAmount",
+			"value": "50000",
+			"type": "string"
+		},
+		{
+			"key": "orderAmountLarge",
+			"value": "5000000",
+			"type": "string"
 		}
 	]
 }
