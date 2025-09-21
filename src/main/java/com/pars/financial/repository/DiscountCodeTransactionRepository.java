@@ -42,4 +42,9 @@ public interface DiscountCodeTransactionRepository extends JpaRepository<Discoun
     
     @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(t.originalAmount), 0) FROM DiscountCodeTransaction t WHERE t.trxType = 'Redeem' AND t.discountCode.company.id = :companyId")
     Long sumOriginalAmountByCompany(@org.springframework.data.repository.query.Param("companyId") Long companyId);
+    
+    // Store-specific methods
+    java.util.List<DiscountCodeTransaction> findByStoreId(Long storeId);
+    
+    java.util.List<DiscountCodeTransaction> findByStoreIdAndDiscountCode(Long storeId, String discountCode);
 }

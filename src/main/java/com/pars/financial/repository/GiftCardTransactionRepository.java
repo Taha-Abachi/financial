@@ -44,4 +44,9 @@ public interface GiftCardTransactionRepository extends JpaRepository<GiftCardTra
     
     @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(t.Amount), 0) FROM GiftCardTransaction t WHERE t.transactionType = 'Debit' AND t.giftCard.company.id = :companyId")
     Long sumDebitAmountByCompany(@org.springframework.data.repository.query.Param("companyId") Long companyId);
+    
+    // Store-specific methods
+    List<GiftCardTransaction> findByStoreId(Long storeId);
+    
+    List<GiftCardTransaction> findByStoreIdAndGiftCardSerialNo(Long storeId, String serialNo);
 }

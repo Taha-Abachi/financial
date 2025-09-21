@@ -67,6 +67,16 @@ public class UserService {
         return convertToUserDto(user.get());
     }
 
+    public User getUserEntityByUsername(String username) {
+        logger.debug("Fetching user entity by username: {}", username);
+        var user = userRepository.findByUsername(username);
+        if (user.isEmpty()) {
+            logger.warn("User not found with username: {}", username);
+            throw new ValidationException(ErrorCodes.USER_NOT_FOUND);
+        }
+        return user.get();
+    }
+
     @Transactional
     public UserDto createUser(UserCreateRequest request) {
         logger.info("Creating new user: {}", request.getUsername());

@@ -75,6 +75,10 @@ public class User {
     @NotNull(message = "User role cannot be null")
     private UserRole role;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "store_id")
+    private Store store;
+
     @Column(name = "api_key", columnDefinition = "TEXT")
     private String apiKey;
 
@@ -194,6 +198,14 @@ public class User {
         this.role = role;
     }
 
+    public Store getStore() {
+        return store;
+    }
+
+    public void setStore(Store store) {
+        this.store = store;
+    }
+
     public String getApiKey() {
         return apiKeyEncryption != null && (apiKey != null) && (!apiKey.isEmpty())  ? apiKeyEncryption.decrypt(apiKey) : "";
     }
@@ -209,6 +221,7 @@ public class User {
     public boolean canUseApiKey() {
         return role != null && (com.pars.financial.enums.UserRole.API_USER.name().equals(role.getName()) || 
                                com.pars.financial.enums.UserRole.ADMIN.name().equals(role.getName()) ||
-                               com.pars.financial.enums.UserRole.SUPERADMIN.name().equals(role.getName()));
+                               com.pars.financial.enums.UserRole.SUPERADMIN.name().equals(role.getName()) ||
+                               com.pars.financial.enums.UserRole.STORE_USER.name().equals(role.getName()));
     }
 } 

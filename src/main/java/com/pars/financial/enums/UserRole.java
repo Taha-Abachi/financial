@@ -4,5 +4,6 @@ public enum UserRole {
     SUPERADMIN,
     ADMIN,
     API_USER,
-    USER
+    USER,
+    STORE_USER
 }
