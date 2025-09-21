@@ -32,6 +32,8 @@ public class UserCreateRequest {
     @NotNull(message = "Role ID cannot be null")
     private Long roleId;
 
+    private Long storeId;
+
     public UserCreateRequest() {}
 
     public UserCreateRequest(String username, String name, String password, String mobilePhoneNumber, String nationalCode, String email, Long roleId) {
@@ -98,5 +100,13 @@ public class UserCreateRequest {
 
     public void setRoleId(Long roleId) {
         this.roleId = roleId;
+    }
+
+    public Long getStoreId() {
+        return storeId;
+    }
+
+    public void setStoreId(Long storeId) {
+        this.storeId = storeId;
     }
 } 

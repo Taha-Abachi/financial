@@ -20,6 +20,9 @@ import com.pars.financial.constants.ErrorCodes;
 import com.pars.financial.exception.ValidationException;
 import com.pars.financial.repository.UserRepository;
 import com.pars.financial.repository.UserRoleRepository;
+import com.pars.financial.repository.StoreRepository;
+import com.pars.financial.entity.Store;
+import com.pars.financial.enums.UserRole;
 import com.pars.financial.utils.ApiKeyEncryption;
 
 @Service
@@ -28,12 +31,14 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final UserRoleRepository userRoleRepository;
+    private final StoreRepository storeRepository;
     private final PasswordEncoder passwordEncoder;
 
     public UserService(UserRepository userRepository, UserRoleRepository userRoleRepository, 
-                      PasswordEncoder passwordEncoder, ApiKeyEncryption apiKeyEncryption) {
+                      StoreRepository storeRepository, PasswordEncoder passwordEncoder, ApiKeyEncryption apiKeyEncryption) {
         this.userRepository = userRepository;
         this.userRoleRepository = userRoleRepository;
+        this.storeRepository = storeRepository;
         this.passwordEncoder = passwordEncoder;
         
         // Set the API key encryption in the User entity
@@ -109,6 +114,25 @@ public class UserService {
             throw new ValidationException(ErrorCodes.USER_ROLE_NOT_FOUND);
         }
 
+        // Validate store assignment for STORE_USER role
+        Store store = null;
+        if (UserRole.STORE_USER.name().equals(role.get().getName())) {
+            if (request.getStoreId() == null) {
+                logger.warn("Store ID is required for STORE_USER role");
+                throw new ValidationException(ErrorCodes.REQUIRED_FIELD_MISSING, "Store ID is required for STORE_USER role");
+            }
+            
+            var storeOptional = storeRepository.findById(request.getStoreId());
+            if (storeOptional.isEmpty()) {
+                logger.warn("Store not found with id: {}", request.getStoreId());
+                throw new ValidationException(ErrorCodes.STORE_NOT_FOUND);
+            }
+            store = storeOptional.get();
+        } else if (request.getStoreId() != null) {
+            logger.warn("Store ID should not be provided for non-STORE_USER roles");
+            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "Store ID should only be provided for STORE_USER role");
+        }
+
         // Create user
         var user = new User(
             request.getUsername(),
@@ -122,6 +146,12 @@ public class UserService {
         user.setCreatedAt(LocalDateTime.now());
         user.setUpdatedAt(LocalDateTime.now());
         user.setApiKey(generateSecureApiKey());
+        
+        // Set store for STORE_USER role
+        if (store != null) {
+            user.setStore(store);
+            logger.info("Assigned store {} to STORE_USER {}", store.getId(), request.getUsername());
+        }
         
         // Encode password before saving
         user.setEncodedPassword(passwordEncoder.encode(request.getPassword()));

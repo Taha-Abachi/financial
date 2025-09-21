@@ -714,6 +714,73 @@
 					]
 				},
 				{
+					"name": "Create Store User (ADMIN or SUPERADMIN)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{ADMIN_API_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"store_user1\",\n    \"name\": \"Store User One\",\n    \"password\": \"password123\",\n    \"mobilePhoneNumber\": \"09123456789\",\n    \"nationalCode\": \"1234567892\",\n    \"email\": \"storeuser@example.com\",\n    \"roleId\": 5,\n    \"storeId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/users/create",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"create"
+							]
+						},
+						"description": "Create a new store user with store assignment"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"username\": \"store_user1\",\n    \"name\": \"Store User One\",\n    \"password\": \"password123\",\n    \"mobilePhoneNumber\": \"09123456789\",\n    \"nationalCode\": \"1234567892\",\n    \"email\": \"storeuser@example.com\",\n    \"roleId\": 5,\n    \"storeId\": 1\n}"
+								},
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 3,\n    \"username\": \"store_user1\",\n    \"name\": \"Store User One\",\n    \"mobilePhoneNumber\": \"09123456789\",\n    \"nationalCode\": \"1234567892\",\n    \"email\": \"storeuser@example.com\",\n    \"isActive\": true,\n    \"createdAt\": \"2024-01-01T10:00:00\",\n    \"updatedAt\": \"2024-01-01T10:00:00\",\n    \"role\": {\n      \"id\": 5,\n      \"name\": \"STORE_USER\",\n      \"description\": \"Store User with access to store-specific transactions\"\n    },\n    \"store\": {\n      \"id\": 1,\n      \"storeName\": \"Main Store\"\n    }\n  }\n}"
+						}
+					]
+				},
+				{
 					"name": "Update User (ADMIN or SUPERADMIN)",
 					"request": {
 						"method": "PUT",
