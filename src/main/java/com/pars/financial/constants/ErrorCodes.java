@@ -67,6 +67,9 @@ public class ErrorCodes {
     public static final ErrorCode GIFT_CARD_INACTIVE = new ErrorCode(-604, "Gift card inactive", "کارت هدیه غیرفعال");
     public static final ErrorCode GIFT_CARD_INVALID = new ErrorCode(-605, "Invalid gift card", "کارت هدیه نامعتبر");
     public static final ErrorCode SERIAL_NUMBER_ALREADY_EXISTS = new ErrorCode(-606, "Serial number already exists", "شماره سریال قبلاً وجود دارد");
+    public static final ErrorCode GIFT_CARD_CUSTOMER_MISMATCH = new ErrorCode(-607, "Gift card is already associated with a different customer", "کارت هدیه قبلاً به مشتری دیگری اختصاص یافته است");
+    public static final ErrorCode GIFT_CARD_CUSTOMER_REQUIRED = new ErrorCode(-608, "Customer is required for gift card transaction", "مشتری برای تراکنش کارت هدیه الزامی است");
+    public static final ErrorCode GIFT_CARD_DATA_INTEGRITY_ERROR = new ErrorCode(-609, "Gift card data integrity error - used but no customer assigned", "خطای یکپارچگی داده کارت هدیه - استفاده شده اما مشتری اختصاص نیافته");
     
     // ===== TRANSACTION ERROR CODES =====
     public static final ErrorCode TRANSACTION_NOT_FOUND = new ErrorCode(-700, "Transaction not found", "تراکنش یافت نشد");

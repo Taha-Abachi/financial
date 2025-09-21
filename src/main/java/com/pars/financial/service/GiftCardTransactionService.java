@@ -87,6 +87,46 @@ public class GiftCardTransactionService {
         }
     }
 
+    /**
+     * Validates customer assignment for gift card transactions
+     * Ensures that if a gift card already has a customer, the same customer must be used
+     * If no customer is assigned, the provided customer will be assigned
+     * Also checks if this is the first transaction based on lastUsed date
+     */
+    private void validateGiftCardCustomer(GiftCard gc, com.pars.financial.entity.Customer customer) {
+        // Check if customer is provided
+        if (customer == null) {
+            logger.warn("Customer is required for gift card transaction but was not provided");
+            throw new ValidationException(ErrorCodes.GIFT_CARD_CUSTOMER_REQUIRED, "Customer is required for gift card transaction");
+        }
+
+        // Check if this is the first transaction (lastUsed is null)
+        boolean isFirstTransaction = (gc.getLastUsed() == null);
+        
+        if (isFirstTransaction) {
+            // First transaction - customer will be set as the owner
+            logger.info("First transaction for gift card {} - setting customer {} as owner", gc.getSerialNo(), customer.getId());
+        } else {
+            // Not first transaction - must validate customer matches owner
+            if (gc.getCustomer() == null) {
+                logger.error("Gift card {} has been used before (lastUsed: {}) but has no customer assigned - data integrity issue", 
+                    gc.getSerialNo(), gc.getLastUsed());
+                throw new ValidationException(ErrorCodes.GIFT_CARD_DATA_INTEGRITY_ERROR, 
+                    "Gift card has been used before but has no customer assigned. Data integrity issue.");
+            }
+            
+            // Validate that the current customer is the same as the gift card owner
+            if (!Objects.equals(gc.getCustomer().getId(), customer.getId())) {
+                logger.warn("Gift card {} is owned by customer {}, but transaction is for customer {}", 
+                    gc.getSerialNo(), gc.getCustomer().getId(), customer.getId());
+                throw new ValidationException(ErrorCodes.GIFT_CARD_CUSTOMER_MISMATCH, 
+                    "Gift card is owned by a different customer. Owner customer ID: " + 
+                    gc.getCustomer().getId() + ", but provided customer ID: " + customer.getId());
+            }
+            logger.debug("Gift card {} customer validation passed - same owner customer {}", gc.getSerialNo(), customer.getId());
+        }
+    }
+
     public GiftCardTransactionDto debitGiftCard(User user, String clientTransactionId, long amount, String serialNo, Long storeId, String phoneNumber) {
         logger.info("Processing debit request for gift card: {}, amount: {}, store: {}, phone: {}", serialNo, amount, storeId, phoneNumber);
         
@@ -123,9 +163,19 @@ public class GiftCardTransactionService {
         if (gc != null){
             validateStoreLimit(gc, storeId);
             validateCompanyAccess(gc, storeId);
+            
+            // CUSTOMER VALIDATION LOGIC
+            validateGiftCardCustomer(gc, customer);
+            
             if(gc.getBalance() >= amount) {
                 logger.debug("Processing debit transaction for gift card: {}, current balance: {}, debit amount: {}", 
                     gc.getSerialNo(), gc.getBalance(), amount);
+                
+                // Set customer to gift card only on first transaction (when lastUsed is null)
+                if (gc.getLastUsed() == null) {
+                    gc.setCustomer(customer);
+                    logger.info("First transaction - setting customer {} as owner of gift card {}", customer.getId(), gc.getSerialNo());
+                }
                 
                 GiftCardTransaction transaction = new GiftCardTransaction();
                 transaction.setTransactionType(TransactionType.Debit);
@@ -239,6 +289,13 @@ public class GiftCardTransactionService {
         }
 
         logger.debug("Creating {} transaction for debit transaction: {}", trxType, debitTransaction.getTransactionId());
+        
+        // Validate that the debit transaction has a customer
+        if (debitTransaction.getCustomer() == null) {
+            logger.warn("Debit transaction {} has no customer assigned", debitTransaction.getTransactionId());
+            throw new ValidationException(ErrorCodes.GIFT_CARD_CUSTOMER_REQUIRED, "Debit transaction must have a customer assigned");
+        }
+        
         GiftCardTransaction transaction = new GiftCardTransaction();
         transaction.setCustomer(debitTransaction.getCustomer());
         transaction.setApiUser(user);
