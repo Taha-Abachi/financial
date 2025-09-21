@@ -98,6 +98,38 @@ public class DataCleansingController {
     }
 
     /**
+     * Validate confirmation integrity - ensure no confirmed transactions have refunds
+     * This is a critical validation for data integrity
+     */
+    @GetMapping("/validate-confirmation-integrity")
+    public GenericResponse<Boolean> validateConfirmationIntegrity() {
+        logger.info("GET /api/v1/admin/data-cleansing/validate-confirmation-integrity called");
+        
+        GenericResponse<Boolean> response = new GenericResponse<>();
+        
+        try {
+            boolean isValid = dataCleansingService.validateConfirmationIntegrity();
+            response.data = isValid;
+            
+            if (isValid) {
+                response.message = "Confirmation integrity validation passed - all confirmed transactions have no refunds";
+                logger.info("Confirmation integrity validation passed");
+            } else {
+                response.status = -1;
+                response.message = "Confirmation integrity validation FAILED - some confirmed transactions have refunds";
+                logger.error("Confirmation integrity validation failed");
+            }
+            
+        } catch (Exception e) {
+            logger.error("Error during confirmation integrity validation", e);
+            response.status = -1;
+            response.message = "Error during validation: " + e.getMessage();
+        }
+        
+        return response;
+    }
+
+    /**
      * Generate a comprehensive data health report
      * This combines both the inconsistency report and provides recommendations
      */

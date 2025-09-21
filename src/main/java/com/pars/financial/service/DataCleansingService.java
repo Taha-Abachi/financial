@@ -56,8 +56,14 @@ public class DataCleansingService {
             int orphanedCount = fixOrphanedSettlementTransactions();
             result.setOrphanedTransactionsFixed(orphanedCount);
             
-            logger.info("Gift card transaction data cleansing completed successfully. Fixed: {} refunded (priority), {} confirmed, {} reversed, {} orphaned", 
-                refundedCount, confirmedCount, reversedCount, orphanedCount);
+            // Validate confirmation integrity after cleansing
+            boolean confirmationIntegrityValid = validateConfirmationIntegrity();
+            if (!confirmationIntegrityValid) {
+                logger.warn("Confirmation integrity validation failed after cleansing - some confirmed transactions may have refunds");
+            }
+            
+            logger.info("Gift card transaction data cleansing completed successfully. Fixed: {} refunded (priority), {} confirmed, {} reversed, {} orphaned. Confirmation integrity: {}", 
+                refundedCount, confirmedCount, reversedCount, orphanedCount, confirmationIntegrityValid ? "VALID" : "INVALID");
             
         } catch (Exception e) {
             logger.error("Error during gift card transaction data cleansing", e);
@@ -71,21 +77,23 @@ public class DataCleansingService {
     /**
      * Fixes pending debit transactions that have confirmation transactions
      * Updates both debit and confirmation transaction statuses to Confirmed
-     * Note: This method only processes transactions that haven't been processed by refund method
+     * IMPORTANT: Only confirms transactions that have NO refund transactions available
+     * This ensures data integrity by preventing confirmation when refunds exist
      */
     private int fixPendingDebitTransactionsWithConfirmations() {
-        logger.debug("Fixing pending debit transactions with confirmations...");
+        logger.debug("Fixing pending debit transactions with confirmations (ensuring no refunds exist)...");
         
         List<GiftCardTransaction> pendingDebits = transactionRepository.findByTransactionTypeAndStatus(
             TransactionType.Debit, TransactionStatus.Pending);
         
         int fixedCount = 0;
         for (GiftCardTransaction debit : pendingDebits) {
-            // Skip if this debit has already been processed by refund method
+            // CRITICAL: Check if there's a refund transaction for this debit
+            // If refund exists, skip confirmation to maintain data integrity
             GiftCardTransaction refund = transactionRepository.findByTransactionTypeAndTransactionId(
                 TransactionType.Refund, debit.getTransactionId());
             if (refund != null) {
-                logger.debug("Skipping debit {} as it has a refund transaction (already processed)", 
+                logger.debug("Skipping debit {} confirmation as refund transaction exists (refund takes priority)", 
                     debit.getTransactionId());
                 continue;
             }
@@ -95,22 +103,32 @@ public class DataCleansingService {
                 TransactionType.Confirmation, debit.getTransactionId());
             
             if (confirmation != null) {
-                logger.debug("Found pending debit {} with confirmation, updating both statuses to Confirmed", 
-                    debit.getTransactionId());
+                // Double-check: Ensure no refund exists before confirming
+                // This is a safety check to prevent confirmation when refunds are present
+                GiftCardTransaction doubleCheckRefund = transactionRepository.findByTransactionTypeAndTransactionId(
+                    TransactionType.Refund, debit.getTransactionId());
                 
-                // Update debit transaction status
-                debit.setStatus(TransactionStatus.Confirmed);
-                transactionRepository.save(debit);
-                
-                // Update confirmation transaction status to Confirmed
-                confirmation.setStatus(TransactionStatus.Confirmed);
-                transactionRepository.save(confirmation);
-                
-                fixedCount++;
+                if (doubleCheckRefund == null) {
+                    logger.debug("Found pending debit {} with confirmation and NO refunds, updating both statuses to Confirmed", 
+                        debit.getTransactionId());
+                    
+                    // Update debit transaction status to Confirmed
+                    debit.setStatus(TransactionStatus.Confirmed);
+                    transactionRepository.save(debit);
+                    
+                    // Update confirmation transaction status to Confirmed
+                    confirmation.setStatus(TransactionStatus.Confirmed);
+                    transactionRepository.save(confirmation);
+                    
+                    fixedCount++;
+                } else {
+                    logger.warn("Refund transaction found during confirmation process for debit {}, skipping confirmation", 
+                        debit.getTransactionId());
+                }
             }
         }
         
-        logger.info("Fixed {} pending debit transactions with confirmations (updated both debit and confirmation statuses)", fixedCount);
+        logger.info("Fixed {} pending debit transactions with confirmations (ensured no refunds exist before confirming)", fixedCount);
         return fixedCount;
     }
 
@@ -265,6 +283,43 @@ public class DataCleansingService {
         
         logger.info("Fixed {} orphaned settlement transactions", fixedCount);
         return fixedCount;
+    }
+
+    /**
+     * Validates that confirmations are only processed when no refunds exist
+     * This is a safety check to ensure data integrity
+     * 
+     * @return true if all confirmations are valid (no refunds exist), false otherwise
+     */
+    public boolean validateConfirmationIntegrity() {
+        logger.info("Validating confirmation integrity - ensuring no refunds exist for confirmed transactions...");
+        
+        List<GiftCardTransaction> confirmedDebits = transactionRepository.findByTransactionTypeAndStatus(
+            TransactionType.Debit, TransactionStatus.Confirmed);
+        
+        boolean isValid = true;
+        int invalidCount = 0;
+        
+        for (GiftCardTransaction debit : confirmedDebits) {
+            // Check if there's a refund transaction for this confirmed debit
+            GiftCardTransaction refund = transactionRepository.findByTransactionTypeAndTransactionId(
+                TransactionType.Refund, debit.getTransactionId());
+            
+            if (refund != null) {
+                logger.error("DATA INTEGRITY VIOLATION: Confirmed debit {} has refund transaction {} - this should not happen!", 
+                    debit.getTransactionId(), refund.getTransactionId());
+                isValid = false;
+                invalidCount++;
+            }
+        }
+        
+        if (isValid) {
+            logger.info("Confirmation integrity validation passed - all confirmed transactions have no refunds");
+        } else {
+            logger.error("Confirmation integrity validation FAILED - found {} confirmed transactions with refunds", invalidCount);
+        }
+        
+        return isValid;
     }
 
     /**
