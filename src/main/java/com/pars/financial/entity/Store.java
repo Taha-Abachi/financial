@@ -1,6 +1,10 @@
 package com.pars.financial.entity;
 
+import com.pars.financial.enums.OwnershipType;
+import com.pars.financial.enums.LocationType;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -32,6 +36,12 @@ public class Store {
     private Address address;
 
     private String store_name;
+
+    @Enumerated(EnumType.STRING)
+    private OwnershipType ownershipType;
+
+    @Enumerated(EnumType.STRING)
+    private LocationType locationType;
 
     public PhoneNumber getPhone_number() {
         return phone_number;
@@ -73,5 +83,21 @@ public class Store {
 
     public void setStore_name(String store_name) {
         this.store_name = store_name;
+    }
+
+    public OwnershipType getOwnershipType() {
+        return ownershipType;
+    }
+
+    public void setOwnershipType(OwnershipType ownershipType) {
+        this.ownershipType = ownershipType;
+    }
+
+    public LocationType getLocationType() {
+        return locationType;
+    }
+
+    public void setLocationType(LocationType locationType) {
+        this.locationType = locationType;
     }
 }

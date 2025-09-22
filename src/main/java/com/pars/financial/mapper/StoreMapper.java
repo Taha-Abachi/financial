@@ -15,6 +15,8 @@ public class StoreMapper {
         c.name = store.getStore_name();
         c.address = store.getAddress().getText();
         c.phone = store.getPhone_number().getNumber();
+        c.ownershipType = store.getOwnershipType();
+        c.locationType = store.getLocationType();
         return c;
     }
     public List<StoreDto> getFrom(List<Store> stores) {
