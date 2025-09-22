@@ -121,7 +121,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/batches/*/report").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN")
                         .requestMatchers("/api/v1/batches/*/summary").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN")
                         .requestMatchers("/api/v1/batches/reports/**").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN")
-                        // Admin endpoints - restricted to ADMIN and SUPERADMIN
+                        // Data cleansing endpoints - restricted to SUPERADMIN only
+                        .requestMatchers("/api/v1/admin/data-cleansing/**").hasRole("SUPERADMIN")
+                        // Other admin endpoints - restricted to ADMIN and SUPERADMIN
                         .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN", "SUPERADMIN")
                         .anyRequest().permitAll()
                 )
