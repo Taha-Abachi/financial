@@ -1,9 +1,12 @@
 package com.pars.financial.repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.pars.financial.entity.GiftCard;
 import com.pars.financial.entity.GiftCardTransaction;
@@ -49,4 +52,23 @@ public interface GiftCardTransactionRepository extends JpaRepository<GiftCardTra
     List<GiftCardTransaction> findByStoreId(Long storeId);
     
     List<GiftCardTransaction> findByStoreIdAndGiftCardSerialNo(Long storeId, String serialNo);
+    
+    // Aggregation methods for transaction statistics
+    @Query("SELECT t.status, COUNT(t), COALESCE(SUM(t.Amount), 0), COALESCE(SUM(t.orderAmount), 0) " +
+           "FROM GiftCardTransaction t " +
+           "WHERE t.trxDate >= :startDate AND t.trxDate < :endDate " +
+           "AND t.transactionType = 'Debit' " +
+           "GROUP BY t.status")
+    List<Object[]> getTransactionAggregationsByDateRange(@Param("startDate") LocalDateTime startDate, 
+                                                         @Param("endDate") LocalDateTime endDate);
+    
+    @Query("SELECT t.status, COUNT(t), COALESCE(SUM(t.Amount), 0), COALESCE(SUM(t.orderAmount), 0) " +
+           "FROM GiftCardTransaction t " +
+           "WHERE t.trxDate >= :startDate AND t.trxDate < :endDate " +
+           "AND t.transactionType = 'Debit' " +
+           "AND t.store.id = :storeId " +
+           "GROUP BY t.status")
+    List<Object[]> getTransactionAggregationsByDateRangeAndStore(@Param("startDate") LocalDateTime startDate, 
+                                                                 @Param("endDate") LocalDateTime endDate,
+                                                                 @Param("storeId") Long storeId);
 }

@@ -2,6 +2,7 @@ package com.pars.financial.controller;
 
 import com.pars.financial.dto.GenericResponse;
 import com.pars.financial.dto.GiftCardTransactionDto;
+import com.pars.financial.dto.TransactionAggregationResponseDto;
 import com.pars.financial.service.GiftCardTransactionService;
 import com.pars.financial.utils.ApiUserUtil;
 
@@ -187,6 +188,31 @@ public class GiftCardTransactionController {
             res.message = e.getMessage();
             res.status = -1;
         }
+        return res;
+    }
+
+    @GetMapping("/aggregations")
+    public GenericResponse<TransactionAggregationResponseDto> getTransactionAggregations() {
+        logger.info("GET /api/v1/giftcard/transaction/aggregations called");
+        var res = new GenericResponse<TransactionAggregationResponseDto>();
+        
+        ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+        if (userResult.isError()) {
+            res.message = userResult.errorMessage;
+            res.status = 401;
+            return res;
+        }
+        
+        try {
+            var aggregations = transactionService.getTransactionAggregations(userResult.user);
+            res.data = aggregations;
+            logger.info("Successfully retrieved transaction aggregations for user: {}", userResult.user.getUsername());
+        } catch (Exception e) {
+            logger.error("Error getting transaction aggregations: {}", e.getMessage());
+            res.message = "Failed to retrieve transaction aggregations";
+            res.status = -1;
+        }
+        
         return res;
     }
 

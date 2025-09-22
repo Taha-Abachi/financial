@@ -1128,6 +1128,119 @@
 					]
 				},
 				{
+					"name": "Get Transaction Aggregations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "X-API-Key",
+								"value": "{{apiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/transaction/aggregations",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"giftcard",
+								"transaction",
+								"aggregations"
+							]
+						},
+						"description": "Get transaction aggregations for today, last 7 days, and last 30 days. Returns count and amounts for Confirmed, Refunded, and Reversed transactions. For STORE_USER, only returns data for their assigned store. For SUPERADMIN, returns data for all stores."
+					},
+					"response": [
+						{
+							"name": "Success Response - SUPERADMIN",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": {\n    \"today\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 15,\n        \"totalAmount\": 150000,\n        \"totalOrderAmount\": 200000\n      },\n      {\n        \"status\": \"Refunded\",\n        \"count\": 2,\n        \"totalAmount\": 20000,\n        \"totalOrderAmount\": 25000\n      },\n      {\n        \"status\": \"Reversed\",\n        \"count\": 1,\n        \"totalAmount\": 10000,\n        \"totalOrderAmount\": 12000\n      }\n    ],\n    \"last7Days\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 85,\n        \"totalAmount\": 850000,\n        \"totalOrderAmount\": 1200000\n      },\n      {\n        \"status\": \"Refunded\",\n        \"count\": 8,\n        \"totalAmount\": 80000,\n        \"totalOrderAmount\": 100000\n      },\n      {\n        \"status\": \"Reversed\",\n        \"count\": 3,\n        \"totalAmount\": 30000,\n        \"totalOrderAmount\": 35000\n      }\n    ],\n    \"last30Days\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 350,\n        \"totalAmount\": 3500000,\n        \"totalOrderAmount\": 5000000\n      },\n      {\n        \"status\": \"Refunded\",\n        \"count\": 25,\n        \"totalAmount\": 250000,\n        \"totalOrderAmount\": 300000\n      },\n      {\n        \"status\": \"Reversed\",\n        \"count\": 12,\n        \"totalAmount\": 120000,\n        \"totalOrderAmount\": 140000\n      }\n    ]\n  }\n}"
+						},
+						{
+							"name": "Success Response - STORE_USER",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": {\n    \"today\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 5,\n        \"totalAmount\": 50000,\n        \"totalOrderAmount\": 75000\n      },\n      {\n        \"status\": \"Refunded\",\n        \"count\": 0,\n        \"totalAmount\": 0,\n        \"totalOrderAmount\": 0\n      },\n      {\n        \"status\": \"Reversed\",\n        \"count\": 1,\n        \"totalAmount\": 5000,\n        \"totalOrderAmount\": 6000\n      }\n    ],\n    \"last7Days\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 25,\n        \"totalAmount\": 250000,\n        \"totalOrderAmount\": 375000\n      },\n      {\n        \"status\": \"Refunded\",\n        \"count\": 2,\n        \"totalAmount\": 20000,\n        \"totalOrderAmount\": 25000\n      },\n      {\n        \"status\": \"Reversed\",\n        \"count\": 1,\n        \"totalAmount\": 5000,\n        \"totalOrderAmount\": 6000\n      }\n    ],\n    \"last30Days\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 100,\n        \"totalAmount\": 1000000,\n        \"totalOrderAmount\": 1500000\n      },\n      {\n        \"status\": \"Refunded\",\n        \"count\": 5,\n        \"totalAmount\": 50000,\n        \"totalOrderAmount\": 60000\n      },\n      {\n        \"status\": \"Reversed\",\n        \"count\": 3,\n        \"totalAmount\": 15000,\n        \"totalOrderAmount\": 18000\n      }\n    ]\n  }\n}"
+						},
+						{
+							"name": "Success Response - No Data",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": {\n    \"today\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 0,\n        \"totalAmount\": 0,\n        \"totalOrderAmount\": 0\n      },\n      {\n        \"status\": \"Refunded\",\n        \"count\": 0,\n        \"totalAmount\": 0,\n        \"totalOrderAmount\": 0\n      },\n      {\n        \"status\": \"Reversed\",\n        \"count\": 0,\n        \"totalAmount\": 0,\n        \"totalOrderAmount\": 0\n      }\n    ],\n    \"last7Days\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 0,\n        \"totalAmount\": 0,\n        \"totalOrderAmount\": 0\n      },\n      {\n        \"status\": \"Refunded\",\n        \"count\": 0,\n        \"totalAmount\": 0,\n        \"totalOrderAmount\": 0\n      },\n      {\n        \"status\": \"Reversed\",\n        \"count\": 0,\n        \"totalAmount\": 0,\n        \"totalOrderAmount\": 0\n      }\n    ],\n    \"last30Days\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 0,\n        \"totalAmount\": 0,\n        \"totalOrderAmount\": 0\n      },\n      {\n        \"status\": \"Refunded\",\n        \"count\": 0,\n        \"totalAmount\": 0,\n        \"totalOrderAmount\": 0\n      },\n      {\n        \"status\": \"Reversed\",\n        \"count\": 0,\n        \"totalAmount\": 0,\n        \"totalOrderAmount\": 0\n      }\n    ]\n  }\n}"
+						},
+						{
+							"name": "Error Response - Unauthorized",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": 401,\n  \"message\": \"Invalid or missing API key\",\n  \"data\": null\n}"
+						}
+					]
+				},
+				{
 					"name": "Get Gift Card Report",
 					"request": {
 						"method": "GET",

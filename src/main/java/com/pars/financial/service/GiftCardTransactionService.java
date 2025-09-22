@@ -1,6 +1,8 @@
 package com.pars.financial.service;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -11,6 +13,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.pars.financial.dto.GiftCardTransactionDto;
+import com.pars.financial.dto.TransactionAggregationDto;
+import com.pars.financial.dto.TransactionAggregationResponseDto;
 import com.pars.financial.entity.GiftCard;
 import com.pars.financial.entity.GiftCardTransaction;
 import com.pars.financial.entity.User;
@@ -423,5 +427,118 @@ public class GiftCardTransactionService {
             .flatMap(gc -> transactionRepository.findByGiftCard(gc).stream())
             .map(giftCardTransactionMapper::getFrom)
             .toList();
+    }
+
+    /**
+     * Get transaction aggregations for today, last 7 days, and last 30 days
+     * For STORE_USER, only returns data for their assigned store
+     * For SUPERADMIN, returns data for all stores
+     */
+    public TransactionAggregationResponseDto getTransactionAggregations(User user) {
+        logger.info("Getting transaction aggregations for user: {}", user.getUsername());
+        
+        LocalDate today = LocalDate.now();
+        LocalDateTime todayStart = today.atStartOfDay();
+        LocalDateTime todayEnd = today.plusDays(1).atStartOfDay();
+        
+        LocalDateTime last7DaysStart = today.minusDays(7).atStartOfDay();
+        LocalDateTime last30DaysStart = today.minusDays(30).atStartOfDay();
+        
+        List<TransactionAggregationDto> todayAggregations;
+        List<TransactionAggregationDto> last7DaysAggregations;
+        List<TransactionAggregationDto> last30DaysAggregations;
+        
+        // Check if user is STORE_USER and filter by store
+        if (user.getRole().getName().equals("STORE_USER") && user.getStore() != null) {
+            Long storeId = user.getStore().getId();
+            logger.debug("Filtering aggregations for store: {}", storeId);
+            
+            todayAggregations = getAggregationsForDateRangeAndStore(todayStart, todayEnd, storeId);
+            last7DaysAggregations = getAggregationsForDateRangeAndStore(last7DaysStart, todayEnd, storeId);
+            last30DaysAggregations = getAggregationsForDateRangeAndStore(last30DaysStart, todayEnd, storeId);
+        } else {
+            // SUPERADMIN or other roles - get all transactions
+            logger.debug("Getting aggregations for all stores");
+            todayAggregations = getAggregationsForDateRange(todayStart, todayEnd);
+            last7DaysAggregations = getAggregationsForDateRange(last7DaysStart, todayEnd);
+            last30DaysAggregations = getAggregationsForDateRange(last30DaysStart, todayEnd);
+        }
+        
+        return new TransactionAggregationResponseDto(todayAggregations, last7DaysAggregations, last30DaysAggregations);
+    }
+    
+    private List<TransactionAggregationDto> getAggregationsForDateRange(LocalDateTime startDate, LocalDateTime endDate) {
+        List<Object[]> results = transactionRepository.getTransactionAggregationsByDateRange(startDate, endDate);
+        return convertToAggregationDtos(results);
+    }
+    
+    private List<TransactionAggregationDto> getAggregationsForDateRangeAndStore(LocalDateTime startDate, LocalDateTime endDate, Long storeId) {
+        List<Object[]> results = transactionRepository.getTransactionAggregationsByDateRangeAndStore(startDate, endDate, storeId);
+        return convertToAggregationDtos(results);
+    }
+    
+    /**
+     * Creates a default empty aggregation list with all three statuses set to zero
+     */
+    private List<TransactionAggregationDto> createEmptyAggregations() {
+        List<TransactionAggregationDto> emptyAggregations = new ArrayList<>();
+        TransactionStatus[] statuses = {TransactionStatus.Confirmed, TransactionStatus.Refunded, TransactionStatus.Reversed};
+        
+        for (TransactionStatus status : statuses) {
+            emptyAggregations.add(new TransactionAggregationDto(status, 0L, 0L, 0L));
+        }
+        
+        logger.debug("Created empty aggregations with {} statuses", emptyAggregations.size());
+        return emptyAggregations;
+    }
+    
+    private List<TransactionAggregationDto> convertToAggregationDtos(List<Object[]> results) {
+        List<TransactionAggregationDto> aggregations = new ArrayList<>();
+        
+        // Handle null or empty results
+        if (results == null || results.isEmpty()) {
+            logger.debug("No results from database query, returning empty aggregations");
+            return createEmptyAggregations();
+        }
+        
+        logger.debug("Converting {} result rows to aggregation DTOs", results.size());
+        
+        for (Object[] result : results) {
+            TransactionStatus status = (TransactionStatus) result[0];
+            Long count = ((Number) result[1]).longValue();
+            Long totalAmount = ((Number) result[2]).longValue();
+            Long totalOrderAmount = ((Number) result[3]).longValue();
+            
+            aggregations.add(new TransactionAggregationDto(status, count, totalAmount, totalOrderAmount));
+            logger.debug("Added aggregation for status {}: count={}, totalAmount={}, totalOrderAmount={}", 
+                        status, count, totalAmount, totalOrderAmount);
+        }
+        
+        // Ensure we have entries for all three statuses (Confirmed, Refunded, Reversed)
+        // If no transactions exist for a status, add with 0 count and amount
+        ensureAllStatusesPresent(aggregations);
+        
+        logger.debug("Final aggregation list size: {}", aggregations.size());
+        return aggregations;
+    }
+    
+    private void ensureAllStatusesPresent(List<TransactionAggregationDto> aggregations) {
+        TransactionStatus[] requiredStatuses = {TransactionStatus.Confirmed, TransactionStatus.Refunded, TransactionStatus.Reversed};
+        
+        logger.debug("Ensuring all statuses are present. Current size: {}", aggregations.size());
+        
+        for (TransactionStatus status : requiredStatuses) {
+            boolean exists = aggregations.stream()
+                .anyMatch(agg -> agg.status == status);
+            
+            if (!exists) {
+                logger.debug("Adding missing status {} with zero values", status);
+                aggregations.add(new TransactionAggregationDto(status, 0L, 0L, 0L));
+            } else {
+                logger.debug("Status {} already exists in aggregations", status);
+            }
+        }
+        
+        logger.debug("Final status count: {}", aggregations.size());
     }
 }
