@@ -2,6 +2,8 @@ package com.pars.financial.repository;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,6 +27,14 @@ public interface StoreRepository extends JpaRepository<Store, Long> {
     List<Store> findAllWithRelationships();
     
     /**
+     * Find all stores with company, address, and phone number eagerly fetched (paginated)
+     * @param pageable pagination information
+     * @return paginated list of all stores with relationships loaded
+     */
+    @Query("SELECT s FROM Store s LEFT JOIN FETCH s.company LEFT JOIN FETCH s.address LEFT JOIN FETCH s.phone_number")
+    Page<Store> findAllWithRelationships(Pageable pageable);
+    
+    /**
      * Find store by ID with company, address, and phone number eagerly fetched
      * @param id the store ID
      * @return store with relationships loaded
@@ -33,10 +43,11 @@ public interface StoreRepository extends JpaRepository<Store, Long> {
     Store findByIdWithRelationships(@Param("id") Long id);
     
     /**
-     * Find stores by company ID with company, address, and phone number eagerly fetched
+     * Find stores by company ID with company, address, and phone number eagerly fetched (paginated)
      * @param companyId the company ID
-     * @return list of stores for the company with relationships loaded
+     * @param pageable pagination information
+     * @return paginated list of stores for the company with relationships loaded
      */
     @Query("SELECT s FROM Store s LEFT JOIN FETCH s.company LEFT JOIN FETCH s.address LEFT JOIN FETCH s.phone_number WHERE s.company.id = :companyId")
-    List<Store> findByCompanyIdWithRelationships(@Param("companyId") Long companyId);
+    Page<Store> findByCompanyIdWithRelationships(@Param("companyId") Long companyId, Pageable pageable);
 }

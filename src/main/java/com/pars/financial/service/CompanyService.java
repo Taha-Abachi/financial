@@ -5,11 +5,16 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.pars.financial.dto.CompanyCreateRequest;
+import com.pars.financial.dto.CompanyDto;
 import com.pars.financial.dto.CompanyUpdateRequest;
+import com.pars.financial.dto.PagedResponse;
 import com.pars.financial.entity.Address;
 import com.pars.financial.entity.Company;
 import com.pars.financial.entity.PhoneNumber;
@@ -56,12 +61,41 @@ public class CompanyService {
     }
 
     /**
-     * Get all companies
-     * @return list of all companies
+     * Get all companies with pagination
+     * @param page the page number (0-based)
+     * @param size the page size
+     * @return paginated list of companies
      */
-    public List<Company> getAllCompanies() {
-        logger.debug("Fetching all companies");
-        return companyRepository.findAll();
+    @Transactional(readOnly = true)
+    public PagedResponse<CompanyDto> getAllCompanies(int page, int size) {
+        logger.debug("Fetching companies with pagination - page: {}, size: {}", page, size);
+        
+        // Validate pagination parameters
+        if (page < 0) {
+            page = 0;
+        }
+        if (size <= 0) {
+            size = 10; // Default page size
+        }
+        if (size > 100) {
+            size = 100; // Maximum page size
+        }
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Company> companyPage = companyRepository.findAll(pageable);
+        
+        List<CompanyDto> companies = companyPage.getContent()
+            .stream()
+            .map(CompanyDto::fromEntity)
+            .toList();
+        
+        return new PagedResponse<>(
+            companies,
+            companyPage.getNumber(),
+            companyPage.getSize(),
+            companyPage.getTotalElements(),
+            companyPage.getTotalPages()
+        );
     }
 
     /**

@@ -1,7 +1,6 @@
 package com.pars.financial.controller;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,11 +12,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.pars.financial.dto.CompanyCreateRequest;
 import com.pars.financial.dto.CompanyDto;
 import com.pars.financial.dto.CompanyUpdateRequest;
+import com.pars.financial.dto.PagedResponse;
 import com.pars.financial.dto.StoreDto;
 import com.pars.financial.entity.Company;
 import com.pars.financial.service.CompanyService;
@@ -38,16 +39,17 @@ public class CompanyController {
     }
 
     /**
-     * Get all companies
-     * @return list of all companies
+     * Get all companies with pagination
+     * @param page the page number (0-based, default: 0)
+     * @param size the page size (default: 10, max: 100)
+     * @return paginated list of companies
      */
     @GetMapping
-    public ResponseEntity<List<CompanyDto>> getAllCompanies() {
-        logger.info("Fetching all companies");
-        List<CompanyDto> companies = companyService.getAllCompanies()
-            .stream()
-            .map(CompanyDto::fromEntity)
-            .collect(Collectors.toList());
+    public ResponseEntity<PagedResponse<CompanyDto>> getAllCompanies(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        logger.info("Fetching companies with pagination - page: {}, size: {}", page, size);
+        PagedResponse<CompanyDto> companies = companyService.getAllCompanies(page, size);
         return ResponseEntity.ok(companies);
     }
 
@@ -128,13 +130,18 @@ public class CompanyController {
     }
 
     /**
-     * Get all stores for a specific company
+     * Get all stores for a specific company with pagination
      * @param companyId the company ID
-     * @return list of stores belonging to the company
+     * @param page the page number (0-based, default: 0)
+     * @param size the page size (default: 10, max: 100)
+     * @return paginated list of stores belonging to the company
      */
     @GetMapping("/{companyId}/stores")
-    public ResponseEntity<List<StoreDto>> getCompanyStores(@PathVariable Long companyId) {
-        logger.info("Fetching stores for company ID: {}", companyId);
+    public ResponseEntity<PagedResponse<StoreDto>> getCompanyStores(
+            @PathVariable Long companyId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        logger.info("Fetching stores for company ID: {} with pagination - page: {}, size: {}", companyId, page, size);
         
         // Verify company exists
         try {
@@ -148,8 +155,8 @@ public class CompanyController {
             return ResponseEntity.notFound().build();
         }
         
-        List<StoreDto> stores = storeService.getStoresByCompany(companyId);
-        logger.info("Found {} stores for company {}", stores.size(), companyId);
+        PagedResponse<StoreDto> stores = storeService.getStoresByCompany(companyId, page, size);
+        logger.info("Found {} stores for company {} (page {})", stores.getContent().size(), companyId, page);
         return ResponseEntity.ok(stores);
     }
 } 

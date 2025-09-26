@@ -1,6 +1,7 @@
 package com.pars.financial.controller;
 
 import com.pars.financial.dto.GenericResponse;
+import com.pars.financial.dto.PagedResponse;
 import com.pars.financial.dto.StoreDto;
 import com.pars.financial.dto.StoreTransactionSummary;
 import com.pars.financial.entity.DiscountCodeTransaction;
@@ -67,14 +68,22 @@ public class StoreController {
     }
 
     @GetMapping
-    public GenericResponse<List<StoreDto>> getStores() {
-        GenericResponse<List<StoreDto>> genericResponseDto = new GenericResponse<>();
-        var ls = storeService.getAllStores();
-        if(ls == null || ls.isEmpty()){
+    public GenericResponse<PagedResponse<StoreDto>> getStores(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        GenericResponse<PagedResponse<StoreDto>> genericResponseDto = new GenericResponse<>();
+        try {
+            PagedResponse<StoreDto> pagedStores = storeService.getAllStores(page, size);
+            if (pagedStores.getContent() == null || pagedStores.getContent().isEmpty()) {
+                genericResponseDto.status = -1;
+                genericResponseDto.message = "No stores found";
+            }
+            genericResponseDto.data = pagedStores;
+        } catch (Exception e) {
+            logger.error("Error fetching stores with pagination: {}", e.getMessage());
             genericResponseDto.status = -1;
-            genericResponseDto.message = "Store not found";
+            genericResponseDto.message = "Error fetching stores: " + e.getMessage();
         }
-        genericResponseDto.data = ls;
         return genericResponseDto;
     }
 

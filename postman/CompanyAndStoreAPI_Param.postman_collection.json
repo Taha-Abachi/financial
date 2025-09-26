@@ -97,7 +97,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/api/v1/companies",
+							"raw": "{{baseUrl}}/api/v1/companies?page={{page}}&size={{size}}",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -105,9 +105,21 @@
 								"api",
 								"v1",
 								"companies"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "{{page}}",
+									"description": "Page number (0-based)"
+								},
+								{
+									"key": "size",
+									"value": "{{size}}",
+									"description": "Page size (default: 10, max: 100)"
+								}
 							]
 						},
-						"description": "Retrieve all companies"
+						"description": "Retrieve all companies with pagination"
 					},
 					"response": [
 						{
@@ -121,7 +133,7 @@
 									}
 								],
 								"url": {
-									"raw": "{{baseUrl}}/api/v1/companies",
+									"raw": "{{baseUrl}}/api/v1/companies?page=0&size=10",
 									"host": [
 										"{{baseUrl}}"
 									],
@@ -129,6 +141,16 @@
 										"api",
 										"v1",
 										"companies"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "0"
+										},
+										{
+											"key": "size",
+											"value": "10"
+										}
 									]
 								}
 							},
@@ -142,7 +164,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "[\n    {\n        \"id\": 1,\n        \"companyName\": \"Tech Solutions Inc\",\n        \"phoneNumber\": \"+1-555-0123\",\n        \"address\": \"123 Tech Street, Silicon Valley, CA 94000\"\n    },\n    {\n        \"id\": 2,\n        \"companyName\": \"Retail Corp\",\n        \"phoneNumber\": \"+1-555-0456\",\n        \"address\": \"456 Retail Ave, New York, NY 10001\"\n    }\n]"
+							"body": "{\n    \"content\": [\n        {\n            \"id\": 1,\n            \"companyName\": \"Tech Solutions Inc\",\n            \"phoneNumber\": \"+1-555-0123\",\n            \"address\": \"123 Tech Street, Silicon Valley, CA 94000\"\n        },\n        {\n            \"id\": 2,\n            \"companyName\": \"Retail Corp\",\n            \"phoneNumber\": \"+1-555-0456\",\n            \"address\": \"456 Retail Ave, New York, NY 10001\"\n        }\n    ],\n    \"page\": 0,\n    \"size\": 10,\n    \"totalElements\": 2,\n    \"totalPages\": 1,\n    \"first\": true,\n    \"last\": true,\n    \"hasNext\": false,\n    \"hasPrevious\": false\n}"
 						}
 					]
 				},
@@ -778,7 +800,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/api/v1/store",
+							"raw": "{{baseUrl}}/api/v1/store?page={{page}}&size={{size}}",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -786,9 +808,21 @@
 								"api",
 								"v1",
 								"store"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "{{page}}",
+									"description": "Page number (0-based)"
+								},
+								{
+									"key": "size",
+									"value": "{{size}}",
+									"description": "Page size (default: 10, max: 100)"
+								}
 							]
 						},
-						"description": "Retrieve all stores"
+						"description": "Retrieve all stores with pagination"
 					},
 					"response": [
 						{
@@ -937,7 +971,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/api/v1/companies/{{companyId}}/stores",
+							"raw": "{{baseUrl}}/api/v1/companies/{{companyId}}/stores?page={{page}}&size={{size}}",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -947,9 +981,21 @@
 								"companies",
 								"{{companyId}}",
 								"stores"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "{{page}}",
+									"description": "Page number (0-based)"
+								},
+								{
+									"key": "size",
+									"value": "{{size}}",
+									"description": "Page size (default: 10, max: 100)"
+								}
 							]
 						},
-						"description": "Get all stores belonging to a specific company"
+						"description": "Get all stores belonging to a specific company with pagination"
 					},
 					"response": [
 						{
@@ -963,7 +1009,7 @@
 									}
 								],
 								"url": {
-									"raw": "{{baseUrl}}/api/v1/companies/1/stores",
+									"raw": "{{baseUrl}}/api/v1/companies/1/stores?page=0&size=10",
 									"host": [
 										"{{baseUrl}}"
 									],
@@ -973,6 +1019,16 @@
 										"companies",
 										"1",
 										"stores"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "0"
+										},
+										{
+											"key": "size",
+											"value": "10"
+										}
 									]
 								}
 							},
@@ -986,7 +1042,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "[\n    {\n        \"id\": 1,\n        \"name\": \"Downtown Store\",\n        \"address\": \"123 Main Street, Downtown, NY 10001\",\n        \"phone\": \"+1-555-0100\",\n        \"ownershipType\": \"OWNED\",\n        \"locationType\": \"FIELD\",\n        \"company\": {\n            \"id\": 1,\n            \"name\": \"Tech Solutions Inc\"\n        }\n    },\n    {\n        \"id\": 2,\n        \"name\": \"Mall Location\",\n        \"address\": \"456 Mall Drive, Shopping Center, NY 10002\",\n        \"phone\": \"+1-555-0200\",\n        \"ownershipType\": \"FRANCHISE\",\n        \"locationType\": \"FIELD\",\n        \"company\": {\n            \"id\": 1,\n            \"name\": \"Tech Solutions Inc\"\n        }\n    }\n]"
+							"body": "{\n    \"content\": [\n        {\n            \"id\": 1,\n            \"name\": \"Downtown Store\",\n            \"address\": \"123 Main Street, Downtown, NY 10001\",\n            \"phone\": \"+1-555-0100\",\n            \"ownershipType\": \"OWNED\",\n            \"locationType\": \"FIELD\",\n            \"company\": {\n                \"id\": 1,\n                \"name\": \"Tech Solutions Inc\"\n            }\n        },\n        {\n            \"id\": 2,\n            \"name\": \"Mall Location\",\n            \"address\": \"456 Mall Drive, Shopping Center, NY 10002\",\n            \"phone\": \"+1-555-0200\",\n            \"ownershipType\": \"FRANCHISE\",\n            \"locationType\": \"FIELD\",\n            \"company\": {\n                \"id\": 1,\n                \"name\": \"Tech Solutions Inc\"\n            }\n        }\n    ],\n    \"page\": 0,\n    \"size\": 10,\n    \"totalElements\": 2,\n    \"totalPages\": 1,\n    \"first\": true,\n    \"last\": true,\n    \"hasNext\": false,\n    \"hasPrevious\": false\n}"
 						},
 						{
 							"name": "Company Not Found",
