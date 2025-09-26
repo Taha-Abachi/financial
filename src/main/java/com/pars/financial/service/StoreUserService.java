@@ -5,7 +5,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -166,8 +165,8 @@ public class StoreUserService {
             return null;
         }
 
-        Optional<Store> store = storeRepository.findById(storeUser.getStore().getId());
-        return store.orElse(null);
+        Store store = storeRepository.findByIdWithRelationships(storeUser.getStore().getId());
+        return store;
     }
 
     private void calculateGiftCardTotals(StoreTransactionSummary summary, List<GiftCardTransaction> transactions,

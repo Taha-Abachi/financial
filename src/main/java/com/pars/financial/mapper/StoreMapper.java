@@ -14,11 +14,31 @@ public class StoreMapper {
         StoreDto c = new StoreDto();
         c.id = store.getId();
         c.name = store.getStore_name();
-        c.address = store.getAddress().getText();
-        c.phone = store.getPhone_number().getNumber();
+        
+        // Safe null handling for address
+        if (store.getAddress() != null) {
+            c.address = store.getAddress().getText();
+        } else {
+            c.address = null;
+        }
+        
+        // Safe null handling for phone number
+        if (store.getPhone_number() != null) {
+            c.phone = store.getPhone_number().getNumber();
+        } else {
+            c.phone = null;
+        }
+        
         c.ownershipType = store.getOwnershipType();
         c.locationType = store.getLocationType();
-        c.company = SimpleCompanyDto.fromEntity(store.getCompany());
+        
+        // Safe null handling for company - this is the main issue
+        if (store.getCompany() != null) {
+            c.company = SimpleCompanyDto.fromEntity(store.getCompany());
+        } else {
+            c.company = null;
+        }
+        
         return c;
     }
     public List<StoreDto> getFrom(List<Store> stores) {

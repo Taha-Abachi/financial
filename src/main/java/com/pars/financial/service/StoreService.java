@@ -1,7 +1,6 @@
 package com.pars.financial.service;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,18 +30,18 @@ public class StoreService {
     @Transactional(readOnly = true)
     public StoreDto getStore(Long id) {
         logger.debug("Fetching store with ID: {}", id);
-        Optional<Store> st = storeRepository.findById(id);
-        if (!st.isPresent()) {
+        Store store = storeRepository.findByIdWithRelationships(id);
+        if (store == null) {
             logger.warn("Store not found with ID: {}", id);
             return null;
         }
-        return storeMapper.getFrom(st.get());
+        return storeMapper.getFrom(store);
     }
 
     @Transactional(readOnly = true)
     public List<StoreDto> getAllStores() {
         logger.debug("Fetching all stores");
-        List<Store> stores = storeRepository.findAll();
+        List<Store> stores = storeRepository.findAllWithRelationships();
         logger.debug("Found {} stores", stores.size());
         return storeMapper.getFrom(stores);
     }
@@ -50,7 +49,7 @@ public class StoreService {
     @Transactional(readOnly = true)
     public List<StoreDto> getStoresByCompany(Long companyId) {
         logger.debug("Fetching stores for company ID: {}", companyId);
-        List<Store> stores = storeRepository.findByCompanyId(companyId);
+        List<Store> stores = storeRepository.findByCompanyIdWithRelationships(companyId);
         logger.debug("Found {} stores for company {}", stores.size(), companyId);
         return storeMapper.getFrom(stores);
     }
