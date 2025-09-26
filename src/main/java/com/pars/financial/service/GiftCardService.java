@@ -6,6 +6,7 @@ import com.pars.financial.dto.GiftCardReportDto;
 import com.pars.financial.dto.PagedResponse;
 import com.pars.financial.entity.GiftCard;
 import com.pars.financial.entity.Store;
+import com.pars.financial.entity.User;
 import com.pars.financial.exception.GiftCardNotFoundException;
 import com.pars.financial.constants.ErrorCodes;
 import com.pars.financial.exception.ValidationException;
@@ -47,14 +48,16 @@ public class GiftCardService {
     final CompanyRepository companyRepository;
     final ItemCategoryRepository itemCategoryRepository;
     final GiftCardTransactionRepository giftCardTransactionRepository;
+    final SecurityContextService securityContextService;
 
-    public GiftCardService(GiftCardRepository giftCardRepository, GiftCardMapper giftCardMapper, StoreRepository storeRepository, CompanyRepository companyRepository, ItemCategoryRepository itemCategoryRepository, GiftCardTransactionRepository giftCardTransactionRepository) {
+    public GiftCardService(GiftCardRepository giftCardRepository, GiftCardMapper giftCardMapper, StoreRepository storeRepository, CompanyRepository companyRepository, ItemCategoryRepository itemCategoryRepository, GiftCardTransactionRepository giftCardTransactionRepository, SecurityContextService securityContextService) {
         this.giftCardRepository = giftCardRepository;
         this.giftCardMapper = giftCardMapper;
         this.storeRepository = storeRepository;
         this.companyRepository = companyRepository;
         this.itemCategoryRepository = itemCategoryRepository;
         this.giftCardTransactionRepository = giftCardTransactionRepository;
+        this.securityContextService = securityContextService;
     }
 
     private void validateRealAmount(long realAmount) {
@@ -495,6 +498,103 @@ public class GiftCardService {
             logger.error("Error generating gift card report for company {}: {}", companyId, e.getMessage(), e);
             throw new RuntimeException("Failed to generate gift card report for company", e);
         }
+    }
+
+    /**
+     * Get gift cards based on user role and permissions
+     * - SUPERADMIN/ADMIN: All gift cards
+     * - COMPANY_USER: Gift cards of their company
+     * - STORE_USER: Gift cards of their store
+     * - API_USER: All gift cards (if system-wide access needed)
+     */
+    @Transactional(readOnly = true)
+    public PagedResponse<GiftCardDto> getGiftCardsForUser(User user, int page, int size) {
+        logger.debug("Fetching gift cards for user: {} with role: {} - page: {}, size: {}", 
+                    user.getUsername(), user.getRole().getName(), page, size);
+        
+        // Validate pagination parameters
+        if (page < 0) {
+            page = 0;
+        }
+        if (size <= 0) {
+            size = 10; // Default page size
+        }
+        if (size > 100) {
+            size = 100; // Maximum page size
+        }
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<GiftCard> giftCardPage;
+        
+        // Role-based data filtering
+        switch (user.getRole().getName()) {
+            case "SUPERADMIN":
+            case "ADMIN":
+            case "API_USER":
+                // Return all gift cards
+                logger.debug("User {} has admin access - returning all gift cards", user.getUsername());
+                giftCardPage = giftCardRepository.findAll(pageable);
+                break;
+                
+            case "COMPANY_USER":
+                // Return gift cards of user's company
+                if (user.getCompany() == null) {
+                    logger.warn("COMPANY_USER {} has no company assigned", user.getUsername());
+                    giftCardPage = Page.empty(pageable);
+                } else {
+                    logger.debug("User {} has company access - returning gift cards for company: {}", 
+                               user.getUsername(), user.getCompany().getId());
+                    giftCardPage = giftCardRepository.findByCompany(user.getCompany(), pageable);
+                }
+                break;
+                
+            case "STORE_USER":
+                // Return gift cards of user's store
+                if (user.getStore() == null) {
+                    logger.warn("STORE_USER {} has no store assigned", user.getUsername());
+                    giftCardPage = Page.empty(pageable);
+                } else {
+                    logger.debug("User {} has store access - returning gift cards for store: {}", 
+                               user.getUsername(), user.getStore().getId());
+                    // For STORE_USER, we need to get gift cards that belong to their store's company
+                    giftCardPage = giftCardRepository.findByCompany(user.getStore().getCompany(), pageable);
+                }
+                break;
+                
+            default:
+                logger.warn("Unknown role {} for user {} - returning empty result", 
+                           user.getRole().getName(), user.getUsername());
+                giftCardPage = Page.empty(pageable);
+                break;
+        }
+        
+        List<GiftCardDto> giftCards = giftCardMapper.getFrom(giftCardPage.getContent());
+        
+        return new PagedResponse<>(
+            giftCards,
+            giftCardPage.getNumber(),
+            giftCardPage.getSize(),
+            giftCardPage.getTotalElements(),
+            giftCardPage.getTotalPages()
+        );
+    }
+
+    /**
+     * Get gift cards based on current user's role and permissions
+     * - SUPERADMIN/ADMIN: All gift cards
+     * - COMPANY_USER: Gift cards of their company
+     * - STORE_USER: Gift cards of their store's company
+     * - API_USER: All gift cards (if system-wide access needed)
+     */
+    @Transactional(readOnly = true)
+    public PagedResponse<GiftCardDto> getGiftCardsForCurrentUser(int page, int size) {
+        User currentUser = securityContextService.getCurrentUser();
+        if (currentUser == null) {
+            logger.warn("No authenticated user found");
+            return new PagedResponse<>(List.of(), 0, size, 0, 0);
+        }
+        
+        return getGiftCardsForUser(currentUser, page, size);
     }
 }
 

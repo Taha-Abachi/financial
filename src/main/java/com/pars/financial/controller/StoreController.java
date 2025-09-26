@@ -11,6 +11,7 @@ import com.pars.financial.entity.User;
 import com.pars.financial.service.StoreService;
 import com.pars.financial.service.StoreUserService;
 import com.pars.financial.service.UserService;
+import com.pars.financial.service.SecurityContextService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,30 +43,15 @@ public class StoreController {
     private final StoreService storeService;
     private final StoreUserService storeUserService;
     private final UserService userService;
+    private final SecurityContextService securityContextService;
 
-    public StoreController(StoreService storeService, StoreUserService storeUserService, UserService userService) {
+    public StoreController(StoreService storeService, StoreUserService storeUserService, UserService userService, SecurityContextService securityContextService) {
         this.storeService = storeService;
         this.storeUserService = storeUserService;
         this.userService = userService;
+        this.securityContextService = securityContextService;
     }
 
-    /**
-     * Get the current authenticated user
-     */
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !authentication.isAuthenticated()) {
-            return null;
-        }
-        
-        String username = authentication.getName();
-        try {
-            return userService.getUserEntityByUsername(username);
-        } catch (Exception e) {
-            logger.error("Error getting current user: {}", e.getMessage());
-            return null;
-        }
-    }
 
     @GetMapping
     public GenericResponse<PagedResponse<StoreDto>> getStores(
@@ -74,20 +60,17 @@ public class StoreController {
             @RequestParam(required = false) Long companyId) {
         GenericResponse<PagedResponse<StoreDto>> genericResponseDto = new GenericResponse<>();
         try {
-            PagedResponse<StoreDto> pagedStores;
-            if (companyId != null) {
-                pagedStores = storeService.getStoresByCompany(companyId, page, size);
-            } else {
-                pagedStores = storeService.getAllStores(page, size);
-            }
+            PagedResponse<StoreDto> pagedStores = storeService.getStoresForCurrentUser(page, size, companyId);
             
             if (pagedStores.getContent() == null || pagedStores.getContent().isEmpty()) {
                 genericResponseDto.status = -1;
                 if (companyId != null) {
                     genericResponseDto.message = "No stores found for company ID: " + companyId;
                 } else {
-                    genericResponseDto.message = "No stores found";
+                    genericResponseDto.message = "No stores found for your access level";
                 }
+            } else {
+                genericResponseDto.message = "Stores retrieved successfully";
             }
             genericResponseDto.data = pagedStores;
         } catch (Exception e) {
@@ -101,14 +84,24 @@ public class StoreController {
     @GetMapping("/{storeId}")
     public GenericResponse<StoreDto> getStore(@PathVariable Long storeId) {
         GenericResponse<StoreDto> genericResponseDto = new GenericResponse<>();
-        var ls = storeService.getStore(storeId);
-        if(ls == null){
+        try {
+            StoreDto store = storeService.getStoreForCurrentUser(storeId);
+            if (store == null) {
+                genericResponseDto.status = -1;
+                genericResponseDto.message = "Store not found or access denied";
+                return genericResponseDto;
+            }
+
+            genericResponseDto.data = store;
+            genericResponseDto.message = "Store retrieved successfully";
+        } catch (Exception e) {
+            logger.error("Error fetching store with ID {}: {}", storeId, e.getMessage());
             genericResponseDto.status = -1;
-            genericResponseDto.message = "Store not found";
+            genericResponseDto.message = "Error fetching store: " + e.getMessage();
         }
-        genericResponseDto.data = ls;
         return genericResponseDto;
     }
+
 
     // ==================== STORE USER ENDPOINTS ====================
 
@@ -131,7 +124,7 @@ public class StoreController {
         GenericResponse<StoreTransactionSummary> response = new GenericResponse<>();
 
         try {
-            User currentUser = getCurrentUser();
+            User currentUser = securityContextService.getCurrentUser();
             if (currentUser == null) {
                 response.status = -1;
                 response.message = "User not authenticated";
@@ -182,7 +175,7 @@ public class StoreController {
         GenericResponse<Store> response = new GenericResponse<>();
 
         try {
-            User currentUser = getCurrentUser();
+            User currentUser = securityContextService.getCurrentUser();
             if (currentUser == null) {
                 response.status = -1;
                 response.message = "User not authenticated";
@@ -231,7 +224,7 @@ public class StoreController {
         GenericResponse<List<GiftCardTransaction>> response = new GenericResponse<>();
 
         try {
-            User currentUser = getCurrentUser();
+            User currentUser = securityContextService.getCurrentUser();
             if (currentUser == null) {
                 response.status = -1;
                 response.message = "User not authenticated";
@@ -274,7 +267,7 @@ public class StoreController {
         GenericResponse<List<DiscountCodeTransaction>> response = new GenericResponse<>();
 
         try {
-            User currentUser = getCurrentUser();
+            User currentUser = securityContextService.getCurrentUser();
             if (currentUser == null) {
                 response.status = -1;
                 response.message = "User not authenticated";
@@ -320,7 +313,7 @@ public class StoreController {
         GenericResponse<List<GiftCardTransaction>> response = new GenericResponse<>();
 
         try {
-            User currentUser = getCurrentUser();
+            User currentUser = securityContextService.getCurrentUser();
             if (currentUser == null) {
                 response.status = -1;
                 response.message = "User not authenticated";
@@ -366,7 +359,7 @@ public class StoreController {
         GenericResponse<List<DiscountCodeTransaction>> response = new GenericResponse<>();
 
         try {
-            User currentUser = getCurrentUser();
+            User currentUser = securityContextService.getCurrentUser();
             if (currentUser == null) {
                 response.status = -1;
                 response.message = "User not authenticated";

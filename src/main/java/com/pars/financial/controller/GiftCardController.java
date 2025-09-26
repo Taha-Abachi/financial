@@ -29,6 +29,7 @@ public class GiftCardController {
         this.giftCardService = giftCardService;
     }
 
+
     @GetMapping("/all")
     public GenericResponse<PagedResponse<GiftCardDto>> getGiftCards(
             @RequestParam(defaultValue = "0") int page,
@@ -36,11 +37,13 @@ public class GiftCardController {
         logger.info("GET /api/v1/giftcard/all called with pagination - page: {}, size: {}", page, size);
         GenericResponse<PagedResponse<GiftCardDto>> genericResponseDto = new GenericResponse<>();
         try {
-            PagedResponse<GiftCardDto> pagedGiftCards = giftCardService.getGiftCards(page, size);
+            PagedResponse<GiftCardDto> pagedGiftCards = giftCardService.getGiftCardsForCurrentUser(page, size);
             if (pagedGiftCards.getContent() == null || pagedGiftCards.getContent().isEmpty()) {
-                logger.warn("Gift card list not found");
+                logger.warn("Gift card list not found for user access level");
                 genericResponseDto.status = -1;
-                genericResponseDto.message = "Gift card list not found";
+                genericResponseDto.message = "No gift cards found for your access level";
+            } else {
+                genericResponseDto.message = "Gift cards retrieved successfully";
             }
             genericResponseDto.data = pagedGiftCards;
         } catch (Exception e) {
