@@ -135,6 +135,12 @@ public class UserRoleService {
             createRole(new UserRoleDto(null, "STORE_USER", "Store User with access to store-specific transactions"));
             logger.info("Created STORE_USER role");
         }
+        
+        // Check and create COMPANY_USER role
+        if (!existsByName("COMPANY_USER")) {
+            createRole(new UserRoleDto(null, "COMPANY_USER", "Company User with access to company-specific operations and data"));
+            logger.info("Created COMPANY_USER role");
+        }
     }
 
     private UserRoleDto convertToUserRoleDto(UserRole userRole) {

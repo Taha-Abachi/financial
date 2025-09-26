@@ -5,5 +5,6 @@ public enum UserRole {
     ADMIN,
     API_USER,
     USER,
-    STORE_USER
+    STORE_USER,
+    COMPANY_USER
 }
