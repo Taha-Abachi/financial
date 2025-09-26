@@ -800,7 +800,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/api/v1/store?page={{page}}&size={{size}}",
+							"raw": "{{baseUrl}}/api/v1/store?page={{page}}&size={{size}}&companyId={{companyId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -819,10 +819,15 @@
 									"key": "size",
 									"value": "{{size}}",
 									"description": "Page size (default: 10, max: 100)"
+								},
+								{
+									"key": "companyId",
+									"value": "{{companyId}}",
+									"description": "Optional company ID to filter stores by company"
 								}
 							]
 						},
-						"description": "Retrieve all stores with pagination"
+						"description": "Retrieve all stores with pagination. Optionally filter by company ID."
 					},
 					"response": [
 						{
@@ -836,7 +841,7 @@
 									}
 								],
 								"url": {
-									"raw": "{{baseUrl}}/api/v1/store",
+									"raw": "{{baseUrl}}/api/v1/store?page=0&size=10&companyId=1",
 									"host": [
 										"{{baseUrl}}"
 									],
@@ -844,6 +849,20 @@
 										"api",
 										"v1",
 										"store"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "0"
+										},
+										{
+											"key": "size",
+											"value": "10"
+										},
+										{
+											"key": "companyId",
+											"value": "1"
+										}
 									]
 								}
 							},
@@ -857,7 +876,99 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"status\": 0,\n    \"message\": \"Success\",\n    \"messageFa\": \"موفقیت\",\n    \"data\": [\n        {\n            \"id\": 1,\n            \"name\": \"Downtown Store\",\n            \"address\": \"123 Main Street, Downtown, NY 10001\",\n            \"phone\": \"+1-555-0100\",\n            \"ownershipType\": \"OWNED\",\n            \"locationType\": \"FIELD\",\n            \"company\": {\n                \"id\": 1,\n                \"name\": \"Tech Solutions Inc\"\n            }\n        },\n        {\n            \"id\": 2,\n            \"name\": \"Mall Location\",\n            \"address\": \"456 Mall Drive, Shopping Center, NY 10002\",\n            \"phone\": \"+1-555-0200\",\n            \"ownershipType\": \"FRANCHISE\",\n            \"locationType\": \"FIELD\",\n            \"company\": {\n                \"id\": 1,\n                \"name\": \"Tech Solutions Inc\"\n            }\n        },\n        {\n            \"id\": 3,\n            \"name\": \"Online Store\",\n            \"address\": \"789 Web Avenue, Virtual, NY 10003\",\n            \"phone\": \"+1-555-0300\",\n            \"ownershipType\": \"OWNED\",\n            \"locationType\": \"ONLINE\",\n            \"company\": {\n                \"id\": 2,\n                \"name\": \"Digital Commerce Corp\"\n            }\n        }\n    ]\n}"
+							"body": "{\n    \"status\": 0,\n    \"message\": \"Success\",\n    \"messageFa\": \"موفقیت\",\n    \"data\": {\n        \"content\": [\n            {\n                \"id\": 1,\n                \"name\": \"Downtown Store\",\n                \"address\": \"123 Main Street, Downtown, NY 10001\",\n                \"phone\": \"+1-555-0100\",\n                \"ownershipType\": \"OWNED\",\n                \"locationType\": \"FIELD\",\n                \"company\": {\n                    \"id\": 1,\n                    \"name\": \"Tech Solutions Inc\"\n                }\n            },\n            {\n                \"id\": 2,\n                \"name\": \"Mall Location\",\n                \"address\": \"456 Mall Drive, Shopping Center, NY 10002\",\n                \"phone\": \"+1-555-0200\",\n                \"ownershipType\": \"FRANCHISE\",\n                \"locationType\": \"FIELD\",\n                \"company\": {\n                    \"id\": 1,\n                    \"name\": \"Tech Solutions Inc\"\n                }\n            }\n        ],\n        \"page\": 0,\n        \"size\": 10,\n        \"totalElements\": 2,\n        \"totalPages\": 1,\n        \"first\": true,\n        \"last\": true,\n        \"hasNext\": false,\n        \"hasPrevious\": false\n    }\n}"
+						},
+						{
+							"name": "Success Response - All Stores (No Company Filter)",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/store?page=0&size=10",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"store"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "0"
+										},
+										{
+											"key": "size",
+											"value": "10"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": 0,\n    \"message\": \"Success\",\n    \"messageFa\": \"موفقیت\",\n    \"data\": {\n        \"content\": [\n            {\n                \"id\": 1,\n                \"name\": \"Downtown Store\",\n                \"address\": \"123 Main Street, Downtown, NY 10001\",\n                \"phone\": \"+1-555-0100\",\n                \"ownershipType\": \"OWNED\",\n                \"locationType\": \"FIELD\",\n                \"company\": {\n                    \"id\": 1,\n                    \"name\": \"Tech Solutions Inc\"\n                }\n            },\n            {\n                \"id\": 2,\n                \"name\": \"Mall Location\",\n                \"address\": \"456 Mall Drive, Shopping Center, NY 10002\",\n                \"phone\": \"+1-555-0200\",\n                \"ownershipType\": \"FRANCHISE\",\n                \"locationType\": \"FIELD\",\n                \"company\": {\n                    \"id\": 1,\n                    \"name\": \"Tech Solutions Inc\"\n                }\n            },\n            {\n                \"id\": 3,\n                \"name\": \"Online Store\",\n                \"address\": \"789 Web Avenue, Virtual, NY 10003\",\n                \"phone\": \"+1-555-0300\",\n                \"ownershipType\": \"OWNED\",\n                \"locationType\": \"ONLINE\",\n                \"company\": {\n                    \"id\": 2,\n                    \"name\": \"Digital Commerce Corp\"\n                }\n            }\n        ],\n        \"page\": 0,\n        \"size\": 10,\n        \"totalElements\": 3,\n        \"totalPages\": 1,\n        \"first\": true,\n        \"last\": true,\n        \"hasNext\": false,\n        \"hasPrevious\": false\n    }\n}"
+						},
+						{
+							"name": "Success Response - Company Not Found",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/store?page=0&size=10&companyId=999",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"store"
+									],
+									"query": [
+										{
+											"key": "page",
+											"value": "0"
+										},
+										{
+											"key": "size",
+											"value": "10"
+										},
+										{
+											"key": "companyId",
+											"value": "999"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": -1,\n    \"message\": \"No stores found for company ID: 999\",\n    \"messageFa\": \"هیچ فروشگاهی یافت نشد\",\n    \"data\": {\n        \"content\": [],\n        \"page\": 0,\n        \"size\": 10,\n        \"totalElements\": 0,\n        \"totalPages\": 0,\n        \"first\": true,\n        \"last\": true,\n        \"hasNext\": false,\n        \"hasPrevious\": false\n    }\n}"
 						}
 					]
 				},

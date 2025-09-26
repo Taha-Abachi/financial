@@ -70,13 +70,24 @@ public class StoreController {
     @GetMapping
     public GenericResponse<PagedResponse<StoreDto>> getStores(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) Long companyId) {
         GenericResponse<PagedResponse<StoreDto>> genericResponseDto = new GenericResponse<>();
         try {
-            PagedResponse<StoreDto> pagedStores = storeService.getAllStores(page, size);
+            PagedResponse<StoreDto> pagedStores;
+            if (companyId != null) {
+                pagedStores = storeService.getStoresByCompany(companyId, page, size);
+            } else {
+                pagedStores = storeService.getAllStores(page, size);
+            }
+            
             if (pagedStores.getContent() == null || pagedStores.getContent().isEmpty()) {
                 genericResponseDto.status = -1;
-                genericResponseDto.message = "No stores found";
+                if (companyId != null) {
+                    genericResponseDto.message = "No stores found for company ID: " + companyId;
+                } else {
+                    genericResponseDto.message = "No stores found";
+                }
             }
             genericResponseDto.data = pagedStores;
         } catch (Exception e) {
