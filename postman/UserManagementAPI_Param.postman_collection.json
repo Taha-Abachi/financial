@@ -67,7 +67,28 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"refreshToken\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"tokenType\": \"Bearer\",\n  \"expiresAt\": \"2024-01-15T10:30:00\",\n  \"loginIp\": \"192.168.1.100\",\n  \"userAgent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\",\n  \"referrer\": \"https://example.com/login\",\n  \"user\": {\n    \"id\": 1,\n    \"username\": \"admin\",\n    \"name\": \"Administrator\",\n    \"email\": \"admin@example.com\",\n    \"mobilePhoneNumber\": \"+1234567890\",\n    \"isActive\": true,\n    \"createdAt\": \"2024-01-01T10:00:00\",\n    \"updatedAt\": \"2024-01-15T10:30:00\",\n    \"role\": {\n      \"id\": 1,\n      \"name\": \"ADMIN\",\n      \"description\": \"Administrator role with full access\"\n    }\n  }\n}"
+							"body": "{\n  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"refreshToken\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"tokenType\": \"Bearer\",\n  \"expiresAt\": \"2024-01-15T10:30:00\",\n  \"loginIp\": \"192.168.1.100\",\n  \"userAgent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\",\n  \"referrer\": \"https://example.com/login\",\n  \"user\": {\n    \"id\": 1,\n    \"username\": \"admin\",\n    \"name\": \"Administrator\",\n    \"email\": \"admin@example.com\",\n    \"mobilePhoneNumber\": \"+1234567890\",\n    \"isActive\": true,\n    \"createdAt\": \"2024-01-01T10:00:00\",\n    \"updatedAt\": \"2024-01-15T10:30:00\",\n    \"storeId\": null,\n    \"storeName\": null,\n    \"companyId\": null,\n    \"companyName\": null,\n    \"role\": {\n      \"id\": 1,\n      \"name\": \"ADMIN\",\n      \"description\": \"Administrator role with full access\"\n    }\n  }\n}"
+						},
+						{
+							"name": "STORE_USER Login Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"refreshToken\": \"660e8400-e29b-41d4-a716-446655440001\",\n  \"tokenType\": \"Bearer\",\n  \"expiresAt\": \"2024-01-15T10:30:00\",\n  \"loginIp\": \"192.168.1.100\",\n  \"userAgent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\",\n  \"referrer\": \"https://example.com/login\",\n  \"user\": {\n    \"id\": 3,\n    \"username\": \"store_manager\",\n    \"name\": \"Store Manager\",\n    \"email\": \"store@example.com\",\n    \"mobilePhoneNumber\": \"+1234567890\",\n    \"isActive\": true,\n    \"createdAt\": \"2024-01-01T10:00:00\",\n    \"updatedAt\": \"2024-01-15T10:30:00\",\n    \"storeId\": 1,\n    \"storeName\": \"Main Store\",\n    \"companyId\": 1,\n    \"companyName\": \"Test Company\",\n    \"role\": {\n      \"id\": 5,\n      \"name\": \"STORE_USER\",\n      \"description\": \"Store User with access to specific store operations\"\n    }\n  }\n}"
 						}
 					]
 				},
@@ -669,7 +690,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"username\": \"john_doe\",\n    \"name\": \"John Doe\",\n    \"password\": \"password123\",\n    \"mobilePhoneNumber\": \"09123456788\",\n    \"nationalCode\": \"1234567891\",\n    \"email\": \"john@example.com\",\n    \"roleId\": 3\n}"
+							"raw": "{\n    \"username\": \"john_doe\",\n    \"name\": \"John Doe\",\n    \"password\": \"password123\",\n    \"mobilePhoneNumber\": \"09123456788\",\n    \"nationalCode\": \"1234567891\",\n    \"email\": \"john@example.com\",\n    \"roleId\": 3,\n    \"storeId\": null,\n    \"companyId\": null\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/users/create",
@@ -1045,6 +1066,302 @@
 							],
 							"cookie": [],
 							"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": [\n    {\n      \"id\": 2,\n      \"username\": \"john_doe\",\n      \"name\": \"John Smith\",\n      \"mobilePhoneNumber\": \"09123456788\",\n      \"nationalCode\": \"1234567891\",\n      \"email\": \"john.smith@example.com\",\n      \"isActive\": true,\n      \"createdAt\": \"2024-01-01T10:00:00\",\n      \"updatedAt\": \"2024-01-01T10:00:00\",\n      \"role\": {\n        \"id\": 3,\n        \"name\": \"API_USER\",\n        \"description\": \"API User with limited access\"\n      }\n    }\n  ]\n}"
+						}
+					]
+				},
+				{
+					"name": "Update User with Store Assignment (ADMIN or SUPERADMIN)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{ADMIN_API_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Updated Store Manager\",\n    \"email\": \"updated.store@example.com\",\n    \"roleId\": 5,\n    \"storeId\": 2\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/users/update/3",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"update",
+								"3"
+							]
+						},
+						"description": "Update user to STORE_USER role with store assignment"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 3,\n    \"username\": \"store_manager\",\n    \"name\": \"Updated Store Manager\",\n    \"mobilePhoneNumber\": \"09123456777\",\n    \"nationalCode\": \"1234567892\",\n    \"email\": \"updated.store@example.com\",\n    \"isActive\": true,\n    \"createdAt\": \"2024-01-01T10:00:00\",\n    \"updatedAt\": \"2024-01-01T11:00:00\",\n    \"storeId\": 2,\n    \"storeName\": \"Secondary Store\",\n    \"companyId\": 2,\n    \"companyName\": \"Another Company\",\n    \"role\": {\n      \"id\": 5,\n      \"name\": \"STORE_USER\",\n      \"description\": \"Store User with access to specific store operations\"\n    }\n  }\n}"
+						}
+					]
+				},
+				{
+					"name": "Update User with Company Assignment (ADMIN or SUPERADMIN)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{ADMIN_API_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Updated Company Manager\",\n    \"email\": \"updated.company@example.com\",\n    \"roleId\": 6,\n    \"companyId\": 2\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/users/update/4",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"update",
+								"4"
+							]
+						},
+						"description": "Update user to COMPANY_USER role with company assignment"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 4,\n    \"username\": \"company_manager\",\n    \"name\": \"Updated Company Manager\",\n    \"mobilePhoneNumber\": \"09123456766\",\n    \"nationalCode\": \"1234567893\",\n    \"email\": \"updated.company@example.com\",\n    \"isActive\": true,\n    \"createdAt\": \"2024-01-01T10:00:00\",\n    \"updatedAt\": \"2024-01-01T11:00:00\",\n    \"storeId\": null,\n    \"storeName\": null,\n    \"companyId\": 2,\n    \"companyName\": \"Another Company\",\n    \"role\": {\n      \"id\": 6,\n      \"name\": \"COMPANY_USER\",\n      \"description\": \"Company User with access to company-specific operations\"\n    }\n  }\n}"
+						}
+					]
+				},
+				{
+					"name": "Create STORE_USER (ADMIN or SUPERADMIN)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{ADMIN_API_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"store_manager\",\n    \"name\": \"Store Manager\",\n    \"password\": \"password123\",\n    \"mobilePhoneNumber\": \"09123456777\",\n    \"nationalCode\": \"1234567892\",\n    \"email\": \"store@example.com\",\n    \"roleId\": 5,\n    \"storeId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/users/create",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"create"
+							]
+						},
+						"description": "Create a new STORE_USER with store assignment"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 3,\n    \"username\": \"store_manager\",\n    \"name\": \"Store Manager\",\n    \"mobilePhoneNumber\": \"09123456777\",\n    \"nationalCode\": \"1234567892\",\n    \"email\": \"store@example.com\",\n    \"isActive\": true,\n    \"createdAt\": \"2024-01-01T10:00:00\",\n    \"updatedAt\": \"2024-01-01T10:00:00\",\n    \"storeId\": 1,\n    \"storeName\": \"Main Store\",\n    \"companyId\": 1,\n    \"companyName\": \"Test Company\",\n    \"role\": {\n      \"id\": 5,\n      \"name\": \"STORE_USER\",\n      \"description\": \"Store User with access to specific store operations\"\n    }\n  }\n}"
+						},
+						{
+							"name": "Error - Missing Store ID",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": -100,\n  \"message\": \"Store ID is required for STORE_USER role\",\n  \"data\": null\n}"
+						}
+					]
+				},
+				{
+					"name": "Create COMPANY_USER (ADMIN or SUPERADMIN)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{ADMIN_API_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"company_manager\",\n    \"name\": \"Company Manager\",\n    \"password\": \"password123\",\n    \"mobilePhoneNumber\": \"09123456766\",\n    \"nationalCode\": \"1234567893\",\n    \"email\": \"company@example.com\",\n    \"roleId\": 6,\n    \"companyId\": 1\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/users/create",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"users",
+								"create"
+							]
+						},
+						"description": "Create a new COMPANY_USER with company assignment"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 4,\n    \"username\": \"company_manager\",\n    \"name\": \"Company Manager\",\n    \"mobilePhoneNumber\": \"09123456766\",\n    \"nationalCode\": \"1234567893\",\n    \"email\": \"company@example.com\",\n    \"isActive\": true,\n    \"createdAt\": \"2024-01-01T10:00:00\",\n    \"updatedAt\": \"2024-01-01T10:00:00\",\n    \"companyId\": 1,\n    \"companyName\": \"Test Company\",\n    \"role\": {\n      \"id\": 6,\n      \"name\": \"COMPANY_USER\",\n      \"description\": \"Company User with access to company-specific operations\"\n    }\n  }\n}"
+						},
+						{
+							"name": "Error - Missing Company ID",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": -100,\n  \"message\": \"Company ID is required for COMPANY_USER role\",\n  \"data\": null\n}"
 						}
 					]
 				},

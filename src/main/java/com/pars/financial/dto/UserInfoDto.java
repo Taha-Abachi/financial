@@ -12,11 +12,16 @@ public class UserInfoDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private UserRoleInfoDto role;
+    private Long storeId;
+    private String storeName;
+    private Long companyId;
+    private String companyName;
 
     public UserInfoDto() {}
 
     public UserInfoDto(Long id, String username, String name, String email, String mobilePhoneNumber, 
-                      boolean isActive, LocalDateTime createdAt, LocalDateTime updatedAt, UserRoleInfoDto role) {
+                      boolean isActive, LocalDateTime createdAt, LocalDateTime updatedAt, UserRoleInfoDto role,
+                      Long storeId, String storeName, Long companyId, String companyName) {
         this.id = id;
         this.username = username;
         this.name = name;
@@ -26,6 +31,10 @@ public class UserInfoDto {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.role = role;
+        this.storeId = storeId;
+        this.storeName = storeName;
+        this.companyId = companyId;
+        this.companyName = companyName;
     }
 
     // Getters and Setters
@@ -99,6 +108,38 @@ public class UserInfoDto {
 
     public void setRole(UserRoleInfoDto role) {
         this.role = role;
+    }
+
+    public Long getStoreId() {
+        return storeId;
+    }
+
+    public void setStoreId(Long storeId) {
+        this.storeId = storeId;
+    }
+
+    public String getStoreName() {
+        return storeName;
+    }
+
+    public void setStoreName(String storeName) {
+        this.storeName = storeName;
+    }
+
+    public Long getCompanyId() {
+        return companyId;
+    }
+
+    public void setCompanyId(Long companyId) {
+        this.companyId = companyId;
+    }
+
+    public String getCompanyName() {
+        return companyName;
+    }
+
+    public void setCompanyName(String companyName) {
+        this.companyName = companyName;
     }
 
     // Inner class for role information

@@ -76,7 +76,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n    \"refreshToken\": \"660e8400-e29b-41d4-a716-446655440001\",\n    \"tokenType\": \"Bearer\",\n    \"expiresAt\": \"2024-01-15T11:00:00\",\n    \"loginIp\": \"192.168.1.100\",\n    \"userAgent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\",\n    \"referrer\": \"https://example.com/login\",\n    \"user\": {\n        \"id\": 1,\n        \"username\": \"admin\",\n        \"name\": \"Administrator\",\n        \"email\": \"admin@example.com\",\n        \"mobilePhoneNumber\": \"+1234567890\",\n        \"isActive\": true,\n        \"createdAt\": \"2024-01-01T10:00:00\",\n        \"updatedAt\": \"2024-01-15T10:30:00\",\n        \"role\": {\n            \"id\": 1,\n            \"name\": \"ADMIN\",\n            \"description\": \"Administrator role with full access\"\n        }\n    }\n}"
+							"body": "{\n    \"accessToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n    \"refreshToken\": \"660e8400-e29b-41d4-a716-446655440001\",\n    \"tokenType\": \"Bearer\",\n    \"expiresAt\": \"2024-01-15T11:00:00\",\n    \"loginIp\": \"192.168.1.100\",\n    \"userAgent\": \"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36\",\n    \"referrer\": \"https://example.com/login\",\n    \"user\": {\n        \"id\": 1,\n        \"username\": \"admin\",\n        \"name\": \"Administrator\",\n        \"email\": \"admin@example.com\",\n        \"mobilePhoneNumber\": \"+1234567890\",\n        \"isActive\": true,\n        \"createdAt\": \"2024-01-01T10:00:00\",\n        \"updatedAt\": \"2024-01-15T10:30:00\",\n        \"storeId\": null,\n        \"storeName\": null,\n        \"companyId\": null,\n        \"companyName\": null,\n        \"role\": {\n            \"id\": 1,\n            \"name\": \"ADMIN\",\n            \"description\": \"Administrator role with full access\"\n        }\n    }\n}"
 						}
 					]
 				}
@@ -2012,7 +2012,7 @@
 	"variable": [
 		{
 			"key": "baseUrl",
-			"value": "http://localhost:8080",
+			"value": "http://localhost:8081",
 			"type": "string"
 		},
 		{

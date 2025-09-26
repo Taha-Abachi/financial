@@ -13,6 +13,10 @@ public class UserDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private UserRoleDto role;
+    private Long storeId;
+    private String storeName;
+    private Long companyId;
+    private String companyName;
     private String apiKey;
 
     public UserDto() {}
@@ -117,5 +121,37 @@ public class UserDto {
 
     public void setApiKey(String apiKey) {
         this.apiKey = apiKey;
+    }
+
+    public Long getStoreId() {
+        return storeId;
+    }
+
+    public void setStoreId(Long storeId) {
+        this.storeId = storeId;
+    }
+
+    public String getStoreName() {
+        return storeName;
+    }
+
+    public void setStoreName(String storeName) {
+        this.storeName = storeName;
+    }
+
+    public Long getCompanyId() {
+        return companyId;
+    }
+
+    public void setCompanyId(Long companyId) {
+        this.companyId = companyId;
+    }
+
+    public String getCompanyName() {
+        return companyName;
+    }
+
+    public void setCompanyName(String companyName) {
+        this.companyName = companyName;
     }
 } 

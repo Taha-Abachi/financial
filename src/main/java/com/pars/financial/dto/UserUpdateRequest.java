@@ -20,6 +20,8 @@ public class UserUpdateRequest {
     private String email;
 
     private Long roleId;
+    private Long storeId;
+    private Long companyId;
     private Boolean isActive;
 
     public UserUpdateRequest() {}
@@ -78,5 +80,21 @@ public class UserUpdateRequest {
 
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
+    }
+
+    public Long getStoreId() {
+        return storeId;
+    }
+
+    public void setStoreId(Long storeId) {
+        this.storeId = storeId;
+    }
+
+    public Long getCompanyId() {
+        return companyId;
+    }
+
+    public void setCompanyId(Long companyId) {
+        this.companyId = companyId;
     }
 } 

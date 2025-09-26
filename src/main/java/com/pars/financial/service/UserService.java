@@ -21,7 +21,9 @@ import com.pars.financial.exception.ValidationException;
 import com.pars.financial.repository.UserRepository;
 import com.pars.financial.repository.UserRoleRepository;
 import com.pars.financial.repository.StoreRepository;
+import com.pars.financial.repository.CompanyRepository;
 import com.pars.financial.entity.Store;
+import com.pars.financial.entity.Company;
 import com.pars.financial.enums.UserRole;
 import com.pars.financial.utils.ApiKeyEncryption;
 
@@ -32,13 +34,15 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserRoleRepository userRoleRepository;
     private final StoreRepository storeRepository;
+    private final CompanyRepository companyRepository;
     private final PasswordEncoder passwordEncoder;
 
     public UserService(UserRepository userRepository, UserRoleRepository userRoleRepository, 
-                      StoreRepository storeRepository, PasswordEncoder passwordEncoder, ApiKeyEncryption apiKeyEncryption) {
+                      StoreRepository storeRepository, CompanyRepository companyRepository, PasswordEncoder passwordEncoder, ApiKeyEncryption apiKeyEncryption) {
         this.userRepository = userRepository;
         this.userRoleRepository = userRoleRepository;
         this.storeRepository = storeRepository;
+        this.companyRepository = companyRepository;
         this.passwordEncoder = passwordEncoder;
         
         // Set the API key encryption in the User entity
@@ -47,14 +51,14 @@ public class UserService {
 
     public List<UserDto> getAllUsers() {
         logger.debug("Fetching all users");
-        return userRepository.findAll().stream()
+        return userRepository.findAllWithRelationships().stream()
                 .map(this::convertToUserDto)
                 .collect(Collectors.toList());
     }
 
     public UserDto getUserById(Long id) {
         logger.debug("Fetching user by id: {}", id);
-        var user = userRepository.findById(id);
+        var user = userRepository.findByIdWithRelationships(id);
         if (user.isEmpty()) {
             logger.warn("User not found with id: {}", id);
             throw new ValidationException(ErrorCodes.USER_NOT_FOUND);
@@ -133,6 +137,25 @@ public class UserService {
             throw new ValidationException(ErrorCodes.INVALID_REQUEST, "Store ID should only be provided for STORE_USER role");
         }
 
+        // Validate company assignment for COMPANY_USER role
+        Company company = null;
+        if (UserRole.COMPANY_USER.name().equals(role.get().getName())) {
+            if (request.getCompanyId() == null) {
+                logger.warn("Company ID is required for COMPANY_USER role");
+                throw new ValidationException(ErrorCodes.REQUIRED_FIELD_MISSING, "Company ID is required for COMPANY_USER role");
+            }
+            
+            var companyOptional = companyRepository.findById(request.getCompanyId());
+            if (companyOptional.isEmpty()) {
+                logger.warn("Company not found with id: {}", request.getCompanyId());
+                throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND);
+            }
+            company = companyOptional.get();
+        } else if (request.getCompanyId() != null) {
+            logger.warn("Company ID should not be provided for non-COMPANY_USER roles");
+            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "Company ID should only be provided for COMPANY_USER role");
+        }
+
         // Create user
         var user = new User(
             request.getUsername(),
@@ -150,7 +173,19 @@ public class UserService {
         // Set store for STORE_USER role
         if (store != null) {
             user.setStore(store);
-            logger.info("Assigned store {} to STORE_USER {}", store.getId(), request.getUsername());
+            // Also set the company from the store for STORE_USER
+            if (store.getCompany() != null) {
+                user.setCompany(store.getCompany());
+                logger.info("Assigned store {} and company {} to STORE_USER {}", store.getId(), store.getCompany().getId(), request.getUsername());
+            } else {
+                logger.warn("Store {} has no company assigned, STORE_USER {} will have null company", store.getId(), request.getUsername());
+            }
+        }
+
+        // Set company for COMPANY_USER role
+        if (company != null) {
+            user.setCompany(company);
+            logger.info("Assigned company {} to COMPANY_USER {}", company.getId(), request.getUsername());
         }
         
         // Encode password before saving
@@ -215,7 +250,83 @@ public class UserService {
                 logger.warn("User role not found with id: {}", request.getRoleId());
                 throw new ValidationException(ErrorCodes.USER_ROLE_NOT_FOUND);
             }
+            
+            // Validate role-specific requirements when changing role
+            if (UserRole.STORE_USER.name().equals(role.get().getName()) && request.getStoreId() == null) {
+                logger.warn("Store ID is required when changing role to STORE_USER");
+                throw new ValidationException(ErrorCodes.REQUIRED_FIELD_MISSING, "Store ID is required when changing role to STORE_USER");
+            }
+            
+            if (UserRole.COMPANY_USER.name().equals(role.get().getName()) && request.getCompanyId() == null) {
+                logger.warn("Company ID is required when changing role to COMPANY_USER");
+                throw new ValidationException(ErrorCodes.REQUIRED_FIELD_MISSING, "Company ID is required when changing role to COMPANY_USER");
+            }
+            
+            // Clear assignments when changing to roles that don't need them
+            if (!UserRole.STORE_USER.name().equals(role.get().getName())) {
+                user.setStore(null);
+                logger.info("Cleared store assignment for user {} when changing to role {}", user.getUsername(), role.get().getName());
+            }
+            
+            if (!UserRole.COMPANY_USER.name().equals(role.get().getName())) {
+                user.setCompany(null);
+                logger.info("Cleared company assignment for user {} when changing to role {}", user.getUsername(), role.get().getName());
+            }
+            
             user.setRole(role.get());
+            
+            // If changing to STORE_USER role and storeId is provided, set the company from the store
+            if (UserRole.STORE_USER.name().equals(role.get().getName()) && request.getStoreId() != null) {
+                var storeOptional = storeRepository.findById(request.getStoreId());
+                if (storeOptional.isPresent()) {
+                    Store store = storeOptional.get();
+                    if (store.getCompany() != null) {
+                        user.setCompany(store.getCompany());
+                        logger.info("Set company {} from store {} for user {} when changing to STORE_USER role", store.getCompany().getId(), store.getId(), user.getUsername());
+                    } else {
+                        logger.warn("Store {} has no company assigned, user {} will have null company when changing to STORE_USER role", store.getId(), user.getUsername());
+                    }
+                }
+            }
+        }
+
+        // Handle store assignment updates
+        if (request.getStoreId() != null) {
+            if (UserRole.STORE_USER.name().equals(user.getRole().getName())) {
+                var storeOptional = storeRepository.findById(request.getStoreId());
+                if (storeOptional.isEmpty()) {
+                    logger.warn("Store not found with id: {}", request.getStoreId());
+                    throw new ValidationException(ErrorCodes.STORE_NOT_FOUND);
+                }
+                Store store = storeOptional.get();
+                user.setStore(store);
+                // Also set the company from the store for STORE_USER
+                if (store.getCompany() != null) {
+                    user.setCompany(store.getCompany());
+                    logger.info("Updated store assignment for user {} to store {} and company {}", user.getUsername(), store.getId(), store.getCompany().getId());
+                } else {
+                    logger.warn("Store {} has no company assigned, user {} will have null company", store.getId(), user.getUsername());
+                }
+            } else {
+                logger.warn("Store ID should only be provided for STORE_USER role");
+                throw new ValidationException(ErrorCodes.INVALID_REQUEST, "Store ID should only be provided for STORE_USER role");
+            }
+        }
+
+        // Handle company assignment updates
+        if (request.getCompanyId() != null) {
+            if (UserRole.COMPANY_USER.name().equals(user.getRole().getName())) {
+                var companyOptional = companyRepository.findById(request.getCompanyId());
+                if (companyOptional.isEmpty()) {
+                    logger.warn("Company not found with id: {}", request.getCompanyId());
+                    throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND);
+                }
+                user.setCompany(companyOptional.get());
+                logger.info("Updated company assignment for user {} to company {}", user.getUsername(), request.getCompanyId());
+            } else {
+                logger.warn("Company ID should only be provided for COMPANY_USER role");
+                throw new ValidationException(ErrorCodes.INVALID_REQUEST, "Company ID should only be provided for COMPANY_USER role");
+            }
         }
 
         if (request.getIsActive() != null) {
@@ -333,21 +444,21 @@ public class UserService {
 
     public List<UserDto> getUsersByRole(Long roleId) {
         logger.debug("Fetching users by role id: {}", roleId);
-        return userRepository.findByRoleId(roleId).stream()
+        return userRepository.findByRoleIdWithRelationships(roleId).stream()
                 .map(this::convertToUserDto)
                 .collect(Collectors.toList());
     }
 
     public List<UserDto> getActiveUsers() {
         logger.debug("Fetching active users");
-        return userRepository.findByIsActive(true).stream()
+        return userRepository.findByIsActiveWithRelationships(true).stream()
                 .map(this::convertToUserDto)
                 .collect(Collectors.toList());
     }
 
     public List<UserDto> getUsersWithApiKeyCapability() {
         logger.debug("Fetching users with API key capability");
-        return userRepository.findAll().stream()
+        return userRepository.findAllWithRelationships().stream()
                 .filter(User::canUseApiKey)
                 .map(this::convertToUserDto)
                 .collect(Collectors.toList());
@@ -355,7 +466,7 @@ public class UserService {
 
     public List<UserDto> getUsersWithActiveApiKeys() {
         logger.debug("Fetching users with active API keys");
-        return userRepository.findAll().stream()
+        return userRepository.findAllWithRelationships().stream()
                 .filter(User::hasApiKey)
                 .map(this::convertToUserDto)
                 .collect(Collectors.toList());
@@ -466,6 +577,18 @@ public class UserService {
             roleDto.setName(user.getRole().getName());
             roleDto.setDescription(user.getRole().getDescription());
             userDto.setRole(roleDto);
+        }
+
+        // Set store information if available
+        if (user.getStore() != null) {
+            userDto.setStoreId(user.getStore().getId());
+            userDto.setStoreName(user.getStore().getStore_name());
+        }
+
+        // Set company information if available
+        if (user.getCompany() != null) {
+            userDto.setCompanyId(user.getCompany().getId());
+            userDto.setCompanyName(user.getCompany().getName());
         }
         
         return userDto;

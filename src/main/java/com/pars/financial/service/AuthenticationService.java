@@ -55,6 +55,10 @@ public class AuthenticationService {
 
             User user = userRepository.findByUsername(loginRequest.getUsername())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+            
+            // Eagerly load store and company relationships for login response
+            user = userRepository.findByIdWithRelationships(user.getId())
+                .orElse(user);
 
             if (!user.isActive()) {
                 throw new GenericException("User account is deactivated");

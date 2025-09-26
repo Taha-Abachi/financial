@@ -32,6 +32,18 @@ public class UserMapper {
             dto.setRole(toUserRoleInfoDto(user.getRole()));
         }
 
+        // Map store information if available
+        if (user.getStore() != null) {
+            dto.setStoreId(user.getStore().getId());
+            dto.setStoreName(user.getStore().getStore_name());
+        }
+
+        // Map company information if available
+        if (user.getCompany() != null) {
+            dto.setCompanyId(user.getCompany().getId());
+            dto.setCompanyName(user.getCompany().getName());
+        }
+
         return dto;
     }
 

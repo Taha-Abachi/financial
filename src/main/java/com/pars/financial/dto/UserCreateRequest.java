@@ -33,6 +33,7 @@ public class UserCreateRequest {
     private Long roleId;
 
     private Long storeId;
+    private Long companyId;
 
     public UserCreateRequest() {}
 
@@ -108,5 +109,13 @@ public class UserCreateRequest {
 
     public void setStoreId(Long storeId) {
         this.storeId = storeId;
+    }
+
+    public Long getCompanyId() {
+        return companyId;
+    }
+
+    public void setCompanyId(Long companyId) {
+        this.companyId = companyId;
     }
 } 

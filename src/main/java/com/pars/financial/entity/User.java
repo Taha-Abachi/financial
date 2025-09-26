@@ -2,7 +2,6 @@ package com.pars.financial.entity;
 
 import java.time.LocalDateTime;
 
-
 import com.pars.financial.utils.ApiKeyEncryption;
 
 import jakarta.persistence.Column;
@@ -78,6 +77,10 @@ public class User {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "store_id")
     private Store store;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "company_id")
+    private Company company;
 
     @Column(name = "api_key", columnDefinition = "TEXT")
     private String apiKey;
@@ -204,6 +207,14 @@ public class User {
 
     public void setStore(Store store) {
         this.store = store;
+    }
+
+    public Company getCompany() {
+        return company;
+    }
+
+    public void setCompany(Company company) {
+        this.company = company;
     }
 
     public String getApiKey() {
