@@ -730,7 +730,57 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 2,\n    \"username\": \"john_doe\",\n    \"name\": \"John Doe\",\n    \"mobilePhoneNumber\": \"09123456788\",\n    \"nationalCode\": \"1234567891\",\n    \"email\": \"john@example.com\",\n    \"isActive\": true,\n    \"createdAt\": \"2024-01-01T10:00:00\",\n    \"updatedAt\": \"2024-01-01T10:00:00\",\n    \"role\": {\n      \"id\": 3,\n      \"name\": \"API_USER\",\n      \"description\": \"API User with limited access\"\n    }\n  }\n}"
+							"body": "{\n  \"status\": 0,\n  \"message\": \"User created successfully\",\n  \"data\": {\n    \"id\": 2,\n    \"username\": \"john_doe\",\n    \"name\": \"John Doe\",\n    \"mobilePhoneNumber\": \"09123456788\",\n    \"nationalCode\": \"1234567891\",\n    \"email\": \"john@example.com\",\n    \"isActive\": true,\n    \"createdAt\": \"2024-01-01T10:00:00\",\n    \"updatedAt\": \"2024-01-01T10:00:00\",\n    \"role\": {\n      \"id\": 3,\n      \"name\": \"API_USER\",\n      \"description\": \"API User with limited access\"\n    }\n  }\n}"
+						},
+						{
+							"name": "Validation Error Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"username\": \"\",\n    \"name\": \"John Doe\",\n    \"password\": \"123\",\n    \"mobilePhoneNumber\": \"invalid-phone\",\n    \"nationalCode\": \"123\",\n    \"email\": \"invalid-email\",\n    \"roleId\": 999\n}"
+								},
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": -1,\n  \"message\": \"Username is required\",\n  \"data\": null\n}"
+						},
+						{
+							"name": "Duplicate Username Error",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"username\": \"admin\",\n    \"name\": \"John Doe\",\n    \"password\": \"password123\",\n    \"mobilePhoneNumber\": \"09123456788\",\n    \"nationalCode\": \"1234567891\",\n    \"email\": \"john@example.com\",\n    \"roleId\": 3\n}"
+								},
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": -1,\n  \"message\": \"Username already exists\",\n  \"data\": null\n}"
 						}
 					]
 				},
@@ -865,7 +915,57 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 2,\n    \"username\": \"john_doe\",\n    \"name\": \"John Smith\",\n    \"mobilePhoneNumber\": \"09123456788\",\n    \"nationalCode\": \"1234567891\",\n    \"email\": \"john.smith@example.com\",\n    \"isActive\": true,\n    \"createdAt\": \"2024-01-01T10:00:00\",\n    \"updatedAt\": \"2024-01-01T10:00:00\",\n    \"role\": {\n      \"id\": 4,\n      \"name\": \"USER\",\n      \"description\": \"Regular user with basic access\"\n    }\n  }\n}"
+							"body": "{\n  \"status\": 0,\n  \"message\": \"User updated successfully\",\n  \"data\": {\n    \"id\": 2,\n    \"username\": \"john_doe\",\n    \"name\": \"John Smith\",\n    \"mobilePhoneNumber\": \"09123456788\",\n    \"nationalCode\": \"1234567891\",\n    \"email\": \"john.smith@example.com\",\n    \"isActive\": true,\n    \"createdAt\": \"2024-01-01T10:00:00\",\n    \"updatedAt\": \"2024-01-01T10:00:00\",\n    \"role\": {\n      \"id\": 4,\n      \"name\": \"USER\",\n      \"description\": \"Regular user with basic access\"\n    }\n  }\n}"
+						},
+						{
+							"name": "Validation Error Response",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"\",\n    \"email\": \"invalid-email\",\n    \"roleId\": 999\n}"
+								},
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": -1,\n  \"message\": \"Name is required\",\n  \"data\": null\n}"
+						},
+						{
+							"name": "User Not Found Error",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"name\": \"John Smith\",\n    \"email\": \"john.smith@example.com\",\n    \"roleId\": 4\n}"
+								},
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": -1,\n  \"message\": \"User not found with ID: 999\",\n  \"data\": null\n}"
 						}
 					]
 				},

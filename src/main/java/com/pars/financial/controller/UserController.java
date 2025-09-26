@@ -7,6 +7,8 @@ import com.pars.financial.dto.UserUpdateRequest;
 import com.pars.financial.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -39,137 +41,210 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public GenericResponse<UserDto> getUserById(@PathVariable Long id) {
+    public ResponseEntity<GenericResponse<UserDto>> getUserById(@PathVariable Long id) {
         logger.info("GET /api/v1/users/{} called", id);
         var response = new GenericResponse<UserDto>();
         try {
             var user = userService.getUserById(id);
+            if (user == null) {
+                response.status = -1;
+                response.message = "User not found with ID: " + id;
+                return ResponseEntity.notFound().build();
+            }
             response.data = user;
+            response.message = "User retrieved successfully";
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            logger.error("Validation error fetching user with id {}: {}", id, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.badRequest().body(response);
         } catch (Exception e) {
             logger.error("Error fetching user with id {}: {}", id, e.getMessage());
             response.status = -1;
             response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-        return response;
     }
 
     @GetMapping("/username/{username}")
-    public GenericResponse<UserDto> getUserByUsername(@PathVariable String username) {
+    public ResponseEntity<GenericResponse<UserDto>> getUserByUsername(@PathVariable String username) {
         logger.info("GET /api/v1/users/username/{} called", username);
         var response = new GenericResponse<UserDto>();
         try {
             var user = userService.getUserByUsername(username);
+            if (user == null) {
+                response.status = -1;
+                response.message = "User not found with username: " + username;
+                return ResponseEntity.notFound().build();
+            }
             response.data = user;
+            response.message = "User retrieved successfully";
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            logger.error("Validation error fetching user with username {}: {}", username, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.badRequest().body(response);
         } catch (Exception e) {
             logger.error("Error fetching user with username {}: {}", username, e.getMessage());
             response.status = -1;
             response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-        return response;
     }
 
     @PostMapping("/create")
-    public GenericResponse<UserDto> createUser(@RequestBody UserCreateRequest request) {
+    public ResponseEntity<GenericResponse<UserDto>> createUser(@RequestBody UserCreateRequest request) {
         logger.info("POST /api/v1/users/create called with username: {}", request.getUsername());
         var response = new GenericResponse<UserDto>();
         try {
             var createdUser = userService.createUser(request);
             response.data = createdUser;
+            response.message = "User created successfully";
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            logger.error("Validation error creating user: {}", e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.badRequest().body(response);
         } catch (Exception e) {
             logger.error("Error creating user: {}", e.getMessage());
             response.status = -1;
             response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-        return response;
     }
 
     @PutMapping("/update/{id}")
-    public GenericResponse<UserDto> updateUser(@PathVariable Long id, @RequestBody UserUpdateRequest request) {
+    public ResponseEntity<GenericResponse<UserDto>> updateUser(@PathVariable Long id, @RequestBody UserUpdateRequest request) {
         logger.info("PUT /api/v1/users/update/{} called", id);
         var response = new GenericResponse<UserDto>();
         try {
             var updatedUser = userService.updateUser(id, request);
             response.data = updatedUser;
+            response.message = "User updated successfully";
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            logger.error("Validation error updating user with id {}: {}", id, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.badRequest().body(response);
         } catch (Exception e) {
             logger.error("Error updating user with id {}: {}", id, e.getMessage());
             response.status = -1;
             response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-        return response;
     }
 
     @DeleteMapping("/delete/{id}")
-    public GenericResponse<Void> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<GenericResponse<Void>> deleteUser(@PathVariable Long id) {
         logger.info("DELETE /api/v1/users/delete/{} called", id);
         var response = new GenericResponse<Void>();
         try {
             userService.deleteUser(id);
+            response.message = "User deleted successfully";
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            logger.error("Validation error deleting user with id {}: {}", id, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.badRequest().body(response);
         } catch (Exception e) {
             logger.error("Error deleting user with id {}: {}", id, e.getMessage());
             response.status = -1;
             response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-        return response;
     }
 
     @PostMapping("/activate/{id}")
-    public GenericResponse<UserDto> activateUser(@PathVariable Long id) {
+    public ResponseEntity<GenericResponse<UserDto>> activateUser(@PathVariable Long id) {
         logger.info("POST /api/v1/users/activate/{} called", id);
         var response = new GenericResponse<UserDto>();
         try {
             var activatedUser = userService.activateUser(id);
             response.data = activatedUser;
+            response.message = "User activated successfully";
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            logger.error("Validation error activating user with id {}: {}", id, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.badRequest().body(response);
         } catch (Exception e) {
             logger.error("Error activating user with id {}: {}", id, e.getMessage());
             response.status = -1;
             response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-        return response;
     }
 
     @PostMapping("/deactivate/{id}")
-    public GenericResponse<UserDto> deactivateUser(@PathVariable Long id) {
+    public ResponseEntity<GenericResponse<UserDto>> deactivateUser(@PathVariable Long id) {
         logger.info("POST /api/v1/users/deactivate/{} called", id);
         var response = new GenericResponse<UserDto>();
         try {
             var deactivatedUser = userService.deactivateUser(id);
             response.data = deactivatedUser;
+            response.message = "User deactivated successfully";
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            logger.error("Validation error deactivating user with id {}: {}", id, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.badRequest().body(response);
         } catch (Exception e) {
             logger.error("Error deactivating user with id {}: {}", id, e.getMessage());
             response.status = -1;
             response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-        return response;
     }
 
     @PostMapping("/{id}/api-key/generate")
-    public GenericResponse<UserDto> generateApiKey(@PathVariable Long id) {
+    public ResponseEntity<GenericResponse<UserDto>> generateApiKey(@PathVariable Long id) {
         logger.info("POST /api/v1/users/{}/api-key/generate called", id);
         var response = new GenericResponse<UserDto>();
         try {
             var userWithApiKey = userService.generateApiKey(id);
             response.data = userWithApiKey;
+            response.message = "API key generated successfully";
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            logger.error("Validation error generating API key for user with id {}: {}", id, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.badRequest().body(response);
         } catch (Exception e) {
             logger.error("Error generating API key for user with id {}: {}", id, e.getMessage());
             response.status = -1;
             response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-        return response;
     }
 
     @PostMapping("/{id}/api-key/revoke")
-    public GenericResponse<UserDto> revokeApiKey(@PathVariable Long id) {
+    public ResponseEntity<GenericResponse<UserDto>> revokeApiKey(@PathVariable Long id) {
         logger.info("POST /api/v1/users/{}/api-key/revoke called", id);
         var response = new GenericResponse<UserDto>();
         try {
             var userWithoutApiKey = userService.revokeApiKey(id);
             response.data = userWithoutApiKey;
+            response.message = "API key revoked successfully";
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            logger.error("Validation error revoking API key for user with id {}: {}", id, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.badRequest().body(response);
         } catch (Exception e) {
             logger.error("Error revoking API key for user with id {}: {}", id, e.getMessage());
             response.status = -1;
             response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-        return response;
     }
 
     @GetMapping("/role/{roleId}")
@@ -248,19 +323,30 @@ public class UserController {
     }
 
     @PostMapping("/validate-api-key")
-    public GenericResponse<UserDto> validateApiKey(@RequestBody String apiKey) {
+    public ResponseEntity<GenericResponse<UserDto>> validateApiKey(@RequestBody String apiKey) {
         logger.info("POST /api/v1/users/validate-api-key called");
         var response = new GenericResponse<UserDto>();
         try {
             var user = userService.getUserByApiKey(apiKey);
+            if (user == null) {
+                response.status = -1;
+                response.message = "Invalid API key";
+                return ResponseEntity.badRequest().body(response);
+            }
             response.data = user;
             response.message = "API key is valid";
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            logger.error("Validation error validating API key: {}", e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.badRequest().body(response);
         } catch (Exception e) {
             logger.error("Error validating API key: {}", e.getMessage());
             response.status = -1;
             response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-        return response;
     }
 
     @GetMapping("/statistics")
