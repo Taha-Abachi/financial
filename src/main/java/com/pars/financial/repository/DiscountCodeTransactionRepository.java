@@ -5,11 +5,13 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import com.pars.financial.entity.DiscountCode;
 import com.pars.financial.entity.DiscountCodeTransaction;
 import com.pars.financial.enums.TransactionType;
 
+@Repository
 public interface DiscountCodeTransactionRepository extends JpaRepository<DiscountCodeTransaction, Long> {
     
     DiscountCodeTransaction findByTransactionId(UUID transactionId);

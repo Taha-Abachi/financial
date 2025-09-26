@@ -21,7 +21,9 @@ import com.pars.financial.entity.PhoneNumber;
 import com.pars.financial.enums.PhoneNumberType;
 import com.pars.financial.constants.ErrorCodes;
 import com.pars.financial.exception.ValidationException;
+import com.pars.financial.repository.AddressRepository;
 import com.pars.financial.repository.CompanyRepository;
+import com.pars.financial.repository.PhoneNumberRepository;
 
 @Service
 public class CompanyService {
@@ -29,9 +31,15 @@ public class CompanyService {
     private static final Logger logger = LoggerFactory.getLogger(CompanyService.class);
 
     private final CompanyRepository companyRepository;
+    private final AddressRepository addressRepository;
+    private final PhoneNumberRepository phoneNumberRepository;
 
-    public CompanyService(CompanyRepository companyRepository) {
+    public CompanyService(CompanyRepository companyRepository, 
+                         AddressRepository addressRepository,
+                         PhoneNumberRepository phoneNumberRepository) {
         this.companyRepository = companyRepository;
+        this.addressRepository = addressRepository;
+        this.phoneNumberRepository = phoneNumberRepository;
     }
 
     /**
@@ -71,7 +79,7 @@ public class CompanyService {
         logger.debug("Fetching companies with pagination - page: {}, size: {}", page, size);
         
         // Validate pagination parameters
-        if (page < 0) {
+            if (page < 0) {
             page = 0;
         }
         if (size <= 0) {
@@ -110,22 +118,24 @@ public class CompanyService {
         Company company = new Company();
         company.setName(request.getCompanyName());
         
-        // Create phone number if provided
+        // Create and persist phone number if provided
         if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
             PhoneNumber phoneNumber = new PhoneNumber();
             phoneNumber.setNumber(request.getPhoneNumber());
             phoneNumber.setType(PhoneNumberType.Cell); // Default type
-            company.setPhone_number(phoneNumber);
+            PhoneNumber savedPhoneNumber = phoneNumberRepository.save(phoneNumber);
+            company.setPhone_number(savedPhoneNumber);
         }
         
-        // Create address if provided
+        // Create and persist address if provided
         if (request.getAddress() != null && !request.getAddress().trim().isEmpty()) {
             Address address = new Address();
             address.setText(request.getAddress());
             address.setCity("Unknown"); // Default values
             address.setProvince("Unknown");
             address.setPostalCode("00000");
-            company.setCompany_address(address);
+            Address savedAddress = addressRepository.save(address);
+            company.setCompany_address(savedAddress);
         }
         
         return companyRepository.save(company);
@@ -152,7 +162,8 @@ public class CompanyService {
                 phoneNumber.setType(PhoneNumberType.Cell); // Default type
             }
             phoneNumber.setNumber(request.getPhoneNumber());
-            company.setPhone_number(phoneNumber);
+            PhoneNumber savedPhoneNumber = phoneNumberRepository.save(phoneNumber);
+            company.setPhone_number(savedPhoneNumber);
         }
         
         // Update address if provided
@@ -165,7 +176,8 @@ public class CompanyService {
                 address.setPostalCode("00000");
             }
             address.setText(request.getAddress());
-            company.setCompany_address(address);
+            Address savedAddress = addressRepository.save(address);
+            company.setCompany_address(savedAddress);
         }
         
         return companyRepository.save(company);
