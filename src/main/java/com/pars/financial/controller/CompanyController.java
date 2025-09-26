@@ -15,7 +15,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.pars.financial.dto.CompanyCreateRequest;
 import com.pars.financial.dto.CompanyDto;
+import com.pars.financial.dto.CompanyUpdateRequest;
 import com.pars.financial.dto.StoreDto;
 import com.pars.financial.entity.Company;
 import com.pars.financial.service.CompanyService;
@@ -78,27 +80,26 @@ public class CompanyController {
 
     /**
      * Create a new company
-     * @param company the company to create
+     * @param request the company creation request
      * @return the created company
      */
     @PostMapping
-    public ResponseEntity<CompanyDto> createCompany(@RequestBody Company company) {
-        logger.info("Creating new company: {}", company.getName());
-        Company createdCompany = companyService.createCompany(company);
+    public ResponseEntity<CompanyDto> createCompany(@RequestBody CompanyCreateRequest request) {
+        logger.info("Creating new company: {}", request.getCompanyName());
+        Company createdCompany = companyService.createCompany(request);
         return ResponseEntity.ok(CompanyDto.fromEntity(createdCompany));
     }
 
     /**
      * Update an existing company
      * @param id the company ID
-     * @param company the company data to update
+     * @param request the company update request
      * @return the updated company
      */
     @PutMapping("/{id}")
-    public ResponseEntity<CompanyDto> updateCompany(@PathVariable Long id, @RequestBody Company company) {
+    public ResponseEntity<CompanyDto> updateCompany(@PathVariable Long id, @RequestBody CompanyUpdateRequest request) {
         logger.info("Updating company with ID: {}", id);
-        company.setId(id);
-        Company updatedCompany = companyService.updateCompany(company);
+        Company updatedCompany = companyService.updateCompany(id, request);
         return ResponseEntity.ok(CompanyDto.fromEntity(updatedCompany));
     }
 

@@ -6,8 +6,14 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.pars.financial.dto.CompanyCreateRequest;
+import com.pars.financial.dto.CompanyUpdateRequest;
+import com.pars.financial.entity.Address;
 import com.pars.financial.entity.Company;
+import com.pars.financial.entity.PhoneNumber;
+import com.pars.financial.enums.PhoneNumberType;
 import com.pars.financial.constants.ErrorCodes;
 import com.pars.financial.exception.ValidationException;
 import com.pars.financial.repository.CompanyRepository;
@@ -60,24 +66,74 @@ public class CompanyService {
 
     /**
      * Create a new company
-     * @param company the company to create
+     * @param request the company creation request
      * @return the created company
      */
-    public Company createCompany(Company company) {
-        logger.info("Creating new company: {}", company.getName());
+    @Transactional
+    public Company createCompany(CompanyCreateRequest request) {
+        logger.info("Creating new company: {}", request.getCompanyName());
+        
+        Company company = new Company();
+        company.setName(request.getCompanyName());
+        
+        // Create phone number if provided
+        if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
+            PhoneNumber phoneNumber = new PhoneNumber();
+            phoneNumber.setNumber(request.getPhoneNumber());
+            phoneNumber.setType(PhoneNumberType.Cell); // Default type
+            company.setPhone_number(phoneNumber);
+        }
+        
+        // Create address if provided
+        if (request.getAddress() != null && !request.getAddress().trim().isEmpty()) {
+            Address address = new Address();
+            address.setText(request.getAddress());
+            address.setCity("Unknown"); // Default values
+            address.setProvince("Unknown");
+            address.setPostalCode("00000");
+            company.setCompany_address(address);
+        }
+        
         return companyRepository.save(company);
     }
 
     /**
      * Update an existing company
-     * @param company the company to update
+     * @param companyId the company ID to update
+     * @param request the company update request
      * @return the updated company
      */
-    public Company updateCompany(Company company) {
-        logger.info("Updating company: {}", company.getName());
-        if (company.getId() == null) {
-            throw new ValidationException(ErrorCodes.REQUIRED_FIELD_MISSING, "Company ID is required for update");
+    @Transactional
+    public Company updateCompany(Long companyId, CompanyUpdateRequest request) {
+        logger.info("Updating company with ID: {}", companyId);
+        
+        Company company = findById(companyId);
+        company.setName(request.getCompanyName());
+        
+        // Update phone number if provided
+        if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
+            PhoneNumber phoneNumber = company.getPhone_number();
+            if (phoneNumber == null) {
+                phoneNumber = new PhoneNumber();
+                phoneNumber.setType(PhoneNumberType.Cell); // Default type
+            }
+            phoneNumber.setNumber(request.getPhoneNumber());
+            company.setPhone_number(phoneNumber);
         }
+        
+        // Update address if provided
+        if (request.getAddress() != null && !request.getAddress().trim().isEmpty()) {
+            Address address = company.getCompany_address();
+            if (address == null) {
+                address = new Address();
+                address.setCity("Unknown"); // Default values
+                address.setProvince("Unknown");
+                address.setPostalCode("00000");
+            }
+            address.setText(request.getAddress());
+            company.setCompany_address(address);
+        }
+        
         return companyRepository.save(company);
     }
 
