@@ -7,18 +7,23 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.lang.NonNull;
 
 import java.io.IOException;
-import java.util.Collections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.security.SignatureException;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -34,7 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
             throws ServletException, IOException {
         
         // Skip JWT processing if API key authentication is already present
@@ -85,8 +90,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     logger.warn("JWT token validation failed for user: {}", username);
                 }
             }
+        } catch (ExpiredJwtException e) {
+            logger.warn("JWT token expired: {}", e.getMessage());
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            response.setContentType("application/json");
+            response.getWriter().write("{\"status\":-805,\"message\":\"Token expired\",\"data\":null}");
+            return; // Stop filter chain
+        } catch (MalformedJwtException e) {
+            logger.warn("JWT token malformed: {}", e.getMessage());
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            response.setContentType("application/json");
+            response.getWriter().write("{\"status\":-804,\"message\":\"Invalid token format\",\"data\":null}");
+            return; // Stop filter chain
+        } catch (SignatureException e) {
+            logger.warn("JWT token signature invalid: {}", e.getMessage());
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            response.setContentType("application/json");
+            response.getWriter().write("{\"status\":-804,\"message\":\"Invalid token signature\",\"data\":null}");
+            return; // Stop filter chain
+        } catch (JwtException e) {
+            logger.warn("JWT token invalid: {}", e.getMessage());
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            response.setContentType("application/json");
+            response.getWriter().write("{\"status\":-804,\"message\":\"Invalid token\",\"data\":null}");
+            return; // Stop filter chain
         } catch (Exception e) {
-            // Log the exception but don't throw it to avoid breaking the filter chain
+            // Log other exceptions but don't throw them to avoid breaking the filter chain
             logger.error("JWT authentication error: " + e.getMessage());
         }
 
