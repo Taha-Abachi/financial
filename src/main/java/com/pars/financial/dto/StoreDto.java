@@ -10,4 +10,5 @@ public class StoreDto {
     public String phone;
     public OwnershipType ownershipType;
     public LocationType locationType;
+    public SimpleCompanyDto company;
 }

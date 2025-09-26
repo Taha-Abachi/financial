@@ -16,8 +16,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.pars.financial.dto.CompanyDto;
+import com.pars.financial.dto.StoreDto;
 import com.pars.financial.entity.Company;
 import com.pars.financial.service.CompanyService;
+import com.pars.financial.service.StoreService;
 
 @RestController
 @RequestMapping("/api/v1/companies")
@@ -26,9 +28,11 @@ public class CompanyController {
     private static final Logger logger = LoggerFactory.getLogger(CompanyController.class);
 
     private final CompanyService companyService;
+    private final StoreService storeService;
 
-    public CompanyController(CompanyService companyService) {
+    public CompanyController(CompanyService companyService, StoreService storeService) {
         this.companyService = companyService;
+        this.storeService = storeService;
     }
 
     /**
@@ -120,5 +124,31 @@ public class CompanyController {
         logger.info("Checking if company exists by name: {}", name);
         boolean exists = companyService.existsByName(name);
         return ResponseEntity.ok(exists);
+    }
+
+    /**
+     * Get all stores for a specific company
+     * @param companyId the company ID
+     * @return list of stores belonging to the company
+     */
+    @GetMapping("/{companyId}/stores")
+    public ResponseEntity<List<StoreDto>> getCompanyStores(@PathVariable Long companyId) {
+        logger.info("Fetching stores for company ID: {}", companyId);
+        
+        // Verify company exists
+        try {
+            Company company = companyService.findById(companyId);
+            if (company == null) {
+                logger.warn("Company not found with ID: {}", companyId);
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            logger.warn("Company not found with ID: {}", companyId);
+            return ResponseEntity.notFound().build();
+        }
+        
+        List<StoreDto> stores = storeService.getStoresByCompany(companyId);
+        logger.info("Found {} stores for company {}", stores.size(), companyId);
+        return ResponseEntity.ok(stores);
     }
 } 

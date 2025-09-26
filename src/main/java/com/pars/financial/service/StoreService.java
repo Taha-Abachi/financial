@@ -46,4 +46,12 @@ public class StoreService {
         logger.debug("Found {} stores", stores.size());
         return storeMapper.getFrom(stores);
     }
+
+    @Transactional(readOnly = true)
+    public List<StoreDto> getStoresByCompany(Long companyId) {
+        logger.debug("Fetching stores for company ID: {}", companyId);
+        List<Store> stores = storeRepository.findByCompanyId(companyId);
+        logger.debug("Found {} stores for company {}", stores.size(), companyId);
+        return storeMapper.getFrom(stores);
+    }
 }

@@ -1,5 +1,6 @@
 package com.pars.financial.mapper;
 
+import com.pars.financial.dto.SimpleCompanyDto;
 import com.pars.financial.dto.StoreDto;
 import com.pars.financial.entity.Store;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,7 @@ public class StoreMapper {
         c.phone = store.getPhone_number().getNumber();
         c.ownershipType = store.getOwnershipType();
         c.locationType = store.getLocationType();
+        c.company = SimpleCompanyDto.fromEntity(store.getCompany());
         return c;
     }
     public List<StoreDto> getFrom(List<Store> stores) {
