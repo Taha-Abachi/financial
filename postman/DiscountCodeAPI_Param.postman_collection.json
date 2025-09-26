@@ -10,6 +10,67 @@
 			"name": "Discount Code Management",
 			"item": [
 				{
+					"name": "Get All Discount Codes",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discountcode/all?page={{page}}&size={{size}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"discountcode",
+								"all"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "{{page}}",
+									"description": "Page number (0-based)"
+								},
+								{
+									"key": "size",
+									"value": "{{size}}",
+									"description": "Page size (default: 10, max: 100)"
+								}
+							]
+						},
+						"description": "Get all discount codes with pagination"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": 0,\n    \"message\": \"Success\",\n    \"data\": {\n        \"content\": [\n            {\n                \"id\": 1,\n                \"code\": \"SAVE20\",\n                \"serialNo\": 1001,\n                \"discountType\": \"PERCENTAGE\",\n                \"percentage\": 20.0,\n                \"constantDiscountAmount\": 0,\n                \"maxDiscountAmount\": 5000,\n                \"minimumBillAmount\": 10000,\n                \"usageLimit\": 100,\n                \"currentUsageCount\": 5,\n                \"isActive\": true,\n                \"used\": false,\n                \"expiryDate\": \"2024-12-31\",\n                \"storeLimited\": false,\n                \"itemCategoryLimited\": false\n            },\n            {\n                \"id\": 2,\n                \"code\": \"FLAT50\",\n                \"serialNo\": 1002,\n                \"discountType\": \"CONSTANT\",\n                \"percentage\": 0.0,\n                \"constantDiscountAmount\": 5000,\n                \"maxDiscountAmount\": 5000,\n                \"minimumBillAmount\": 20000,\n                \"usageLimit\": 50,\n                \"currentUsageCount\": 2,\n                \"isActive\": true,\n                \"used\": false,\n                \"expiryDate\": \"2024-12-31\",\n                \"storeLimited\": true,\n                \"itemCategoryLimited\": false\n            }\n        ],\n        \"page\": 0,\n        \"size\": 10,\n        \"totalElements\": 2,\n        \"totalPages\": 1,\n        \"first\": true,\n        \"last\": true,\n        \"hasNext\": false,\n        \"hasPrevious\": false\n    }\n}"
+						}
+					]
+				},
+				{
 					"name": "Get Discount Code",
 					"request": {
 						"method": "GET",
@@ -1505,7 +1566,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/api/v1/discountcode/transaction/list?page=0&size=10",
+							"raw": "{{baseUrl}}/api/v1/discountcode/transaction/list?page={{page}}&size={{size}}",
 							"host": [
 								"{{baseUrl}}"
 							],

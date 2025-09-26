@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 
@@ -18,6 +19,7 @@ import com.pars.financial.dto.DiscountCodeDto;
 import com.pars.financial.dto.DiscountCodeIssueRequest;
 import com.pars.financial.dto.DiscountCodeReportDto;
 import com.pars.financial.dto.GenericResponse;
+import com.pars.financial.dto.PagedResponse;
 import com.pars.financial.dto.StoreLimitationRequest;
 import com.pars.financial.service.DiscountCodeService;
 import com.pars.financial.utils.ApiUserUtil;
@@ -32,6 +34,28 @@ public class DiscountCodeController {
 
     public DiscountCodeController(DiscountCodeService codeService) {
         this.codeService = codeService;
+    }
+
+    @GetMapping("/all")
+    public GenericResponse<PagedResponse<DiscountCodeDto>> getAllDiscountCodes(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        logger.info("GET /api/v1/discountcode/all called with pagination - page: {}, size: {}", page, size);
+        GenericResponse<PagedResponse<DiscountCodeDto>> genericResponseDto = new GenericResponse<>();
+        try {
+            PagedResponse<DiscountCodeDto> pagedDiscountCodes = codeService.getAllDiscountCodes(page, size);
+            if (pagedDiscountCodes.getContent() == null || pagedDiscountCodes.getContent().isEmpty()) {
+                logger.warn("Discount code list not found");
+                genericResponseDto.status = -1;
+                genericResponseDto.message = "Discount code list not found";
+            }
+            genericResponseDto.data = pagedDiscountCodes;
+        } catch (Exception e) {
+            logger.error("Error fetching discount codes with pagination: {}", e.getMessage());
+            genericResponseDto.status = -1;
+            genericResponseDto.message = "Error fetching discount codes: " + e.getMessage();
+        }
+        return genericResponseDto;
     }
 
     @GetMapping("/{code}")

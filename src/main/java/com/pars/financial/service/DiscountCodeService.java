@@ -5,6 +5,7 @@ import com.pars.financial.dto.DiscountCodeIssueRequest;
 import com.pars.financial.dto.DiscountCodeReportDto;
 import com.pars.financial.dto.DiscountCodeTransactionDto;
 import com.pars.financial.dto.DiscountCodeValidationResponse;
+import com.pars.financial.dto.PagedResponse;
 
 import com.pars.financial.entity.DiscountCode;
 import com.pars.financial.enums.DiscountType;
@@ -22,7 +23,11 @@ import com.pars.financial.utils.RandomStringGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -241,6 +246,35 @@ public class DiscountCodeService {
         var savedCodes = codeRepository.saveAll(ls);
         logger.info("Generated {} discount codes successfully for batch: {}", request.count, batch.getBatchNumber());
         return mapper.getFrom(savedCodes);
+    }
+
+    @Transactional(readOnly = true)
+    public PagedResponse<DiscountCodeDto> getAllDiscountCodes(int page, int size) {
+        logger.debug("Fetching discount codes with pagination - page: {}, size: {}", page, size);
+        
+        // Validate pagination parameters
+        if (page < 0) {
+            page = 0;
+        }
+        if (size <= 0) {
+            size = 10; // Default page size
+        }
+        if (size > 100) {
+            size = 100; // Maximum page size
+        }
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<DiscountCode> discountCodePage = codeRepository.findAll(pageable);
+        
+        List<DiscountCodeDto> discountCodes = mapper.getFrom(discountCodePage.getContent());
+        
+        return new PagedResponse<>(
+            discountCodes,
+            discountCodePage.getNumber(),
+            discountCodePage.getSize(),
+            discountCodePage.getTotalElements(),
+            discountCodePage.getTotalPages()
+        );
     }
 
     public DiscountCodeDto getDiscountCode(String code) {

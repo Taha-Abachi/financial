@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.pars.financial.dto.DiscountCodeTransactionDto;
 import com.pars.financial.dto.GenericResponse;
+import com.pars.financial.dto.PagedResponse;
 import com.pars.financial.entity.User;
 import com.pars.financial.service.DiscountCodeTransactionService;
 import com.pars.financial.utils.ApiUserUtil;
@@ -140,22 +141,28 @@ public class DiscountCodeTransactionController {
     }
 
     @GetMapping("/list")
-    public GenericResponse<List<DiscountCodeTransactionDto>> getTransactions(
+    public GenericResponse<PagedResponse<DiscountCodeTransactionDto>> getTransactions(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         logger.info("GET /api/v1/discountcode/transaction/list called with page: {}, size: {}", page, size);
-        GenericResponse<List<DiscountCodeTransactionDto>> response = new GenericResponse<>();
+        GenericResponse<PagedResponse<DiscountCodeTransactionDto>> response = new GenericResponse<>();
         User apiUser = ApiUserUtil.getApiUserOrSetError(response, logger);
         if (apiUser == null) {
             return response;
         }
-        var transactions = discountCodeTransactionService.getTransactions(page, size);
-        if(transactions == null || transactions.isEmpty()){
-            logger.warn("No discount code transactions found for page: {}, size: {}", page, size);
+        try {
+            PagedResponse<DiscountCodeTransactionDto> pagedTransactions = discountCodeTransactionService.getTransactions(page, size);
+            if (pagedTransactions.getContent() == null || pagedTransactions.getContent().isEmpty()) {
+                logger.warn("No discount code transactions found for page: {}, size: {}", page, size);
+                response.status = -1;
+                response.message = "No discount code transactions found";
+            }
+            response.data = pagedTransactions;
+        } catch (Exception e) {
+            logger.error("Error fetching discount code transactions with pagination: {}", e.getMessage());
             response.status = -1;
-            response.message = "No discount code transactions found";
+            response.message = "Error fetching discount code transactions: " + e.getMessage();
         }
-        response.data = transactions;
         return response;
     }
 }

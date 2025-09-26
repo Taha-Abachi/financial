@@ -13,6 +13,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.pars.financial.dto.DiscountCodeTransactionDto;
+import com.pars.financial.dto.PagedResponse;
 import com.pars.financial.entity.DiscountCodeTransaction;
 import com.pars.financial.entity.User;
 import com.pars.financial.enums.TransactionStatus;
@@ -314,12 +315,32 @@ public class DiscountCodeTransactionService {
         return responseDto;
     }
 
-    public List<DiscountCodeTransactionDto> getTransactions(int page, int size) {
+    public PagedResponse<DiscountCodeTransactionDto> getTransactions(int page, int size) {
         logger.info("Fetching discount code transactions with page: {}, size: {}", page, size);
+        
+        // Validate pagination parameters
+        if (page < 0) {
+            page = 0;
+        }
+        if (size <= 0) {
+            size = 10; // Default page size
+        }
+        if (size > 100) {
+            size = 100; // Maximum page size
+        }
+        
         Pageable pageable = PageRequest.of(page, size);
         Page<DiscountCodeTransaction> transactionPage = transactionRepository.findAll(pageable);
-        List<DiscountCodeTransaction> transactions = transactionPage.getContent();
+        List<DiscountCodeTransactionDto> transactions = mapper.getFrom(transactionPage.getContent());
+        
         logger.info("Found {} discount code transactions", transactions.size());
-        return mapper.getFrom(transactions);
+        
+        return new PagedResponse<>(
+            transactions,
+            transactionPage.getNumber(),
+            transactionPage.getSize(),
+            transactionPage.getTotalElements(),
+            transactionPage.getTotalPages()
+        );
     }
 }
