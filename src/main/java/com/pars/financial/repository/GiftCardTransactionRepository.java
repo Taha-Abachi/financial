@@ -4,10 +4,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.pars.financial.entity.Company;
 import com.pars.financial.entity.GiftCard;
 import com.pars.financial.entity.GiftCardTransaction;
 import com.pars.financial.enums.TransactionStatus;
@@ -23,12 +26,17 @@ public interface GiftCardTransactionRepository extends JpaRepository<GiftCardTra
     GiftCardTransaction findByTransactionTypeAndClientTransactionId(TransactionType transactionType, String clientTransactionId);
 
     List<GiftCardTransaction> findByGiftCardAndTransactionType(GiftCard giftCard, TransactionType transactionType);
+    Page<GiftCardTransaction> findByGiftCardAndTransactionType(GiftCard giftCard, TransactionType transactionType, Pageable pageable);
 
     List<GiftCardTransaction> findByGiftCard(GiftCard giftCard);
 
     GiftCardTransaction findTopByGiftCardOrderByTrxDateDesc(GiftCard giftCard);
 
     GiftCardTransaction findTopByTransactionIdOrderByTrxDateDesc(UUID transactionId);
+    
+    // Paginated method for company transaction history
+    @Query("SELECT t FROM GiftCardTransaction t WHERE t.giftCard.company = :company")
+    Page<GiftCardTransaction> findByGiftCardCompany(@Param("company") Company company, Pageable pageable);
     
     // New methods for data cleansing
     List<GiftCardTransaction> findByTransactionTypeAndStatus(TransactionType transactionType, TransactionStatus status);

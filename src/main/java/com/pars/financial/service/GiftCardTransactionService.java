@@ -10,9 +10,13 @@ import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.pars.financial.dto.GiftCardTransactionDto;
+import com.pars.financial.dto.PagedResponse;
 import com.pars.financial.dto.TransactionAggregationDto;
 import com.pars.financial.dto.TransactionAggregationResponseDto;
 import com.pars.financial.entity.GiftCard;
@@ -375,31 +379,69 @@ public class GiftCardTransactionService {
         return giftCardTransactionMapper.getFrom(transactionRepository.findByClientTransactionId(clientTransactionId));
     }
 
-    public List<GiftCardTransactionDto> getTransactionHistory(String serialNo) {
-        logger.debug("Fetching transaction history for gift card: {}", serialNo);
+    public PagedResponse<GiftCardTransactionDto> getTransactionHistory(String serialNo, int page, int size) {
+        logger.debug("Fetching transaction history for gift card: {} with pagination - page: {}, size: {}", serialNo, page, size);
+        
         var gc = giftCardRepository.findBySerialNo(serialNo);
         if(gc != null) {
-            return giftCardTransactionMapper.getFrom(transactionRepository.findByGiftCardAndTransactionType(gc, TransactionType.Debit));
+            // Validate pagination parameters
+            if (page < 0) {
+                page = 0;
+            }
+            if (size <= 0) {
+                size = 10; // Default page size
+            }
+            if (size > 100) {
+                size = 100; // Maximum page size
+            }
+            
+            Pageable pageable = PageRequest.of(page, size);
+            Page<GiftCardTransaction> transactionPage = transactionRepository.findByGiftCardAndTransactionType(gc, TransactionType.Debit, pageable);
+            
+            List<GiftCardTransactionDto> transactions = giftCardTransactionMapper.getFrom(transactionPage.getContent());
+            
+            return new PagedResponse<>(
+                transactions,
+                transactionPage.getNumber(),
+                transactionPage.getSize(),
+                transactionPage.getTotalElements(),
+                transactionPage.getTotalPages()
+            );
         }
         logger.warn("Gift card not found: {}", serialNo);
         throw new GiftCardNotFoundException("Gift Card Not Found with serial No: " + serialNo);
     }
 
     /**
-     * Get all gift cards for a specific company
+     * Get all gift cards for a specific company with pagination
      * @param companyId the company ID
-     * @return list of gift card transaction DTOs
+     * @param page the page number (0-based)
+     * @param size the page size
+     * @return paginated list of gift card transaction DTOs
      */
-    public List<GiftCardTransactionDto> getGiftCardsByCompany(Long companyId) {
-        logger.debug("Fetching gift cards for company: {}", companyId);
+    public PagedResponse<GiftCardTransactionDto> getGiftCardsByCompany(Long companyId, int page, int size) {
+        logger.debug("Fetching gift cards for company: {} with pagination - page: {}, size: {}", companyId, page, size);
         var company = companyRepository.findById(companyId);
         if (company.isEmpty()) {
             logger.warn("Company not found with ID: {}", companyId);
             throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND);
         }
         
-        var giftCards = giftCardRepository.findByCompany(company.get());
-        return giftCards.stream()
+        // Validate pagination parameters
+        if (page < 0) {
+            page = 0;
+        }
+        if (size <= 0) {
+            size = 10; // Default page size
+        }
+        if (size > 100) {
+            size = 100; // Maximum page size
+        }
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<GiftCard> giftCardPage = giftCardRepository.findByCompany(company.get(), pageable);
+        
+        List<GiftCardTransactionDto> transactions = giftCardPage.getContent().stream()
             .map(gc -> {
                 // Get the latest transaction for each gift card
                 var latestTransaction = transactionRepository.findTopByGiftCardOrderByTrxDateDesc(gc);
@@ -407,26 +449,54 @@ public class GiftCardTransactionService {
             })
             .filter(Objects::nonNull)
             .toList();
+        
+        return new PagedResponse<>(
+            transactions,
+            giftCardPage.getNumber(),
+            giftCardPage.getSize(),
+            giftCardPage.getTotalElements(),
+            giftCardPage.getTotalPages()
+        );
     }
 
     /**
-     * Get transaction history for all gift cards of a company
+     * Get transaction history for all gift cards of a company with pagination
      * @param companyId the company ID
-     * @return list of gift card transaction DTOs
+     * @param page the page number (0-based)
+     * @param size the page size
+     * @return paginated list of gift card transaction DTOs
      */
-    public List<GiftCardTransactionDto> getCompanyTransactionHistory(Long companyId) {
-        logger.debug("Fetching transaction history for company: {}", companyId);
+    public PagedResponse<GiftCardTransactionDto> getCompanyTransactionHistory(Long companyId, int page, int size) {
+        logger.debug("Fetching transaction history for company: {} with pagination - page: {}, size: {}", companyId, page, size);
         var company = companyRepository.findById(companyId);
         if (company.isEmpty()) {
             logger.warn("Company not found with ID: {}", companyId);
             throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND);
         }
         
-        var giftCards = giftCardRepository.findByCompany(company.get());
-        return giftCards.stream()
-            .flatMap(gc -> transactionRepository.findByGiftCard(gc).stream())
-            .map(giftCardTransactionMapper::getFrom)
-            .toList();
+        // Validate pagination parameters
+        if (page < 0) {
+            page = 0;
+        }
+        if (size <= 0) {
+            size = 10; // Default page size
+        }
+        if (size > 100) {
+            size = 100; // Maximum page size
+        }
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<GiftCardTransaction> transactionPage = transactionRepository.findByGiftCardCompany(company.get(), pageable);
+        
+        List<GiftCardTransactionDto> transactions = giftCardTransactionMapper.getFrom(transactionPage.getContent());
+        
+        return new PagedResponse<>(
+            transactions,
+            transactionPage.getNumber(),
+            transactionPage.getSize(),
+            transactionPage.getTotalElements(),
+            transactionPage.getTotalPages()
+        );
     }
 
     /**

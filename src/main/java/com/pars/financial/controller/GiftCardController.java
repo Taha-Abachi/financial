@@ -4,6 +4,7 @@ import com.pars.financial.dto.GenericResponse;
 import com.pars.financial.dto.GiftCardDto;
 import com.pars.financial.dto.GiftCardIssueRequest;
 import com.pars.financial.dto.GiftCardReportDto;
+import com.pars.financial.dto.PagedResponse;
 import com.pars.financial.dto.StoreLimitationRequest;
 import com.pars.financial.service.GiftCardService;
 import com.pars.financial.utils.ApiUserUtil;
@@ -29,16 +30,24 @@ public class GiftCardController {
     }
 
     @GetMapping("/all")
-    public GenericResponse<List<GiftCardDto>> getGiftCards(){
-        logger.info("GET /api/v1/giftcard/all called");
-        GenericResponse<List<GiftCardDto>> genericResponseDto = new GenericResponse<>();
-        var ls = giftCardService.getGiftCards();
-        if((ls == null)|| (ls.isEmpty())){
-            logger.warn("Gift card list not found");
+    public GenericResponse<PagedResponse<GiftCardDto>> getGiftCards(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        logger.info("GET /api/v1/giftcard/all called with pagination - page: {}, size: {}", page, size);
+        GenericResponse<PagedResponse<GiftCardDto>> genericResponseDto = new GenericResponse<>();
+        try {
+            PagedResponse<GiftCardDto> pagedGiftCards = giftCardService.getGiftCards(page, size);
+            if (pagedGiftCards.getContent() == null || pagedGiftCards.getContent().isEmpty()) {
+                logger.warn("Gift card list not found");
+                genericResponseDto.status = -1;
+                genericResponseDto.message = "Gift card list not found";
+            }
+            genericResponseDto.data = pagedGiftCards;
+        } catch (Exception e) {
+            logger.error("Error fetching gift cards with pagination: {}", e.getMessage());
             genericResponseDto.status = -1;
-            genericResponseDto.message = "Gift card list not found";
+            genericResponseDto.message = "Error fetching gift cards: " + e.getMessage();
         }
-        genericResponseDto.data = ls;
         return genericResponseDto;
     }
 
@@ -121,12 +130,15 @@ public class GiftCardController {
     }
 
     @GetMapping("/company/{companyId}")
-    public GenericResponse<List<GiftCardDto>> getGiftCardsByCompany(@PathVariable Long companyId) {
-        logger.info("GET /api/v1/giftcard/company/{} called", companyId);
-        var response = new GenericResponse<List<GiftCardDto>>();
+    public GenericResponse<PagedResponse<GiftCardDto>> getGiftCardsByCompany(
+            @PathVariable Long companyId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        logger.info("GET /api/v1/giftcard/company/{} called with pagination - page: {}, size: {}", companyId, page, size);
+        var response = new GenericResponse<PagedResponse<GiftCardDto>>();
         try {
-            var giftCards = giftCardService.getGiftCardsByCompany(companyId);
-            response.data = giftCards;
+            PagedResponse<GiftCardDto> pagedGiftCards = giftCardService.getGiftCardsByCompany(companyId, page, size);
+            response.data = pagedGiftCards;
         } catch (Exception e) {
             logger.error("Error fetching gift cards for company {}: {}", companyId, e.getMessage());
             response.status = -1;

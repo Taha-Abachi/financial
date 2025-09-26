@@ -3,6 +3,7 @@ package com.pars.financial.service;
 import com.pars.financial.dto.GiftCardDto;
 import com.pars.financial.dto.GiftCardIssueRequest;
 import com.pars.financial.dto.GiftCardReportDto;
+import com.pars.financial.dto.PagedResponse;
 import com.pars.financial.entity.GiftCard;
 import com.pars.financial.entity.Store;
 import com.pars.financial.exception.GiftCardNotFoundException;
@@ -19,6 +20,9 @@ import com.pars.financial.utils.RandomStringGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -122,9 +126,33 @@ public class GiftCardService {
         return gc;
     }
 
-    public List<GiftCardDto> getGiftCards() {
-        logger.debug("Fetching all gift cards");
-        return giftCardMapper.getFrom(giftCardRepository.findAll());
+    @Transactional(readOnly = true)
+    public PagedResponse<GiftCardDto> getGiftCards(int page, int size) {
+        logger.debug("Fetching gift cards with pagination - page: {}, size: {}", page, size);
+        
+        // Validate pagination parameters
+        if (page < 0) {
+            page = 0;
+        }
+        if (size <= 0) {
+            size = 10; // Default page size
+        }
+        if (size > 100) {
+            size = 100; // Maximum page size
+        }
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<GiftCard> giftCardPage = giftCardRepository.findAll(pageable);
+        
+        List<GiftCardDto> giftCards = giftCardMapper.getFrom(giftCardPage.getContent());
+        
+        return new PagedResponse<>(
+            giftCards,
+            giftCardPage.getNumber(),
+            giftCardPage.getSize(),
+            giftCardPage.getTotalElements(),
+            giftCardPage.getTotalPages()
+        );
     }
 
     public GiftCardDto getGiftCard(String serialNo) {
@@ -297,16 +325,39 @@ public class GiftCardService {
      * @param companyId the company ID
      * @return list of gift card DTOs
      */
-    public List<GiftCardDto> getGiftCardsByCompany(Long companyId) {
-        logger.info("Fetching gift cards for company: {}", companyId);
+    @Transactional(readOnly = true)
+    public PagedResponse<GiftCardDto> getGiftCardsByCompany(Long companyId, int page, int size) {
+        logger.info("Fetching gift cards for company: {} with pagination - page: {}, size: {}", companyId, page, size);
+        
         var company = companyRepository.findById(companyId);
         if (company.isEmpty()) {
             logger.warn("Company not found with ID: {}", companyId);
             throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND);
         }
         
-        var giftCards = giftCardRepository.findByCompany(company.get());
-        return giftCardMapper.getFrom(giftCards);
+        // Validate pagination parameters
+        if (page < 0) {
+            page = 0;
+        }
+        if (size <= 0) {
+            size = 10; // Default page size
+        }
+        if (size > 100) {
+            size = 100; // Maximum page size
+        }
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<GiftCard> giftCardPage = giftCardRepository.findByCompany(company.get(), pageable);
+        
+        List<GiftCardDto> giftCards = giftCardMapper.getFrom(giftCardPage.getContent());
+        
+        return new PagedResponse<>(
+            giftCards,
+            giftCardPage.getNumber(),
+            giftCardPage.getSize(),
+            giftCardPage.getTotalElements(),
+            giftCardPage.getTotalPages()
+        );
     }
 
     /**

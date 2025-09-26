@@ -3,6 +3,8 @@ package com.pars.financial.repository;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,6 +16,7 @@ public interface GiftCardRepository extends JpaRepository<GiftCard, Long> {
     GiftCard findBySerialNo(String serialNo);
     GiftCard findByIdentifier(Long identifier);
     List<GiftCard> findByCompany(Company company);
+    Page<GiftCard> findByCompany(Company company, Pageable pageable);
     List<GiftCard> findByBatchId(Long batchId);
     
     // Statistics queries

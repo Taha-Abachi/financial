@@ -2,6 +2,7 @@ package com.pars.financial.controller;
 
 import com.pars.financial.dto.GenericResponse;
 import com.pars.financial.dto.GiftCardTransactionDto;
+import com.pars.financial.dto.PagedResponse;
 import com.pars.financial.dto.TransactionAggregationResponseDto;
 import com.pars.financial.service.GiftCardTransactionService;
 import com.pars.financial.utils.ApiUserUtil;
@@ -147,27 +148,33 @@ public class GiftCardTransactionController {
     }
 
     @GetMapping("/list/{serialNo}")
-    public GenericResponse<List<GiftCardTransactionDto>> getTransactionHistory(@PathVariable String serialNo) {
-        logger.info("GET /api/v1/giftcard/transaction/list/{} called", serialNo);
-        var res = new GenericResponse<List<GiftCardTransactionDto>>();
-        var trx = transactionService.getTransactionHistory(serialNo);
-        if (trx == null) {
+    public GenericResponse<PagedResponse<GiftCardTransactionDto>> getTransactionHistory(
+            @PathVariable String serialNo,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        logger.info("GET /api/v1/giftcard/transaction/list/{} called with pagination - page: {}, size: {}", serialNo, page, size);
+        var res = new GenericResponse<PagedResponse<GiftCardTransactionDto>>();
+        try {
+            PagedResponse<GiftCardTransactionDto> pagedTransactions = transactionService.getTransactionHistory(serialNo, page, size);
+            res.data = pagedTransactions;
+        } catch (Exception e) {
             logger.warn("Failed to find gift card for serialNo: {}", serialNo);
-            res.message = "Failed to find gift card.";
+            res.message = "Failed to find gift card: " + e.getMessage();
             res.status = -1;
         }
-        assert trx != null;
-        res.data = trx;
         return res;
     }
 
     @GetMapping("/company/{companyId}")
-    public GenericResponse<List<GiftCardTransactionDto>> getGiftCardsByCompany(@PathVariable Long companyId) {
-        logger.info("GET /api/v1/giftcard/transaction/company/{} called", companyId);
-        var res = new GenericResponse<List<GiftCardTransactionDto>>();
+    public GenericResponse<PagedResponse<GiftCardTransactionDto>> getGiftCardsByCompany(
+            @PathVariable Long companyId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        logger.info("GET /api/v1/giftcard/transaction/company/{} called with pagination - page: {}, size: {}", companyId, page, size);
+        var res = new GenericResponse<PagedResponse<GiftCardTransactionDto>>();
         try {
-            var transactions = transactionService.getGiftCardsByCompany(companyId);
-            res.data = transactions;
+            PagedResponse<GiftCardTransactionDto> pagedTransactions = transactionService.getGiftCardsByCompany(companyId, page, size);
+            res.data = pagedTransactions;
         } catch (Exception e) {
             logger.error("Error fetching gift cards for company {}: {}", companyId, e.getMessage());
             res.message = e.getMessage();
@@ -177,12 +184,15 @@ public class GiftCardTransactionController {
     }
 
     @GetMapping("/company/{companyId}/history")
-    public GenericResponse<List<GiftCardTransactionDto>> getCompanyTransactionHistory(@PathVariable Long companyId) {
-        logger.info("GET /api/v1/giftcard/transaction/company/{}/history called", companyId);
-        var res = new GenericResponse<List<GiftCardTransactionDto>>();
+    public GenericResponse<PagedResponse<GiftCardTransactionDto>> getCompanyTransactionHistory(
+            @PathVariable Long companyId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        logger.info("GET /api/v1/giftcard/transaction/company/{}/history called with pagination - page: {}, size: {}", companyId, page, size);
+        var res = new GenericResponse<PagedResponse<GiftCardTransactionDto>>();
         try {
-            var transactions = transactionService.getCompanyTransactionHistory(companyId);
-            res.data = transactions;
+            PagedResponse<GiftCardTransactionDto> pagedTransactions = transactionService.getCompanyTransactionHistory(companyId, page, size);
+            res.data = pagedTransactions;
         } catch (Exception e) {
             logger.error("Error fetching transaction history for company {}: {}", companyId, e.getMessage());
             res.message = e.getMessage();
