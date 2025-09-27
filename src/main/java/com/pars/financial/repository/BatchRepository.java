@@ -1,6 +1,8 @@
 package com.pars.financial.repository;
 
 import com.pars.financial.entity.Batch;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -17,4 +19,11 @@ public interface BatchRepository extends JpaRepository<Batch, Long> {
     List<Batch> findByRequestUserId(Long requestUserId);
     List<Batch> findByCompanyIdAndBatchType(Long companyId, Batch.BatchType batchType);
     List<Batch> findByCompanyIdAndStatus(Long companyId, Batch.BatchStatus status);
+    
+    // Pagination methods
+    Page<Batch> findAll(Pageable pageable);
+    Page<Batch> findByCompanyId(Long companyId, Pageable pageable);
+    Page<Batch> findByRequestUserId(Long requestUserId, Pageable pageable);
+    Page<Batch> findByBatchType(Batch.BatchType batchType, Pageable pageable);
+    Page<Batch> findByStatus(Batch.BatchStatus status, Pageable pageable);
 } 

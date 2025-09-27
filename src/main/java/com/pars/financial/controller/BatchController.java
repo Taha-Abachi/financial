@@ -4,6 +4,7 @@ import com.pars.financial.dto.BatchCreateRequest;
 import com.pars.financial.dto.BatchDto;
 import com.pars.financial.dto.BatchReportDto;
 import com.pars.financial.dto.GenericResponse;
+import com.pars.financial.dto.PagedResponse;
 import com.pars.financial.entity.Batch;
 import com.pars.financial.service.BatchService;
 import com.pars.financial.service.BatchReportService;
@@ -30,33 +31,55 @@ public class BatchController {
     }
 
     @GetMapping("/list")
-    public com.pars.financial.dto.GenericResponse<List<BatchDto>> getAllBatches() {
-        logger.info("GET /api/v1/batches/list called");
-        var response = new com.pars.financial.dto.GenericResponse<List<BatchDto>>();
+    public ResponseEntity<GenericResponse<PagedResponse<BatchDto>>> getAllBatches(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) Long companyId) {
+        logger.info("GET /api/v1/batches/list called with pagination - page: {}, size: {}, companyId: {}", page, size, companyId);
+        var response = new GenericResponse<PagedResponse<BatchDto>>();
         try {
-            var batches = batchService.getAllBatches();
-            response.data = batches;
+            PagedResponse<BatchDto> pagedBatches = batchService.getBatchesForCurrentUser(page, size, companyId);
+            
+            if (pagedBatches.getContent() == null || pagedBatches.getContent().isEmpty()) {
+                response.status = -1;
+                if (companyId != null) {
+                    response.message = "No batches found for company ID: " + companyId;
+                } else {
+                    response.message = "No batches found for your access level";
+                }
+            } else {
+                response.message = "Batches retrieved successfully";
+            }
+            response.data = pagedBatches;
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
-            logger.error("Error fetching batches: {}", e.getMessage());
+            logger.error("Error fetching batches with pagination: {}", e.getMessage());
             response.status = -1;
-            response.message = e.getMessage();
+            response.message = "Error fetching batches: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-        return response;
     }
 
     @GetMapping("/{id}")
-    public com.pars.financial.dto.GenericResponse<BatchDto> getBatchById(@PathVariable Long id) {
+    public ResponseEntity<GenericResponse<BatchDto>> getBatchById(@PathVariable Long id) {
         logger.info("GET /api/v1/batches/{} called", id);
-        var response = new com.pars.financial.dto.GenericResponse<BatchDto>();
+        var response = new GenericResponse<BatchDto>();
         try {
-            var batch = batchService.getBatchById(id);
+            BatchDto batch = batchService.getBatchForCurrentUser(id);
+            if (batch == null) {
+                response.status = -1;
+                response.message = "Batch not found or access denied";
+                return ResponseEntity.notFound().build();
+            }
             response.data = batch;
+            response.message = "Batch retrieved successfully";
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             logger.error("Error fetching batch with id {}: {}", id, e.getMessage());
             response.status = -1;
-            response.message = e.getMessage();
+            response.message = "Error fetching batch: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-        return response;
     }
 
     @GetMapping("/batch-number/{batchNumber}")
@@ -75,18 +98,25 @@ public class BatchController {
     }
 
     @PostMapping("/create")
-    public com.pars.financial.dto.GenericResponse<BatchDto> createBatch(@RequestBody BatchCreateRequest request) {
+    public ResponseEntity<GenericResponse<BatchDto>> createBatch(@RequestBody BatchCreateRequest request) {
         logger.info("POST /api/v1/batches/create called with description: {}", request.getDescription());
-        var response = new com.pars.financial.dto.GenericResponse<BatchDto>();
+        var response = new GenericResponse<BatchDto>();
         try {
             var createdBatch = batchService.createBatch(request);
             response.data = createdBatch;
+            response.message = "Batch created successfully";
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            logger.error("Validation error creating batch: {}", e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.badRequest().body(response);
         } catch (Exception e) {
             logger.error("Error creating batch: {}", e.getMessage());
             response.status = -1;
             response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-        return response;
     }
 
     @PostMapping("/{id}/status")

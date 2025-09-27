@@ -22,6 +22,11 @@ import com.pars.financial.repository.BatchRepository;
 import com.pars.financial.repository.CompanyRepository;
 import com.pars.financial.repository.UserRepository;
 import com.pars.financial.utils.RandomStringGenerator;
+import com.pars.financial.entity.User;
+import com.pars.financial.dto.PagedResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @Service
 public class BatchService {
@@ -33,14 +38,16 @@ public class BatchService {
     private final DiscountCodeService discountCodeService;
     private final GiftCardService giftCardService;
     private final ObjectMapper objectMapper;
+    private final SecurityContextService securityContextService;
 
-    public BatchService(BatchRepository batchRepository, CompanyRepository companyRepository, UserRepository userRepository, DiscountCodeService discountCodeService, GiftCardService giftCardService, ObjectMapper objectMapper) {
+    public BatchService(BatchRepository batchRepository, CompanyRepository companyRepository, UserRepository userRepository, DiscountCodeService discountCodeService, GiftCardService giftCardService, ObjectMapper objectMapper, SecurityContextService securityContextService) {
         this.batchRepository = batchRepository;
         this.companyRepository = companyRepository;
         this.userRepository = userRepository;
         this.discountCodeService = discountCodeService;
         this.giftCardService = giftCardService;
         this.objectMapper = objectMapper;
+        this.securityContextService = securityContextService;
     }
 
     public List<BatchDto> getAllBatches() {
@@ -326,5 +333,236 @@ public class BatchService {
         return batchRepository.findByRequestUserId(userId).stream()
                 .map(BatchDto::fromEntity)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Get batches based on current user's role and permissions
+     * - SUPERADMIN/ADMIN: All batches
+     * - COMPANY_USER: Batches of their company
+     * - STORE_USER: Batches of their store's company
+     * - API_USER: All batches (if system-wide access needed)
+     */
+    @Transactional(readOnly = true)
+    public PagedResponse<BatchDto> getBatchesForCurrentUser(int page, int size) {
+        User currentUser = securityContextService.getCurrentUser();
+        if (currentUser == null) {
+            logger.warn("No authenticated user found");
+            return new PagedResponse<>(List.of(), 0, size, 0, 0);
+        }
+        
+        return getBatchesForUser(currentUser, page, size);
+    }
+
+    /**
+     * Get batches with optional company filter based on current user's permissions
+     */
+    @Transactional(readOnly = true)
+    public PagedResponse<BatchDto> getBatchesForCurrentUser(int page, int size, Long companyId) {
+        User currentUser = securityContextService.getCurrentUser();
+        if (currentUser == null) {
+            logger.warn("No authenticated user found");
+            return new PagedResponse<>(List.of(), 0, size, 0, 0);
+        }
+
+        // If companyId is provided, validate user has permission to filter by it
+        if (companyId != null) {
+            if (!canUserFilterByCompany(currentUser, companyId)) {
+                logger.warn("User {} attempted to filter by company {} without permission", 
+                           currentUser.getUsername(), companyId);
+                return new PagedResponse<>(List.of(), 0, size, 0, 0);
+            }
+            return getBatchesByCompany(companyId, page, size);
+        } else {
+            return getBatchesForUser(currentUser, page, size);
+        }
+    }
+
+    /**
+     * Get a specific batch with access control
+     */
+    @Transactional(readOnly = true)
+    public BatchDto getBatchForCurrentUser(Long batchId) {
+        User currentUser = securityContextService.getCurrentUser();
+        if (currentUser == null) {
+            logger.warn("No authenticated user found");
+            return null;
+        }
+
+        BatchDto batch = getBatchById(batchId);
+        if (batch == null) {
+            return null;
+        }
+
+        // Check if user has access to this specific batch
+        if (!hasAccessToBatch(currentUser, batch)) {
+            logger.warn("User {} attempted to access batch {} without permission", 
+                       currentUser.getUsername(), batchId);
+            return null;
+        }
+
+        return batch;
+    }
+
+    /**
+     * Get batches for a specific user with role-based filtering
+     */
+    @Transactional(readOnly = true)
+    public PagedResponse<BatchDto> getBatchesForUser(User user, int page, int size) {
+        logger.debug("Fetching batches for user: {} with role: {} - page: {}, size: {}", 
+                    user.getUsername(), user.getRole().getName(), page, size);
+        
+        // Validate pagination parameters
+        if (page < 0) {
+            page = 0;
+        }
+        if (size <= 0) {
+            size = 10; // Default page size
+        }
+        if (size > 100) {
+            size = 100; // Maximum page size
+        }
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Batch> batchPage;
+        
+        // Role-based data filtering
+        switch (user.getRole().getName()) {
+            case "SUPERADMIN":
+            case "ADMIN":
+            case "API_USER":
+                // Return all batches
+                logger.debug("User {} has admin access - returning all batches", user.getUsername());
+                batchPage = batchRepository.findAll(pageable);
+                break;
+                
+            case "COMPANY_USER":
+                // Return batches of user's company
+                if (user.getCompany() == null) {
+                    logger.warn("COMPANY_USER {} has no company assigned", user.getUsername());
+                    batchPage = Page.empty(pageable);
+                } else {
+                    logger.debug("User {} has company access - returning batches for company: {}", 
+                               user.getUsername(), user.getCompany().getId());
+                    batchPage = batchRepository.findByCompanyId(user.getCompany().getId(), pageable);
+                }
+                break;
+                
+            case "STORE_USER":
+                // Return batches of user's store's company
+                if (user.getStore() == null || user.getStore().getCompany() == null) {
+                    logger.warn("STORE_USER {} has no store or company assigned", user.getUsername());
+                    batchPage = Page.empty(pageable);
+                } else {
+                    logger.debug("User {} has store access - returning batches for company: {}", 
+                               user.getUsername(), user.getStore().getCompany().getId());
+                    batchPage = batchRepository.findByCompanyId(user.getStore().getCompany().getId(), pageable);
+                }
+                break;
+                
+            default:
+                logger.warn("Unknown role {} for user {} - returning empty result", 
+                           user.getRole().getName(), user.getUsername());
+                batchPage = Page.empty(pageable);
+                break;
+        }
+        
+        List<BatchDto> batches = batchPage.getContent().stream()
+                .map(BatchDto::fromEntity)
+                .collect(Collectors.toList());
+        
+        return new PagedResponse<>(
+            batches,
+            batchPage.getNumber(),
+            batchPage.getSize(),
+            batchPage.getTotalElements(),
+            batchPage.getTotalPages()
+        );
+    }
+
+    /**
+     * Get batches by company with pagination
+     */
+    @Transactional(readOnly = true)
+    public PagedResponse<BatchDto> getBatchesByCompany(Long companyId, int page, int size) {
+        logger.debug("Fetching batches by company: {} - page: {}, size: {}", companyId, page, size);
+        
+        // Validate pagination parameters
+        if (page < 0) {
+            page = 0;
+        }
+        if (size <= 0) {
+            size = 10; // Default page size
+        }
+        if (size > 100) {
+            size = 100; // Maximum page size
+        }
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Batch> batchPage = batchRepository.findByCompanyId(companyId, pageable);
+        
+        List<BatchDto> batches = batchPage.getContent().stream()
+                .map(BatchDto::fromEntity)
+                .collect(Collectors.toList());
+        
+        return new PagedResponse<>(
+            batches,
+            batchPage.getNumber(),
+            batchPage.getSize(),
+            batchPage.getTotalElements(),
+            batchPage.getTotalPages()
+        );
+    }
+
+    /**
+     * Check if user can filter by a specific company
+     */
+    private boolean canUserFilterByCompany(User user, Long companyId) {
+        String roleName = user.getRole().getName();
+        
+        switch (roleName) {
+            case "SUPERADMIN":
+            case "ADMIN":
+            case "API_USER":
+                return true;
+                
+            case "COMPANY_USER":
+                return user.getCompany() != null && user.getCompany().getId().equals(companyId);
+                
+            case "STORE_USER":
+                return user.getStore() != null && 
+                       user.getStore().getCompany() != null && 
+                       user.getStore().getCompany().getId().equals(companyId);
+                       
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Check if user has access to a specific batch
+     */
+    private boolean hasAccessToBatch(User user, BatchDto batch) {
+        String roleName = user.getRole().getName();
+        
+        switch (roleName) {
+            case "SUPERADMIN":
+            case "ADMIN":
+            case "API_USER":
+                return true;
+                
+            case "COMPANY_USER":
+                return user.getCompany() != null && 
+                       batch.getCompany() != null && 
+                       user.getCompany().getId().equals(batch.getCompany().getId());
+                       
+            case "STORE_USER":
+                return user.getStore() != null && 
+                       user.getStore().getCompany() != null &&
+                       batch.getCompany() != null &&
+                       user.getStore().getCompany().getId().equals(batch.getCompany().getId());
+                       
+            default:
+                return false;
+        }
     }
 } 
