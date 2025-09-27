@@ -22,10 +22,17 @@ public interface StoreRepository extends JpaRepository<Store, Long> {
     List<Store> findByCompanyId(Long companyId);
     
     /**
+     * Find all active stores belonging to a specific company
+     * @param companyId the company ID
+     * @return list of active stores for the company
+     */
+    List<Store> findByCompanyIdAndIsActiveTrue(Long companyId);
+    
+    /**
      * Find all stores with company, address, and phone number eagerly fetched
      * @return list of all stores with relationships loaded
      */
-    @Query("SELECT s FROM Store s LEFT JOIN FETCH s.company LEFT JOIN FETCH s.address LEFT JOIN FETCH s.phone_number")
+    @Query("SELECT s FROM Store s LEFT JOIN FETCH s.company LEFT JOIN FETCH s.address LEFT JOIN FETCH s.phone_number WHERE s.isActive = true")
     List<Store> findAllWithRelationships();
     
     /**
@@ -33,7 +40,7 @@ public interface StoreRepository extends JpaRepository<Store, Long> {
      * @param pageable pagination information
      * @return paginated list of all stores with relationships loaded
      */
-    @Query("SELECT s FROM Store s LEFT JOIN FETCH s.company LEFT JOIN FETCH s.address LEFT JOIN FETCH s.phone_number")
+    @Query("SELECT s FROM Store s LEFT JOIN FETCH s.company LEFT JOIN FETCH s.address LEFT JOIN FETCH s.phone_number WHERE s.isActive = true")
     Page<Store> findAllWithRelationships(Pageable pageable);
     
     /**
@@ -41,7 +48,7 @@ public interface StoreRepository extends JpaRepository<Store, Long> {
      * @param id the store ID
      * @return store with relationships loaded
      */
-    @Query("SELECT s FROM Store s LEFT JOIN FETCH s.company LEFT JOIN FETCH s.address LEFT JOIN FETCH s.phone_number WHERE s.id = :id")
+    @Query("SELECT s FROM Store s LEFT JOIN FETCH s.company LEFT JOIN FETCH s.address LEFT JOIN FETCH s.phone_number WHERE s.id = :id AND s.isActive = true")
     Store findByIdWithRelationships(@Param("id") Long id);
     
     /**
@@ -50,6 +57,6 @@ public interface StoreRepository extends JpaRepository<Store, Long> {
      * @param pageable pagination information
      * @return paginated list of stores for the company with relationships loaded
      */
-    @Query("SELECT s FROM Store s LEFT JOIN FETCH s.company LEFT JOIN FETCH s.address LEFT JOIN FETCH s.phone_number WHERE s.company.id = :companyId")
+    @Query("SELECT s FROM Store s LEFT JOIN FETCH s.company LEFT JOIN FETCH s.address LEFT JOIN FETCH s.phone_number WHERE s.company.id = :companyId AND s.isActive = true")
     Page<Store> findByCompanyIdWithRelationships(@Param("companyId") Long companyId, Pageable pageable);
 }

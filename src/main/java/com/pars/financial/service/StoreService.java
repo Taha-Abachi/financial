@@ -13,11 +13,19 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.pars.financial.dto.PagedResponse;
 import com.pars.financial.dto.StoreDto;
+import com.pars.financial.dto.StoreCreateRequest;
+import com.pars.financial.dto.StoreUpdateRequest;
 import com.pars.financial.entity.Store;
 import com.pars.financial.entity.User;
-import com.pars.financial.enums.UserRole;
+import com.pars.financial.entity.Company;
+import com.pars.financial.entity.Address;
+import com.pars.financial.entity.PhoneNumber;
+import com.pars.financial.enums.PhoneNumberType;
 import com.pars.financial.mapper.StoreMapper;
 import com.pars.financial.repository.StoreRepository;
+import com.pars.financial.repository.CompanyRepository;
+import com.pars.financial.repository.AddressRepository;
+import com.pars.financial.repository.PhoneNumberRepository;
 
 @Service
 public class StoreService {
@@ -27,11 +35,18 @@ public class StoreService {
     private final StoreRepository storeRepository;
     private final StoreMapper storeMapper;
     private final SecurityContextService securityContextService;
+    private final CompanyRepository companyRepository;
+    private final AddressRepository addressRepository;
+    private final PhoneNumberRepository phoneNumberRepository;
 
-    public StoreService(StoreRepository storeRepository, StoreMapper storeMapper, SecurityContextService securityContextService) {
+    public StoreService(StoreRepository storeRepository, StoreMapper storeMapper, SecurityContextService securityContextService, 
+                       CompanyRepository companyRepository, AddressRepository addressRepository, PhoneNumberRepository phoneNumberRepository) {
         this.storeRepository = storeRepository;
         this.storeMapper = storeMapper;
         this.securityContextService = securityContextService;
+        this.companyRepository = companyRepository;
+        this.addressRepository = addressRepository;
+        this.phoneNumberRepository = phoneNumberRepository;
     }
 
     @Cacheable(value = "stores", key = "#id")
@@ -302,4 +317,124 @@ public class StoreService {
                 return false;
         }
     }
+
+    // ==================== CRUD OPERATIONS ====================
+
+    @Transactional
+    public StoreDto createStore(StoreCreateRequest request) {
+        logger.info("Creating new store: {} for company: {}", request.getStoreName(), request.getCompanyId());
+        
+        // Validate company exists
+        Company company = companyRepository.findById(request.getCompanyId())
+            .orElseThrow(() -> new IllegalArgumentException("Company not found with ID: " + request.getCompanyId()));
+        
+        Store store = new Store();
+        store.setStore_name(request.getStoreName());
+        store.setCompany(company);
+        store.setOwnershipType(request.getOwnershipType());
+        store.setLocationType(request.getLocationType());
+        store.setIsActive(true);
+        
+        // Create and persist phone number if provided
+        if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
+            PhoneNumber phoneNumber = new PhoneNumber();
+            phoneNumber.setNumber(request.getPhoneNumber());
+            phoneNumber.setType(PhoneNumberType.Cell); // Default type
+            PhoneNumber savedPhoneNumber = phoneNumberRepository.save(phoneNumber);
+            store.setPhone_number(savedPhoneNumber);
+        }
+        
+        // Create and persist address if provided
+        if (request.getAddress() != null && !request.getAddress().trim().isEmpty()) {
+            Address address = new Address();
+            address.setText(request.getAddress());
+            address.setCity("Unknown"); // Default values
+            address.setProvince("Unknown");
+            address.setPostalCode("00000");
+            Address savedAddress = addressRepository.save(address);
+            store.setAddress(savedAddress);
+        }
+        
+        Store savedStore = storeRepository.save(store);
+        logger.info("Store created successfully with ID: {}", savedStore.getId());
+        
+        return storeMapper.getFrom(savedStore);
+    }
+
+    @Transactional
+    public StoreDto updateStore(Long storeId, StoreUpdateRequest request) {
+        logger.info("Updating store with ID: {}", storeId);
+        
+        Store store = storeRepository.findById(storeId)
+            .orElseThrow(() -> new IllegalArgumentException("Store not found with ID: " + storeId));
+        
+        // Update basic fields if provided
+        if (request.getStoreName() != null && !request.getStoreName().trim().isEmpty()) {
+            store.setStore_name(request.getStoreName());
+        }
+        
+        if (request.getOwnershipType() != null) {
+            store.setOwnershipType(request.getOwnershipType());
+        }
+        
+        if (request.getLocationType() != null) {
+            store.setLocationType(request.getLocationType());
+        }
+        
+        if (request.getIsActive() != null) {
+            store.setIsActive(request.getIsActive());
+        }
+        
+        // Update company if provided
+        if (request.getCompanyId() != null) {
+            Company company = companyRepository.findById(request.getCompanyId())
+                .orElseThrow(() -> new IllegalArgumentException("Company not found with ID: " + request.getCompanyId()));
+            store.setCompany(company);
+        }
+        
+        // Update phone number if provided
+        if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
+            PhoneNumber phoneNumber = store.getPhone_number();
+            if (phoneNumber == null) {
+                phoneNumber = new PhoneNumber();
+                phoneNumber.setType(PhoneNumberType.Cell); // Default type
+            }
+            phoneNumber.setNumber(request.getPhoneNumber());
+            PhoneNumber savedPhoneNumber = phoneNumberRepository.save(phoneNumber);
+            store.setPhone_number(savedPhoneNumber);
+        }
+        
+        // Update address if provided
+        if (request.getAddress() != null && !request.getAddress().trim().isEmpty()) {
+            Address address = store.getAddress();
+            if (address == null) {
+                address = new Address();
+                address.setCity("Unknown"); // Default values
+                address.setProvince("Unknown");
+                address.setPostalCode("00000");
+            }
+            address.setText(request.getAddress());
+            Address savedAddress = addressRepository.save(address);
+            store.setAddress(savedAddress);
+        }
+        
+        Store savedStore = storeRepository.save(store);
+        logger.info("Store updated successfully with ID: {}", savedStore.getId());
+        
+        return storeMapper.getFrom(savedStore);
+    }
+
+    @Transactional
+    public void deleteStore(Long storeId) {
+        logger.info("Logically deleting store with ID: {}", storeId);
+        
+        Store store = storeRepository.findById(storeId)
+            .orElseThrow(() -> new IllegalArgumentException("Store not found with ID: " + storeId));
+        
+        store.setIsActive(false);
+        storeRepository.save(store);
+        
+        logger.info("Store logically deleted successfully with ID: {}", storeId);
+    }
+
 }

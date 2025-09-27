@@ -43,6 +43,8 @@ public class Store {
     @Enumerated(EnumType.STRING)
     private LocationType locationType;
 
+    private Boolean isActive = true;
+
     public PhoneNumber getPhone_number() {
         return phone_number;
     }
@@ -99,5 +101,13 @@ public class Store {
 
     public void setLocationType(LocationType locationType) {
         this.locationType = locationType;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
     }
 }

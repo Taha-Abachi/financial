@@ -3,6 +3,8 @@ package com.pars.financial.controller;
 import com.pars.financial.dto.GenericResponse;
 import com.pars.financial.dto.PagedResponse;
 import com.pars.financial.dto.StoreDto;
+import com.pars.financial.dto.StoreCreateRequest;
+import com.pars.financial.dto.StoreUpdateRequest;
 import com.pars.financial.dto.StoreTransactionSummary;
 import com.pars.financial.entity.DiscountCodeTransaction;
 import com.pars.financial.entity.GiftCardTransaction;
@@ -10,15 +12,16 @@ import com.pars.financial.entity.Store;
 import com.pars.financial.entity.User;
 import com.pars.financial.service.StoreService;
 import com.pars.financial.service.StoreUserService;
-import com.pars.financial.service.UserService;
 import com.pars.financial.service.SecurityContextService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -42,13 +45,11 @@ public class StoreController {
 
     private final StoreService storeService;
     private final StoreUserService storeUserService;
-    private final UserService userService;
     private final SecurityContextService securityContextService;
 
-    public StoreController(StoreService storeService, StoreUserService storeUserService, UserService userService, SecurityContextService securityContextService) {
+    public StoreController(StoreService storeService, StoreUserService storeUserService, SecurityContextService securityContextService) {
         this.storeService = storeService;
         this.storeUserService = storeUserService;
-        this.userService = userService;
         this.securityContextService = securityContextService;
     }
 
@@ -102,6 +103,93 @@ public class StoreController {
         return genericResponseDto;
     }
 
+    @PostMapping
+    @Operation(summary = "Create a new store", 
+               description = "Create a new store for a company. Requires appropriate permissions.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Store created successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid request data"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "404", description = "Company not found")
+    })
+    public GenericResponse<StoreDto> createStore(@RequestBody StoreCreateRequest request) {
+        logger.info("POST /api/v1/store called - creating store: {}", request.getStoreName());
+        GenericResponse<StoreDto> genericResponseDto = new GenericResponse<>();
+        
+        try {
+            StoreDto createdStore = storeService.createStore(request);
+            genericResponseDto.data = createdStore;
+            genericResponseDto.message = "Store created successfully";
+        } catch (IllegalArgumentException e) {
+            logger.error("Validation error creating store: {}", e.getMessage());
+            genericResponseDto.status = -1;
+            genericResponseDto.message = e.getMessage();
+        } catch (Exception e) {
+            logger.error("Error creating store: {}", e.getMessage());
+            genericResponseDto.status = -1;
+            genericResponseDto.message = "Error creating store: " + e.getMessage();
+        }
+        
+        return genericResponseDto;
+    }
+
+    @PutMapping("/{storeId}")
+    @Operation(summary = "Update a store", 
+               description = "Update an existing store. Requires appropriate permissions.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Store updated successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid request data"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "404", description = "Store or company not found")
+    })
+    public GenericResponse<StoreDto> updateStore(@PathVariable Long storeId, @RequestBody StoreUpdateRequest request) {
+        logger.info("PUT /api/v1/store/{} called - updating store", storeId);
+        GenericResponse<StoreDto> genericResponseDto = new GenericResponse<>();
+        
+        try {
+            StoreDto updatedStore = storeService.updateStore(storeId, request);
+            genericResponseDto.data = updatedStore;
+            genericResponseDto.message = "Store updated successfully";
+        } catch (IllegalArgumentException e) {
+            logger.error("Validation error updating store: {}", e.getMessage());
+            genericResponseDto.status = -1;
+            genericResponseDto.message = e.getMessage();
+        } catch (Exception e) {
+            logger.error("Error updating store: {}", e.getMessage());
+            genericResponseDto.status = -1;
+            genericResponseDto.message = "Error updating store: " + e.getMessage();
+        }
+        
+        return genericResponseDto;
+    }
+
+    @DeleteMapping("/{storeId}")
+    @Operation(summary = "Delete a store", 
+               description = "Logically delete a store (set isActive to false). Requires appropriate permissions.")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Store deleted successfully"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "404", description = "Store not found")
+    })
+    public GenericResponse<Void> deleteStore(@PathVariable Long storeId) {
+        logger.info("DELETE /api/v1/store/{} called - deleting store", storeId);
+        GenericResponse<Void> genericResponseDto = new GenericResponse<>();
+        
+        try {
+            storeService.deleteStore(storeId);
+            genericResponseDto.message = "Store deleted successfully";
+        } catch (IllegalArgumentException e) {
+            logger.error("Validation error deleting store: {}", e.getMessage());
+            genericResponseDto.status = -1;
+            genericResponseDto.message = e.getMessage();
+        } catch (Exception e) {
+            logger.error("Error deleting store: {}", e.getMessage());
+            genericResponseDto.status = -1;
+            genericResponseDto.message = "Error deleting store: " + e.getMessage();
+        }
+        
+        return genericResponseDto;
+    }
 
     // ==================== STORE USER ENDPOINTS ====================
 
