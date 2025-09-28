@@ -25,6 +25,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 
 import java.util.List;
 
@@ -55,7 +57,7 @@ public class StoreController {
 
 
     @GetMapping
-    public GenericResponse<PagedResponse<StoreDto>> getStores(
+    public ResponseEntity<GenericResponse<PagedResponse<StoreDto>>> getStores(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) Long companyId) {
@@ -70,37 +72,40 @@ public class StoreController {
                 } else {
                     genericResponseDto.message = "No stores found for your access level";
                 }
+                return ResponseEntity.ok(genericResponseDto);
             } else {
                 genericResponseDto.message = "Stores retrieved successfully";
+                genericResponseDto.data = pagedStores;
+                return ResponseEntity.ok(genericResponseDto);
             }
-            genericResponseDto.data = pagedStores;
         } catch (Exception e) {
             logger.error("Error fetching stores with pagination: {}", e.getMessage());
             genericResponseDto.status = -1;
             genericResponseDto.message = "Error fetching stores: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(genericResponseDto);
         }
-        return genericResponseDto;
     }
 
     @GetMapping("/{storeId}")
-    public GenericResponse<StoreDto> getStore(@PathVariable Long storeId) {
+    public ResponseEntity<GenericResponse<StoreDto>> getStore(@PathVariable Long storeId) {
         GenericResponse<StoreDto> genericResponseDto = new GenericResponse<>();
         try {
             StoreDto store = storeService.getStoreForCurrentUser(storeId);
             if (store == null) {
                 genericResponseDto.status = -1;
                 genericResponseDto.message = "Store not found or access denied";
-                return genericResponseDto;
+                return ResponseEntity.notFound().build();
             }
 
             genericResponseDto.data = store;
             genericResponseDto.message = "Store retrieved successfully";
+            return ResponseEntity.ok(genericResponseDto);
         } catch (Exception e) {
             logger.error("Error fetching store with ID {}: {}", storeId, e.getMessage());
             genericResponseDto.status = -1;
             genericResponseDto.message = "Error fetching store: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(genericResponseDto);
         }
-        return genericResponseDto;
     }
 
     @PostMapping
@@ -112,7 +117,7 @@ public class StoreController {
         @ApiResponse(responseCode = "401", description = "Unauthorized"),
         @ApiResponse(responseCode = "404", description = "Company not found")
     })
-    public GenericResponse<StoreDto> createStore(@RequestBody StoreCreateRequest request) {
+    public ResponseEntity<GenericResponse<StoreDto>> createStore(@RequestBody StoreCreateRequest request) {
         logger.info("POST /api/v1/store called - creating store: {}", request.getStoreName());
         GenericResponse<StoreDto> genericResponseDto = new GenericResponse<>();
         
@@ -120,17 +125,18 @@ public class StoreController {
             StoreDto createdStore = storeService.createStore(request);
             genericResponseDto.data = createdStore;
             genericResponseDto.message = "Store created successfully";
+            return ResponseEntity.ok(genericResponseDto);
         } catch (IllegalArgumentException e) {
             logger.error("Validation error creating store: {}", e.getMessage());
             genericResponseDto.status = -1;
             genericResponseDto.message = e.getMessage();
+            return ResponseEntity.badRequest().body(genericResponseDto);
         } catch (Exception e) {
             logger.error("Error creating store: {}", e.getMessage());
             genericResponseDto.status = -1;
             genericResponseDto.message = "Error creating store: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(genericResponseDto);
         }
-        
-        return genericResponseDto;
     }
 
     @PutMapping("/{storeId}")
@@ -142,7 +148,7 @@ public class StoreController {
         @ApiResponse(responseCode = "401", description = "Unauthorized"),
         @ApiResponse(responseCode = "404", description = "Store or company not found")
     })
-    public GenericResponse<StoreDto> updateStore(@PathVariable Long storeId, @RequestBody StoreUpdateRequest request) {
+    public ResponseEntity<GenericResponse<StoreDto>> updateStore(@PathVariable Long storeId, @RequestBody StoreUpdateRequest request) {
         logger.info("PUT /api/v1/store/{} called - updating store", storeId);
         GenericResponse<StoreDto> genericResponseDto = new GenericResponse<>();
         
@@ -150,17 +156,18 @@ public class StoreController {
             StoreDto updatedStore = storeService.updateStore(storeId, request);
             genericResponseDto.data = updatedStore;
             genericResponseDto.message = "Store updated successfully";
+            return ResponseEntity.ok(genericResponseDto);
         } catch (IllegalArgumentException e) {
             logger.error("Validation error updating store: {}", e.getMessage());
             genericResponseDto.status = -1;
             genericResponseDto.message = e.getMessage();
+            return ResponseEntity.badRequest().body(genericResponseDto);
         } catch (Exception e) {
             logger.error("Error updating store: {}", e.getMessage());
             genericResponseDto.status = -1;
             genericResponseDto.message = "Error updating store: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(genericResponseDto);
         }
-        
-        return genericResponseDto;
     }
 
     @DeleteMapping("/{storeId}")
@@ -171,24 +178,25 @@ public class StoreController {
         @ApiResponse(responseCode = "401", description = "Unauthorized"),
         @ApiResponse(responseCode = "404", description = "Store not found")
     })
-    public GenericResponse<Void> deleteStore(@PathVariable Long storeId) {
+    public ResponseEntity<GenericResponse<Void>> deleteStore(@PathVariable Long storeId) {
         logger.info("DELETE /api/v1/store/{} called - deleting store", storeId);
         GenericResponse<Void> genericResponseDto = new GenericResponse<>();
         
         try {
             storeService.deleteStore(storeId);
             genericResponseDto.message = "Store deleted successfully";
+            return ResponseEntity.ok(genericResponseDto);
         } catch (IllegalArgumentException e) {
             logger.error("Validation error deleting store: {}", e.getMessage());
             genericResponseDto.status = -1;
             genericResponseDto.message = e.getMessage();
+            return ResponseEntity.badRequest().body(genericResponseDto);
         } catch (Exception e) {
             logger.error("Error deleting store: {}", e.getMessage());
             genericResponseDto.status = -1;
             genericResponseDto.message = "Error deleting store: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(genericResponseDto);
         }
-        
-        return genericResponseDto;
     }
 
     // ==================== STORE USER ENDPOINTS ====================
@@ -206,7 +214,7 @@ public class StoreController {
         @ApiResponse(responseCode = "403", description = "Forbidden - User is not a store user"),
         @ApiResponse(responseCode = "404", description = "Store not found for user")
     })
-    public GenericResponse<StoreTransactionSummary> getStoreUserTransactionSummary() {
+    public ResponseEntity<GenericResponse<StoreTransactionSummary>> getStoreUserTransactionSummary() {
         logger.info("GET /api/v1/store/user/transaction-summary called");
 
         GenericResponse<StoreTransactionSummary> response = new GenericResponse<>();
@@ -216,33 +224,33 @@ public class StoreController {
             if (currentUser == null) {
                 response.status = -1;
                 response.message = "User not authenticated";
-                return response;
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
 
             if (!storeUserService.isStoreUser(currentUser)) {
                 response.status = -1;
                 response.message = "Access denied. User must be a store user with an associated store.";
                 logger.warn("Non-store user {} attempted to access store user endpoint", currentUser.getUsername());
-                return response;
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
             }
 
             StoreTransactionSummary summary = storeUserService.getStoreTransactionSummary(currentUser);
             if (summary == null) {
                 response.status = -1;
                 response.message = "Store not found for user";
-                return response;
+                return ResponseEntity.notFound().build();
             }
 
             response.data = summary;
             response.message = "Transaction summary retrieved successfully";
+            return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             logger.error("Error getting transaction summary", e);
             response.status = -1;
             response.message = "Error retrieving transaction summary: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-
-        return response;
     }
 
     /**
@@ -257,7 +265,7 @@ public class StoreController {
         @ApiResponse(responseCode = "403", description = "Forbidden - User is not a store user"),
         @ApiResponse(responseCode = "404", description = "Store not found for user")
     })
-    public GenericResponse<Store> getStoreUserInfo() {
+    public ResponseEntity<GenericResponse<Store>> getStoreUserInfo() {
         logger.info("GET /api/v1/store/user/info called");
 
         GenericResponse<Store> response = new GenericResponse<>();
@@ -267,32 +275,32 @@ public class StoreController {
             if (currentUser == null) {
                 response.status = -1;
                 response.message = "User not authenticated";
-                return response;
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
 
             if (!storeUserService.isStoreUser(currentUser)) {
                 response.status = -1;
                 response.message = "Access denied. User must be a store user with an associated store.";
-                return response;
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
             }
 
             Store store = storeUserService.getStoreForUser(currentUser);
             if (store == null) {
                 response.status = -1;
                 response.message = "Store not found for user";
-                return response;
+                return ResponseEntity.notFound().build();
             }
 
             response.data = store;
             response.message = "Store information retrieved successfully";
+            return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             logger.error("Error getting store information", e);
             response.status = -1;
             response.message = "Error retrieving store information: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-
-        return response;
     }
 
     /**
@@ -306,7 +314,7 @@ public class StoreController {
         @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing authentication"),
         @ApiResponse(responseCode = "403", description = "Forbidden - User is not a store user")
     })
-    public GenericResponse<List<GiftCardTransaction>> getStoreUserGiftCardTransactions() {
+    public ResponseEntity<GenericResponse<List<GiftCardTransaction>>> getStoreUserGiftCardTransactions() {
         logger.info("GET /api/v1/store/user/gift-card-transactions called");
 
         GenericResponse<List<GiftCardTransaction>> response = new GenericResponse<>();
@@ -316,26 +324,26 @@ public class StoreController {
             if (currentUser == null) {
                 response.status = -1;
                 response.message = "User not authenticated";
-                return response;
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
 
             if (!storeUserService.isStoreUser(currentUser)) {
                 response.status = -1;
                 response.message = "Access denied. User must be a store user with an associated store.";
-                return response;
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
             }
 
             List<GiftCardTransaction> transactions = storeUserService.getGiftCardTransactionsForStore(currentUser);
             response.data = transactions;
             response.message = "Gift card transactions retrieved successfully";
+            return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             logger.error("Error getting gift card transactions", e);
             response.status = -1;
             response.message = "Error retrieving gift card transactions: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-
-        return response;
     }
 
     /**
@@ -349,7 +357,7 @@ public class StoreController {
         @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing authentication"),
         @ApiResponse(responseCode = "403", description = "Forbidden - User is not a store user")
     })
-    public GenericResponse<List<DiscountCodeTransaction>> getStoreUserDiscountCodeTransactions() {
+    public ResponseEntity<GenericResponse<List<DiscountCodeTransaction>>> getStoreUserDiscountCodeTransactions() {
         logger.info("GET /api/v1/store/user/discount-code-transactions called");
 
         GenericResponse<List<DiscountCodeTransaction>> response = new GenericResponse<>();
@@ -359,26 +367,26 @@ public class StoreController {
             if (currentUser == null) {
                 response.status = -1;
                 response.message = "User not authenticated";
-                return response;
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
 
             if (!storeUserService.isStoreUser(currentUser)) {
                 response.status = -1;
                 response.message = "Access denied. User must be a store user with an associated store.";
-                return response;
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
             }
 
             List<DiscountCodeTransaction> transactions = storeUserService.getDiscountCodeTransactionsForStore(currentUser);
             response.data = transactions;
             response.message = "Discount code transactions retrieved successfully";
+            return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             logger.error("Error getting discount code transactions", e);
             response.status = -1;
             response.message = "Error retrieving discount code transactions: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-
-        return response;
     }
 
     /**
@@ -392,7 +400,7 @@ public class StoreController {
         @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing authentication"),
         @ApiResponse(responseCode = "403", description = "Forbidden - User is not a store user")
     })
-    public GenericResponse<List<GiftCardTransaction>> searchStoreUserGiftCardTransactions(
+    public ResponseEntity<GenericResponse<List<GiftCardTransaction>>> searchStoreUserGiftCardTransactions(
             @Parameter(description = "Gift card serial number to search for", required = true)
             @RequestParam String serialNumber) {
         
@@ -405,26 +413,26 @@ public class StoreController {
             if (currentUser == null) {
                 response.status = -1;
                 response.message = "User not authenticated";
-                return response;
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
 
             if (!storeUserService.isStoreUser(currentUser)) {
                 response.status = -1;
                 response.message = "Access denied. User must be a store user with an associated store.";
-                return response;
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
             }
 
             List<GiftCardTransaction> transactions = storeUserService.searchGiftCardTransactionsBySerial(currentUser, serialNumber);
             response.data = transactions;
             response.message = "Gift card transactions search completed successfully";
+            return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             logger.error("Error searching gift card transactions", e);
             response.status = -1;
             response.message = "Error searching gift card transactions: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-
-        return response;
     }
 
     /**
@@ -438,7 +446,7 @@ public class StoreController {
         @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing authentication"),
         @ApiResponse(responseCode = "403", description = "Forbidden - User is not a store user")
     })
-    public GenericResponse<List<DiscountCodeTransaction>> searchStoreUserDiscountCodeTransactions(
+    public ResponseEntity<GenericResponse<List<DiscountCodeTransaction>>> searchStoreUserDiscountCodeTransactions(
             @Parameter(description = "Discount code to search for", required = true)
             @RequestParam String discountCode) {
         
@@ -451,25 +459,25 @@ public class StoreController {
             if (currentUser == null) {
                 response.status = -1;
                 response.message = "User not authenticated";
-                return response;
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
 
             if (!storeUserService.isStoreUser(currentUser)) {
                 response.status = -1;
                 response.message = "Access denied. User must be a store user with an associated store.";
-                return response;
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
             }
 
             List<DiscountCodeTransaction> transactions = storeUserService.searchDiscountCodeTransactionsByCode(currentUser, discountCode);
             response.data = transactions;
             response.message = "Discount code transactions search completed successfully";
+            return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             logger.error("Error searching discount code transactions", e);
             response.status = -1;
             response.message = "Error searching discount code transactions: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
-
-        return response;
     }
 }

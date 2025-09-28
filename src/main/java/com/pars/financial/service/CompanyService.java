@@ -120,11 +120,22 @@ public class CompanyService {
         
         // Create and persist phone number if provided
         if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
-            PhoneNumber phoneNumber = new PhoneNumber();
-            phoneNumber.setNumber(request.getPhoneNumber());
-            phoneNumber.setType(PhoneNumberType.Cell); // Default type
-            PhoneNumber savedPhoneNumber = phoneNumberRepository.save(phoneNumber);
-            company.setPhone_number(savedPhoneNumber);
+            // Check if phone number already exists
+            Optional<PhoneNumber> existingPhoneNumber = phoneNumberRepository.findByNumber(request.getPhoneNumber());
+            
+            if (existingPhoneNumber.isPresent()) {
+                // Reuse existing phone number
+                logger.info("Reusing existing phone number: {} for company: {}", request.getPhoneNumber(), request.getCompanyName());
+                company.setPhone_number(existingPhoneNumber.get());
+            } else {
+                // Create new phone number
+                logger.info("Creating new phone number: {} for company: {}", request.getPhoneNumber(), request.getCompanyName());
+                PhoneNumber phoneNumber = new PhoneNumber();
+                phoneNumber.setNumber(request.getPhoneNumber());
+                phoneNumber.setType(PhoneNumberType.Cell); // Default type
+                PhoneNumber savedPhoneNumber = phoneNumberRepository.save(phoneNumber);
+                company.setPhone_number(savedPhoneNumber);
+            }
         }
         
         // Create and persist address if provided
@@ -156,14 +167,27 @@ public class CompanyService {
         
         // Update phone number if provided
         if (request.getPhoneNumber() != null && !request.getPhoneNumber().trim().isEmpty()) {
-            PhoneNumber phoneNumber = company.getPhone_number();
-            if (phoneNumber == null) {
-                phoneNumber = new PhoneNumber();
-                phoneNumber.setType(PhoneNumberType.Cell); // Default type
+            // Check if phone number already exists
+            Optional<PhoneNumber> existingPhoneNumber = phoneNumberRepository.findByNumber(request.getPhoneNumber());
+            
+            if (existingPhoneNumber.isPresent()) {
+                // Reuse existing phone number
+                logger.info("Reusing existing phone number: {} for company update: {}", request.getPhoneNumber(), companyId);
+                company.setPhone_number(existingPhoneNumber.get());
+            } else {
+                // Create new phone number or update existing one
+                PhoneNumber phoneNumber = company.getPhone_number();
+                if (phoneNumber == null) {
+                    logger.info("Creating new phone number: {} for company update: {}", request.getPhoneNumber(), companyId);
+                    phoneNumber = new PhoneNumber();
+                    phoneNumber.setType(PhoneNumberType.Cell); // Default type
+                } else {
+                    logger.info("Updating existing phone number: {} for company update: {}", request.getPhoneNumber(), companyId);
+                }
+                phoneNumber.setNumber(request.getPhoneNumber());
+                PhoneNumber savedPhoneNumber = phoneNumberRepository.save(phoneNumber);
+                company.setPhone_number(savedPhoneNumber);
             }
-            phoneNumber.setNumber(request.getPhoneNumber());
-            PhoneNumber savedPhoneNumber = phoneNumberRepository.save(phoneNumber);
-            company.setPhone_number(savedPhoneNumber);
         }
         
         // Update address if provided
