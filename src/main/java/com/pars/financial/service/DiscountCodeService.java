@@ -18,6 +18,7 @@ import com.pars.financial.repository.DiscountCodeTransactionRepository;
 import com.pars.financial.repository.ItemCategoryRepository;
 import com.pars.financial.repository.StoreRepository;
 import com.pars.financial.repository.CustomerRepository;
+import com.pars.financial.entity.User;
 import com.pars.financial.utils.RandomStringGenerator;
 
 import org.slf4j.Logger;
@@ -579,6 +580,129 @@ public class DiscountCodeService {
         } catch (Exception e) {
             logger.error("Error generating discount code report for company {}: {}", companyId, e.getMessage(), e);
             throw new RuntimeException("Failed to generate discount code report for company", e);
+        }
+    }
+
+    /**
+     * Get discount codes for current user with RBAC filtering
+     * @param user the current user
+     * @param page page number
+     * @param size page size
+     * @param companyId optional company filter (SUPERADMIN only)
+     * @param storeId optional store filter (SUPERADMIN only)
+     * @return PagedResponse of discount codes
+     */
+    @Transactional(readOnly = true)
+    public PagedResponse<DiscountCodeDto> getDiscountCodesForCurrentUserWithFiltering(User user, int page, int size, Long companyId, Long storeId) {
+        logger.debug("Fetching discount codes for user: {} with role: {} - page: {}, size: {}, companyId: {}, storeId: {}",
+                    user.getUsername(), user.getRole().getName(), page, size, companyId, storeId);
+
+        if (page < 0) { page = 0; }
+        if (size <= 0) { size = 10; }
+        if (size > 100) { size = 100; }
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<DiscountCode> discountCodePage;
+
+        switch (user.getRole().getName()) {
+            case "SUPERADMIN":
+            case "ADMIN":
+            case "API_USER":
+                if (companyId != null) {
+                    var company = companyRepository.findById(companyId);
+                    if (company.isEmpty()) {
+                        logger.warn("Company not found with ID: {}", companyId);
+                        throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND);
+                    }
+                    if (storeId != null) {
+                        var store = storeRepository.findById(storeId);
+                        if (store.isEmpty()) {
+                            logger.warn("Store not found with ID: {}", storeId);
+                            throw new ValidationException(ErrorCodes.STORE_NOT_FOUND);
+                        }
+                        if (!store.get().getCompany().getId().equals(companyId)) {
+                            logger.warn("Store {} does not belong to company {}", storeId, companyId);
+                            throw new ValidationException(ErrorCodes.STORE_NOT_FOUND);
+                        }
+                        discountCodePage = codeRepository.findByCompany(company.get(), pageable);
+                    } else {
+                        discountCodePage = codeRepository.findByCompany(company.get(), pageable);
+                    }
+                } else if (storeId != null) {
+                    var store = storeRepository.findById(storeId);
+                    if (store.isEmpty()) {
+                        logger.warn("Store not found with ID: {}", storeId);
+                        throw new ValidationException(ErrorCodes.STORE_NOT_FOUND);
+                    }
+                    discountCodePage = codeRepository.findByCompany(store.get().getCompany(), pageable);
+                } else {
+                    discountCodePage = codeRepository.findAll(pageable);
+                }
+                break;
+            case "COMPANY_USER":
+                if (user.getCompany() == null) {
+                    logger.warn("COMPANY_USER {} has no company assigned", user.getUsername());
+                    discountCodePage = Page.empty(pageable);
+                } else {
+                    logger.debug("User {} has company access - returning discount codes for company: {}",
+                               user.getUsername(), user.getCompany().getId());
+                    discountCodePage = codeRepository.findByCompany(user.getCompany(), pageable);
+                }
+                break;
+            case "STORE_USER":
+                if (user.getStore() == null) {
+                    logger.warn("STORE_USER {} has no store assigned", user.getUsername());
+                    discountCodePage = Page.empty(pageable);
+                } else {
+                    logger.debug("User {} has store access - returning discount codes for store's company: {}",
+                               user.getUsername(), user.getStore().getCompany().getId());
+                    discountCodePage = codeRepository.findByCompany(user.getStore().getCompany(), pageable);
+                }
+                break;
+            default:
+                logger.warn("Unknown role {} for user {} - returning empty result",
+                           user.getRole().getName(), user.getUsername());
+                discountCodePage = Page.empty(pageable);
+                break;
+        }
+        List<DiscountCodeDto> discountCodes = mapper.getFrom(discountCodePage.getContent());
+        return new PagedResponse<>(
+            discountCodes,
+            discountCodePage.getNumber(),
+            discountCodePage.getSize(),
+            discountCodePage.getTotalElements(),
+            discountCodePage.getTotalPages()
+        );
+    }
+
+    /**
+     * Check if user has access to a specific discount code
+     * @param user the current user
+     * @param discountCode the discount code to check access for
+     * @return true if user has access, false otherwise
+     */
+    public boolean hasAccessToDiscountCode(User user, DiscountCodeDto discountCode) {
+        String roleName = user.getRole().getName();
+
+        switch (roleName) {
+            case "SUPERADMIN":
+            case "ADMIN":
+            case "API_USER":
+                return true;
+
+            case "COMPANY_USER":
+                return user.getCompany() != null &&
+                       discountCode.companyId != null &&
+                       user.getCompany().getId().equals(discountCode.companyId);
+
+            case "STORE_USER":
+                return user.getStore() != null &&
+                       user.getStore().getCompany() != null &&
+                       discountCode.companyId != null &&
+                       user.getStore().getCompany().getId().equals(discountCode.companyId);
+
+            default:
+                return false;
         }
     }
 

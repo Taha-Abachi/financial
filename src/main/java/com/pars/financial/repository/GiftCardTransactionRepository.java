@@ -46,16 +46,16 @@ public interface GiftCardTransactionRepository extends JpaRepository<GiftCardTra
     List<GiftCardTransaction> findByTransactionType(TransactionType transactionType);
     
     // Statistics methods for gift card reports
-    @org.springframework.data.jpa.repository.Query("SELECT COUNT(t) FROM GiftCardTransaction t WHERE t.transactionType = 'Debit'")
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(t) FROM GiftCardTransaction t WHERE t.transactionType = 'Debit' AND t.status = 'Confirmed'")
     Long countDebitTransactions();
     
-    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(t.Amount), 0) FROM GiftCardTransaction t WHERE t.transactionType = 'Debit'")
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(t.Amount), 0) FROM GiftCardTransaction t WHERE t.transactionType = 'Debit' AND t.status = 'Confirmed'")
     Long sumDebitAmount();
     
-    @org.springframework.data.jpa.repository.Query("SELECT COUNT(t) FROM GiftCardTransaction t WHERE t.transactionType = 'Debit' AND t.giftCard.company.id = :companyId")
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(t) FROM GiftCardTransaction t WHERE t.transactionType = 'Debit' AND t.status = 'Confirmed' AND t.giftCard.company.id = :companyId")
     Long countDebitTransactionsByCompany(@org.springframework.data.repository.query.Param("companyId") Long companyId);
     
-    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(t.Amount), 0) FROM GiftCardTransaction t WHERE t.transactionType = 'Debit' AND t.giftCard.company.id = :companyId")
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(t.Amount), 0) FROM GiftCardTransaction t WHERE t.transactionType = 'Debit' AND t.status = 'Confirmed' AND t.giftCard.company.id = :companyId")
     Long sumDebitAmountByCompany(@org.springframework.data.repository.query.Param("companyId") Long companyId);
     
     // Store-specific methods
@@ -68,6 +68,7 @@ public interface GiftCardTransactionRepository extends JpaRepository<GiftCardTra
            "FROM GiftCardTransaction t " +
            "WHERE t.trxDate >= :startDate AND t.trxDate < :endDate " +
            "AND t.transactionType = 'Debit' " +
+           "AND t.status = 'Confirmed' " +
            "GROUP BY t.status")
     List<Object[]> getTransactionAggregationsByDateRange(@Param("startDate") LocalDateTime startDate, 
                                                          @Param("endDate") LocalDateTime endDate);
@@ -76,9 +77,21 @@ public interface GiftCardTransactionRepository extends JpaRepository<GiftCardTra
            "FROM GiftCardTransaction t " +
            "WHERE t.trxDate >= :startDate AND t.trxDate < :endDate " +
            "AND t.transactionType = 'Debit' " +
+           "AND t.status = 'Confirmed' " +
            "AND t.store.id = :storeId " +
            "GROUP BY t.status")
     List<Object[]> getTransactionAggregationsByDateRangeAndStore(@Param("startDate") LocalDateTime startDate, 
                                                                  @Param("endDate") LocalDateTime endDate,
                                                                  @Param("storeId") Long storeId);
+    
+    @Query("SELECT t.status, COUNT(t), COALESCE(SUM(t.Amount), 0), COALESCE(SUM(t.orderAmount), 0) " +
+           "FROM GiftCardTransaction t " +
+           "WHERE t.trxDate >= :startDate AND t.trxDate < :endDate " +
+           "AND t.transactionType = 'Debit' " +
+           "AND t.status = 'Confirmed' " +
+           "AND t.giftCard.company.id = :companyId " +
+           "GROUP BY t.status")
+    List<Object[]> getTransactionAggregationsByDateRangeAndCompany(@Param("startDate") LocalDateTime startDate, 
+                                                                   @Param("endDate") LocalDateTime endDate,
+                                                                   @Param("companyId") Long companyId);
 }

@@ -2,12 +2,15 @@ package com.pars.financial.repository;
 
 import java.time.LocalDate;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.pars.financial.entity.DiscountCode;
+import com.pars.financial.entity.Company;
 
 @Repository
 public interface DiscountCodeRepository extends JpaRepository<DiscountCode, Long> {
@@ -15,6 +18,7 @@ public interface DiscountCodeRepository extends JpaRepository<DiscountCode, Long
     public boolean existsByCode(String code);
     public boolean existsBySerialNo(Long serialNo);
     public java.util.List<DiscountCode> findByBatchId(Long batchId);
+    public Page<DiscountCode> findByCompany(Company company, Pageable pageable);
     
     // Statistics queries
     @Query("SELECT COUNT(d) FROM DiscountCode d")

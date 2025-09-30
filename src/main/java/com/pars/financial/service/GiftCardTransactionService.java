@@ -536,6 +536,149 @@ public class GiftCardTransactionService {
         
         return new TransactionAggregationResponseDto(todayAggregations, last7DaysAggregations, last30DaysAggregations);
     }
+
+    /**
+     * Get transaction aggregations with RBAC and optional filtering for superadmin
+     * - SUPERADMIN: Can filter by companyId and/or storeId
+     * - COMPANY_USER: Only sees their company's aggregations
+     * - STORE_USER: Only sees their store's aggregations
+     */
+    public TransactionAggregationResponseDto getTransactionAggregationsWithFiltering(User user, Long companyId, Long storeId) {
+        logger.info("Getting transaction aggregations for user: {} with companyId: {}, storeId: {}", 
+                   user.getUsername(), companyId, storeId);
+        
+        LocalDate today = LocalDate.now();
+        LocalDateTime todayStart = today.atStartOfDay();
+        LocalDateTime todayEnd = today.plusDays(1).atStartOfDay();
+        
+        LocalDateTime last7DaysStart = today.minusDays(7).atStartOfDay();
+        LocalDateTime last30DaysStart = today.minusDays(30).atStartOfDay();
+        
+        List<TransactionAggregationDto> todayAggregations;
+        List<TransactionAggregationDto> last7DaysAggregations;
+        List<TransactionAggregationDto> last30DaysAggregations;
+        
+        // Role-based filtering
+        switch (user.getRole().getName()) {
+            case "SUPERADMIN":
+            case "ADMIN":
+            case "API_USER":
+                // Superadmin can filter by company and/or store
+                if (companyId != null) {
+                    // Validate company exists
+                    var company = companyRepository.findById(companyId);
+                    if (company.isEmpty()) {
+                        logger.warn("Company not found with ID: {}", companyId);
+                        throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND);
+                    }
+                    
+                    if (storeId != null) {
+                        // Filter by both company and store
+                        var store = storeRepository.findById(storeId);
+                        if (store.isEmpty()) {
+                            logger.warn("Store not found with ID: {}", storeId);
+                            throw new ValidationException(ErrorCodes.STORE_NOT_FOUND);
+                        }
+                        // Validate store belongs to company
+                        if (!store.get().getCompany().getId().equals(companyId)) {
+                            logger.warn("Store {} does not belong to company {}", storeId, companyId);
+                            throw new ValidationException(ErrorCodes.STORE_NOT_FOUND);
+                        }
+                        // Filter by store
+                        todayAggregations = getAggregationsForDateRangeAndStore(todayStart, todayEnd, storeId);
+                        last7DaysAggregations = getAggregationsForDateRangeAndStore(last7DaysStart, todayEnd, storeId);
+                        last30DaysAggregations = getAggregationsForDateRangeAndStore(last30DaysStart, todayEnd, storeId);
+                    } else {
+                        // Filter by company only
+                        todayAggregations = getAggregationsForDateRangeAndCompany(todayStart, todayEnd, companyId);
+                        last7DaysAggregations = getAggregationsForDateRangeAndCompany(last7DaysStart, todayEnd, companyId);
+                        last30DaysAggregations = getAggregationsForDateRangeAndCompany(last30DaysStart, todayEnd, companyId);
+                    }
+                } else if (storeId != null) {
+                    // Filter by store only
+                    var store = storeRepository.findById(storeId);
+                    if (store.isEmpty()) {
+                        logger.warn("Store not found with ID: {}", storeId);
+                        throw new ValidationException(ErrorCodes.STORE_NOT_FOUND);
+                    }
+                    todayAggregations = getAggregationsForDateRangeAndStore(todayStart, todayEnd, storeId);
+                    last7DaysAggregations = getAggregationsForDateRangeAndStore(last7DaysStart, todayEnd, storeId);
+                    last30DaysAggregations = getAggregationsForDateRangeAndStore(last30DaysStart, todayEnd, storeId);
+                } else {
+                    // No filtering - return all aggregations
+                    todayAggregations = getAggregationsForDateRange(todayStart, todayEnd);
+                    last7DaysAggregations = getAggregationsForDateRange(last7DaysStart, todayEnd);
+                    last30DaysAggregations = getAggregationsForDateRange(last30DaysStart, todayEnd);
+                }
+                break;
+                
+            case "COMPANY_USER":
+                // Return aggregations for user's company
+                if (user.getCompany() == null) {
+                    logger.warn("COMPANY_USER {} has no company assigned", user.getUsername());
+                    todayAggregations = List.of();
+                    last7DaysAggregations = List.of();
+                    last30DaysAggregations = List.of();
+                } else {
+                    Long userCompanyId = user.getCompany().getId();
+                    todayAggregations = getAggregationsForDateRangeAndCompany(todayStart, todayEnd, userCompanyId);
+                    last7DaysAggregations = getAggregationsForDateRangeAndCompany(last7DaysStart, todayEnd, userCompanyId);
+                    last30DaysAggregations = getAggregationsForDateRangeAndCompany(last30DaysStart, todayEnd, userCompanyId);
+                }
+                break;
+                
+            case "STORE_USER":
+                // Return aggregations for user's store
+                if (user.getStore() == null) {
+                    logger.warn("STORE_USER {} has no store assigned", user.getUsername());
+                    todayAggregations = List.of();
+                    last7DaysAggregations = List.of();
+                    last30DaysAggregations = List.of();
+                } else {
+                    Long userStoreId = user.getStore().getId();
+                    todayAggregations = getAggregationsForDateRangeAndStore(todayStart, todayEnd, userStoreId);
+                    last7DaysAggregations = getAggregationsForDateRangeAndStore(last7DaysStart, todayEnd, userStoreId);
+                    last30DaysAggregations = getAggregationsForDateRangeAndStore(last30DaysStart, todayEnd, userStoreId);
+                }
+                break;
+                
+            default:
+                logger.warn("Unknown role {} for user {} - returning empty aggregations", 
+                           user.getRole().getName(), user.getUsername());
+                todayAggregations = List.of();
+                last7DaysAggregations = List.of();
+                last30DaysAggregations = List.of();
+                break;
+        }
+        
+        return new TransactionAggregationResponseDto(todayAggregations, last7DaysAggregations, last30DaysAggregations);
+    }
+
+    /**
+     * Check if user has access to a specific company
+     */
+    public boolean hasAccessToCompany(User user, Long companyId) {
+        String roleName = user.getRole().getName();
+        
+        switch (roleName) {
+            case "SUPERADMIN":
+            case "ADMIN":
+            case "API_USER":
+                return true;
+                
+            case "COMPANY_USER":
+                return user.getCompany() != null && 
+                       user.getCompany().getId().equals(companyId);
+                       
+            case "STORE_USER":
+                return user.getStore() != null && 
+                       user.getStore().getCompany() != null &&
+                       user.getStore().getCompany().getId().equals(companyId);
+                       
+            default:
+                return false;
+        }
+    }
     
     private List<TransactionAggregationDto> getAggregationsForDateRange(LocalDateTime startDate, LocalDateTime endDate) {
         List<Object[]> results = transactionRepository.getTransactionAggregationsByDateRange(startDate, endDate);
@@ -544,6 +687,11 @@ public class GiftCardTransactionService {
     
     private List<TransactionAggregationDto> getAggregationsForDateRangeAndStore(LocalDateTime startDate, LocalDateTime endDate, Long storeId) {
         List<Object[]> results = transactionRepository.getTransactionAggregationsByDateRangeAndStore(startDate, endDate, storeId);
+        return convertToAggregationDtos(results);
+    }
+    
+    private List<TransactionAggregationDto> getAggregationsForDateRangeAndCompany(LocalDateTime startDate, LocalDateTime endDate, Long companyId) {
+        List<Object[]> results = transactionRepository.getTransactionAggregationsByDateRangeAndCompany(startDate, endDate, companyId);
         return convertToAggregationDtos(results);
     }
     

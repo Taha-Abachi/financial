@@ -21,7 +21,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/api/v1/discountcode/all?page={{page}}&size={{size}}",
+							"raw": "{{baseUrl}}/api/v1/discountcode/all?page={{page}}&size={{size}}&companyId={{companyId}}&storeId={{storeId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -41,10 +41,20 @@
 									"key": "size",
 									"value": "{{size}}",
 									"description": "Page size (default: 10, max: 100)"
+								},
+								{
+									"key": "companyId",
+									"value": "{{companyId}}",
+									"description": "Filter by company ID (optional, SUPERADMIN only)"
+								},
+								{
+									"key": "storeId",
+									"value": "{{storeId}}",
+									"description": "Filter by store ID (optional, SUPERADMIN only)"
 								}
 							]
 						},
-						"description": "Get all discount codes with pagination"
+						"description": "Get a list of discount codes with pagination and RBAC filtering. SUPERADMIN can filter by companyId and/or storeId. COMPANY_USER sees only their company's discount codes. STORE_USER sees only their store's company discount codes."
 					},
 					"response": [
 						{
@@ -93,7 +103,7 @@
 								"{{discountCode}}"
 							]
 						},
-						"description": "Get details of a specific discount code"
+						"description": "Get details of a specific discount code. Access is controlled by RBAC - users can only access discount codes from their assigned company/store."
 					},
 					"response": [
 						{
@@ -1566,7 +1576,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/api/v1/discountcode/transaction/list?page={{page}}&size={{size}}",
+							"raw": "{{baseUrl}}/api/v1/discountcode/transaction/list?page={{page}}&size={{size}}&companyId={{companyId}}&storeId={{storeId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -1580,15 +1590,27 @@
 							"query": [
 								{
 									"key": "page",
-									"value": "0"
+									"value": "{{page}}",
+									"description": "Page number (0-based)"
 								},
 								{
 									"key": "size",
-									"value": "10"
+									"value": "{{size}}",
+									"description": "Page size (default: 10, max: 100)"
+								},
+								{
+									"key": "companyId",
+									"value": "{{companyId}}",
+									"description": "Filter by company ID (optional, SUPERADMIN only)"
+								},
+								{
+									"key": "storeId",
+									"value": "{{storeId}}",
+									"description": "Filter by store ID (optional, SUPERADMIN only)"
 								}
 							]
 						},
-						"description": "Get a paginated list of discount code transactions"
+						"description": "Get discount code transactions with pagination and RBAC filtering. SUPERADMIN can filter by companyId and/or storeId. COMPANY_USER sees only their company's transactions. STORE_USER sees only their store's transactions."
 					},
 					"response": [
 						{
@@ -1637,7 +1659,7 @@
 								"report"
 							]
 						},
-						"description": "Get comprehensive discount code report with statistics"
+						"description": "Get comprehensive discount code report with statistics. All transaction statistics now only include CONFIRMED transactions."
 					},
 					"response": [
 						{
@@ -1688,7 +1710,7 @@
 								"1"
 							]
 						},
-						"description": "Get discount code report for a specific company"
+						"description": "Get discount code report for a specific company. All transaction statistics now only include CONFIRMED transactions."
 					},
 					"response": [
 						{
@@ -1715,6 +1737,20 @@
 					]
 				}
 			]
+		}
+	],
+	"variable": [
+		{
+			"key": "companyId",
+			"value": "1",
+			"type": "string",
+			"description": "Company ID for filtering (SUPERADMIN only)"
+		},
+		{
+			"key": "storeId",
+			"value": "1",
+			"type": "string",
+			"description": "Store ID for filtering (SUPERADMIN only)"
 		}
 	]
 }

@@ -31,55 +31,122 @@ public class GiftCardController {
 
 
     @GetMapping("/all")
-    public GenericResponse<PagedResponse<GiftCardDto>> getGiftCards(
+    public ResponseEntity<GenericResponse<PagedResponse<GiftCardDto>>> getGiftCards(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        logger.info("GET /api/v1/giftcard/all called with pagination - page: {}, size: {}", page, size);
-        GenericResponse<PagedResponse<GiftCardDto>> genericResponseDto = new GenericResponse<>();
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) Long companyId,
+            @RequestParam(required = false) Long storeId) {
+        logger.info("GET /api/v1/giftcard/all called with pagination - page: {}, size: {}, companyId: {}, storeId: {}", 
+                   page, size, companyId, storeId);
+        
+        var response = new GenericResponse<PagedResponse<GiftCardDto>>();
+        
         try {
-            PagedResponse<GiftCardDto> pagedGiftCards = giftCardService.getGiftCardsForCurrentUser(page, size);
+            // Check authentication
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+            
+            // Get gift cards with RBAC and filtering
+            PagedResponse<GiftCardDto> pagedGiftCards = giftCardService.getGiftCardsForCurrentUserWithFiltering(
+                userResult.user, page, size, companyId, storeId);
+            
             if (pagedGiftCards.getContent() == null || pagedGiftCards.getContent().isEmpty()) {
                 logger.warn("Gift card list not found for user access level");
-                genericResponseDto.status = -1;
-                genericResponseDto.message = "No gift cards found for your access level";
+                response.status = -1;
+                response.message = "No gift cards found for your access level";
             } else {
-                genericResponseDto.message = "Gift cards retrieved successfully";
+                response.message = "Gift cards retrieved successfully";
             }
-            genericResponseDto.data = pagedGiftCards;
+            response.data = pagedGiftCards;
+            
         } catch (Exception e) {
             logger.error("Error fetching gift cards with pagination: {}", e.getMessage());
-            genericResponseDto.status = -1;
-            genericResponseDto.message = "Error fetching gift cards: " + e.getMessage();
+            response.status = -1;
+            response.message = "Error fetching gift cards: " + e.getMessage();
         }
-        return genericResponseDto;
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/identifier/{identifier}")
-    public GenericResponse<GiftCardDto> getGiftCards(@PathVariable Long identifier){
+    public ResponseEntity<GenericResponse<GiftCardDto>> getGiftCards(@PathVariable Long identifier){
         logger.info("GET /api/v1/giftcard/identifier/{} called", identifier);
-        GenericResponse<GiftCardDto> genericResponseDto = new GenericResponse<>();
-        var ls = giftCardService.getGiftCard(identifier);
-        if(ls == null){
-            logger.warn("Gift card not found for identifier {}", identifier);
-            genericResponseDto.status = -1;
-            genericResponseDto.message = "Gift card not found";
+        var response = new GenericResponse<GiftCardDto>();
+        
+        try {
+            // Check authentication
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+            
+            var giftCard = giftCardService.getGiftCard(identifier);
+            if (giftCard == null) {
+                logger.warn("Gift card not found for identifier {}", identifier);
+                response.status = -1;
+                response.message = "Gift card not found";
+            } else {
+                // Check if user has access to this gift card
+                if (!giftCardService.hasAccessToGiftCard(userResult.user, giftCard)) {
+                    logger.warn("User {} does not have access to gift card {}", userResult.user.getUsername(), identifier);
+                    response.status = 403;
+                    response.message = "Access denied to this gift card";
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+                }
+                response.message = "Gift card retrieved successfully";
+            }
+            response.data = giftCard;
+            
+        } catch (Exception e) {
+            logger.error("Error fetching gift card with identifier {}: {}", identifier, e.getMessage());
+            response.status = -1;
+            response.message = "Error fetching gift card: " + e.getMessage();
         }
-        genericResponseDto.data = ls;
-        return genericResponseDto;
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{serialNo}")
-    public GenericResponse<GiftCardDto> getGiftCards(@PathVariable String serialNo){
+    public ResponseEntity<GenericResponse<GiftCardDto>> getGiftCards(@PathVariable String serialNo){
         logger.info("GET /api/v1/giftcard/{} called", serialNo);
-        GenericResponse<GiftCardDto> genericResponseDto = new GenericResponse<>();
-        var ls = giftCardService.getGiftCard(serialNo);
-        if(ls == null){
-            logger.warn("Gift card not found for serialNo {}", serialNo);
-            genericResponseDto.status = -1;
-            genericResponseDto.message = "Gift card not found";
+        var response = new GenericResponse<GiftCardDto>();
+        
+        try {
+            // Check authentication
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+            
+            var giftCard = giftCardService.getGiftCard(serialNo);
+            if (giftCard == null) {
+                logger.warn("Gift card not found for serialNo {}", serialNo);
+                response.status = -1;
+                response.message = "Gift card not found";
+            } else {
+                // Check if user has access to this gift card
+                if (!giftCardService.hasAccessToGiftCard(userResult.user, giftCard)) {
+                    logger.warn("User {} does not have access to gift card {}", userResult.user.getUsername(), serialNo);
+                    response.status = 403;
+                    response.message = "Access denied to this gift card";
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+                }
+                response.message = "Gift card retrieved successfully";
+            }
+            response.data = giftCard;
+            
+        } catch (Exception e) {
+            logger.error("Error fetching gift card with serialNo {}: {}", serialNo, e.getMessage());
+            response.status = -1;
+            response.message = "Error fetching gift card: " + e.getMessage();
         }
-        genericResponseDto.data = ls;
-        return genericResponseDto;
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/issue")

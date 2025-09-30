@@ -5,6 +5,7 @@ import com.pars.financial.dto.GiftCardTransactionDto;
 import com.pars.financial.dto.PagedResponse;
 import com.pars.financial.dto.TransactionAggregationResponseDto;
 import com.pars.financial.service.GiftCardTransactionService;
+import com.pars.financial.service.GiftCardService;
 import com.pars.financial.utils.ApiUserUtil;
 
 import org.slf4j.Logger;
@@ -13,16 +14,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/v1/giftcard/transaction")
 public class GiftCardTransactionController {
     private static final Logger logger = LoggerFactory.getLogger(GiftCardTransactionController.class);
     final GiftCardTransactionService transactionService;
+    final GiftCardService giftCardService;
 
-    public GiftCardTransactionController(GiftCardTransactionService transactionService) {
+    public GiftCardTransactionController(GiftCardTransactionService transactionService, GiftCardService giftCardService) {
         this.transactionService = transactionService;
+        this.giftCardService = giftCardService;
     }
 
     @PostMapping("/debit")
@@ -148,82 +149,150 @@ public class GiftCardTransactionController {
     }
 
     @GetMapping("/list/{serialNo}")
-    public GenericResponse<PagedResponse<GiftCardTransactionDto>> getTransactionHistory(
+    public ResponseEntity<GenericResponse<PagedResponse<GiftCardTransactionDto>>> getTransactionHistory(
             @PathVariable String serialNo,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         logger.info("GET /api/v1/giftcard/transaction/list/{} called with pagination - page: {}, size: {}", serialNo, page, size);
-        var res = new GenericResponse<PagedResponse<GiftCardTransactionDto>>();
+        var response = new GenericResponse<PagedResponse<GiftCardTransactionDto>>();
+        
         try {
+            // Check authentication
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+            
+            // Check if user has access to the gift card
+            var giftCard = giftCardService.getGiftCard(serialNo);
+            if (giftCard == null) {
+                logger.warn("Gift card not found for serialNo: {}", serialNo);
+                response.message = "Gift card not found";
+                response.status = -1;
+                return ResponseEntity.ok(response);
+            }
+            
+            if (!giftCardService.hasAccessToGiftCard(userResult.user, giftCard)) {
+                logger.warn("User {} does not have access to gift card {}", userResult.user.getUsername(), serialNo);
+                response.status = 403;
+                response.message = "Access denied to this gift card";
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+            
             PagedResponse<GiftCardTransactionDto> pagedTransactions = transactionService.getTransactionHistory(serialNo, page, size);
-            res.data = pagedTransactions;
+            response.data = pagedTransactions;
+            response.message = "Transaction history retrieved successfully";
+            
         } catch (Exception e) {
-            logger.warn("Failed to find gift card for serialNo: {}", serialNo);
-            res.message = "Failed to find gift card: " + e.getMessage();
-            res.status = -1;
+            logger.error("Error fetching transaction history for gift card {}: {}", serialNo, e.getMessage());
+            response.message = "Failed to find gift card: " + e.getMessage();
+            response.status = -1;
         }
-        return res;
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/company/{companyId}")
-    public GenericResponse<PagedResponse<GiftCardTransactionDto>> getGiftCardsByCompany(
+    public ResponseEntity<GenericResponse<PagedResponse<GiftCardTransactionDto>>> getGiftCardsByCompany(
             @PathVariable Long companyId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         logger.info("GET /api/v1/giftcard/transaction/company/{} called with pagination - page: {}, size: {}", companyId, page, size);
-        var res = new GenericResponse<PagedResponse<GiftCardTransactionDto>>();
+        var response = new GenericResponse<PagedResponse<GiftCardTransactionDto>>();
+        
         try {
+            // Check authentication
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+            
+            // Check if user has access to this company
+            if (!transactionService.hasAccessToCompany(userResult.user, companyId)) {
+                logger.warn("User {} does not have access to company {}", userResult.user.getUsername(), companyId);
+                response.status = 403;
+                response.message = "Access denied to this company";
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+            
             PagedResponse<GiftCardTransactionDto> pagedTransactions = transactionService.getGiftCardsByCompany(companyId, page, size);
-            res.data = pagedTransactions;
+            response.data = pagedTransactions;
+            response.message = "Company gift cards retrieved successfully";
+            
         } catch (Exception e) {
             logger.error("Error fetching gift cards for company {}: {}", companyId, e.getMessage());
-            res.message = e.getMessage();
-            res.status = -1;
+            response.message = e.getMessage();
+            response.status = -1;
         }
-        return res;
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/company/{companyId}/history")
-    public GenericResponse<PagedResponse<GiftCardTransactionDto>> getCompanyTransactionHistory(
+    public ResponseEntity<GenericResponse<PagedResponse<GiftCardTransactionDto>>> getCompanyTransactionHistory(
             @PathVariable Long companyId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         logger.info("GET /api/v1/giftcard/transaction/company/{}/history called with pagination - page: {}, size: {}", companyId, page, size);
-        var res = new GenericResponse<PagedResponse<GiftCardTransactionDto>>();
+        var response = new GenericResponse<PagedResponse<GiftCardTransactionDto>>();
+        
         try {
+            // Check authentication
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+            
+            // Check if user has access to this company
+            if (!transactionService.hasAccessToCompany(userResult.user, companyId)) {
+                logger.warn("User {} does not have access to company {}", userResult.user.getUsername(), companyId);
+                response.status = 403;
+                response.message = "Access denied to this company";
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+            
             PagedResponse<GiftCardTransactionDto> pagedTransactions = transactionService.getCompanyTransactionHistory(companyId, page, size);
-            res.data = pagedTransactions;
+            response.data = pagedTransactions;
+            response.message = "Company transaction history retrieved successfully";
+            
         } catch (Exception e) {
             logger.error("Error fetching transaction history for company {}: {}", companyId, e.getMessage());
-            res.message = e.getMessage();
-            res.status = -1;
+            response.message = e.getMessage();
+            response.status = -1;
         }
-        return res;
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/aggregations")
-    public GenericResponse<TransactionAggregationResponseDto> getTransactionAggregations() {
-        logger.info("GET /api/v1/giftcard/transaction/aggregations called");
-        var res = new GenericResponse<TransactionAggregationResponseDto>();
+    public ResponseEntity<GenericResponse<TransactionAggregationResponseDto>> getTransactionAggregations(
+            @RequestParam(required = false) Long companyId,
+            @RequestParam(required = false) Long storeId) {
+        logger.info("GET /api/v1/giftcard/transaction/aggregations called with companyId: {}, storeId: {}", companyId, storeId);
+        var response = new GenericResponse<TransactionAggregationResponseDto>();
         
         ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
         if (userResult.isError()) {
-            res.message = userResult.errorMessage;
-            res.status = 401;
-            return res;
+            response.message = userResult.errorMessage;
+            response.status = 401;
+            return ResponseEntity.status(userResult.httpStatus).body(response);
         }
         
         try {
-            var aggregations = transactionService.getTransactionAggregations(userResult.user);
-            res.data = aggregations;
+            var aggregations = transactionService.getTransactionAggregationsWithFiltering(userResult.user, companyId, storeId);
+            response.data = aggregations;
+            response.message = "Transaction aggregations retrieved successfully";
             logger.info("Successfully retrieved transaction aggregations for user: {}", userResult.user.getUsername());
         } catch (Exception e) {
             logger.error("Error getting transaction aggregations: {}", e.getMessage());
-            res.message = "Failed to retrieve transaction aggregations";
-            res.status = -1;
+            response.message = "Failed to retrieve transaction aggregations";
+            response.status = -1;
         }
         
-        return res;
+        return ResponseEntity.ok(response);
     }
 
 }

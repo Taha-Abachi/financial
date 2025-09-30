@@ -1,10 +1,10 @@
 package com.pars.financial.controller;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -141,28 +141,41 @@ public class DiscountCodeTransactionController {
     }
 
     @GetMapping("/list")
-    public GenericResponse<PagedResponse<DiscountCodeTransactionDto>> getTransactions(
+    public ResponseEntity<GenericResponse<PagedResponse<DiscountCodeTransactionDto>>> getTransactions(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        logger.info("GET /api/v1/discountcode/transaction/list called with page: {}, size: {}", page, size);
-        GenericResponse<PagedResponse<DiscountCodeTransactionDto>> response = new GenericResponse<>();
-        User apiUser = ApiUserUtil.getApiUserOrSetError(response, logger);
-        if (apiUser == null) {
-            return response;
-        }
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) Long companyId,
+            @RequestParam(required = false) Long storeId) {
+        logger.info("GET /api/v1/discountcode/transaction/list called with page: {}, size: {}, companyId: {}, storeId: {}", 
+                   page, size, companyId, storeId);
+        
+        var response = new GenericResponse<PagedResponse<DiscountCodeTransactionDto>>();
+        
         try {
-            PagedResponse<DiscountCodeTransactionDto> pagedTransactions = discountCodeTransactionService.getTransactions(page, size);
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+
+            PagedResponse<DiscountCodeTransactionDto> pagedTransactions = discountCodeTransactionService.getTransactionsForCurrentUserWithFiltering(
+                userResult.user, page, size, companyId, storeId);
+
             if (pagedTransactions.getContent() == null || pagedTransactions.getContent().isEmpty()) {
-                logger.warn("No discount code transactions found for page: {}, size: {}", page, size);
+                logger.warn("No discount code transactions found for user access level");
                 response.status = -1;
-                response.message = "No discount code transactions found";
+                response.message = "No discount code transactions found for your access level";
+            } else {
+                response.message = "Discount code transactions retrieved successfully";
             }
             response.data = pagedTransactions;
+            
         } catch (Exception e) {
             logger.error("Error fetching discount code transactions with pagination: {}", e.getMessage());
             response.status = -1;
             response.message = "Error fetching discount code transactions: " + e.getMessage();
         }
-        return response;
+        return ResponseEntity.ok(response);
     }
 }

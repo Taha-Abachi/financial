@@ -27,6 +27,7 @@ import com.pars.financial.repository.CustomerRepository;
 import com.pars.financial.repository.DiscountCodeRepository;
 import com.pars.financial.repository.DiscountCodeTransactionRepository;
 import com.pars.financial.repository.StoreRepository;
+import com.pars.financial.repository.CompanyRepository;
 
 @Service
 public class DiscountCodeTransactionService {
@@ -40,17 +41,19 @@ public class DiscountCodeTransactionService {
     private final DiscountCodeTransactionRepository transactionRepository;
     private final CustomerRepository customerRepository;
     private final StoreRepository storeRepository;
+    private final CompanyRepository companyRepository;
 
     private final CustomerService customerService;
     private final DiscountCodeService discountCodeService;
 
     private final DiscountCodeTransactionMapper mapper;
 
-    public DiscountCodeTransactionService(DiscountCodeRepository discountCodeRepository, DiscountCodeTransactionRepository discountCodeTransactionRepository, CustomerRepository customerRepository, StoreRepository storeRepository, CustomerService customerService, DiscountCodeTransactionMapper mapper, DiscountCodeService discountCodeService) {
+    public DiscountCodeTransactionService(DiscountCodeRepository discountCodeRepository, DiscountCodeTransactionRepository discountCodeTransactionRepository, CustomerRepository customerRepository, StoreRepository storeRepository, CompanyRepository companyRepository, CustomerService customerService, DiscountCodeTransactionMapper mapper, DiscountCodeService discountCodeService) {
         this.codeRepository = discountCodeRepository;
         this.transactionRepository = discountCodeTransactionRepository;
         this.customerRepository = customerRepository;
         this.storeRepository = storeRepository;
+        this.companyRepository = companyRepository;
         this.customerService = customerService;
         this.discountCodeService = discountCodeService;
         this.mapper = mapper;
@@ -343,4 +346,96 @@ public class DiscountCodeTransactionService {
             transactionPage.getTotalPages()
         );
     }
+
+    /**
+     * Get discount code transactions for current user with RBAC filtering
+     * @param user the current user
+     * @param page page number
+     * @param size page size
+     * @param companyId optional company filter (SUPERADMIN only)
+     * @param storeId optional store filter (SUPERADMIN only)
+     * @return PagedResponse of discount code transactions
+     */
+    public PagedResponse<DiscountCodeTransactionDto> getTransactionsForCurrentUserWithFiltering(User user, int page, int size, Long companyId, Long storeId) {
+        logger.debug("Fetching discount code transactions for user: {} with role: {} - page: {}, size: {}, companyId: {}, storeId: {}",
+                    user.getUsername(), user.getRole().getName(), page, size, companyId, storeId);
+
+        if (page < 0) { page = 0; }
+        if (size <= 0) { size = 10; }
+        if (size > 100) { size = 100; }
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<DiscountCodeTransaction> transactionPage;
+
+        switch (user.getRole().getName()) {
+            case "SUPERADMIN":
+            case "ADMIN":
+            case "API_USER":
+                if (companyId != null) {
+                    var company = companyRepository.findById(companyId);
+                    if (company.isEmpty()) {
+                        logger.warn("Company not found with ID: {}", companyId);
+                        throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND);
+                    }
+                    if (storeId != null) {
+                        var store = storeRepository.findById(storeId);
+                        if (store.isEmpty()) {
+                            logger.warn("Store not found with ID: {}", storeId);
+                            throw new ValidationException(ErrorCodes.STORE_NOT_FOUND);
+                        }
+                        if (!store.get().getCompany().getId().equals(companyId)) {
+                            logger.warn("Store {} does not belong to company {}", storeId, companyId);
+                            throw new ValidationException(ErrorCodes.STORE_NOT_FOUND);
+                        }
+                        transactionPage = transactionRepository.findByStoreId(storeId, pageable);
+                    } else {
+                        transactionPage = transactionRepository.findByCompanyId(companyId, pageable);
+                    }
+                } else if (storeId != null) {
+                    var store = storeRepository.findById(storeId);
+                    if (store.isEmpty()) {
+                        logger.warn("Store not found with ID: {}", storeId);
+                        throw new ValidationException(ErrorCodes.STORE_NOT_FOUND);
+                    }
+                    transactionPage = transactionRepository.findByStoreId(storeId, pageable);
+                } else {
+                    transactionPage = transactionRepository.findAll(pageable);
+                }
+                break;
+            case "COMPANY_USER":
+                if (user.getCompany() == null) {
+                    logger.warn("COMPANY_USER {} has no company assigned", user.getUsername());
+                    transactionPage = Page.empty(pageable);
+                } else {
+                    logger.debug("User {} has company access - returning transactions for company: {}",
+                               user.getUsername(), user.getCompany().getId());
+                    transactionPage = transactionRepository.findByCompanyId(user.getCompany().getId(), pageable);
+                }
+                break;
+            case "STORE_USER":
+                if (user.getStore() == null) {
+                    logger.warn("STORE_USER {} has no store assigned", user.getUsername());
+                    transactionPage = Page.empty(pageable);
+                } else {
+                    logger.debug("User {} has store access - returning transactions for store: {}",
+                               user.getUsername(), user.getStore().getId());
+                    transactionPage = transactionRepository.findByStoreId(user.getStore().getId(), pageable);
+                }
+                break;
+            default:
+                logger.warn("Unknown role {} for user {} - returning empty result",
+                           user.getRole().getName(), user.getUsername());
+                transactionPage = Page.empty(pageable);
+                break;
+        }
+        List<DiscountCodeTransactionDto> transactions = mapper.getFrom(transactionPage.getContent());
+        return new PagedResponse<>(
+            transactions,
+            transactionPage.getNumber(),
+            transactionPage.getSize(),
+            transactionPage.getTotalElements(),
+            transactionPage.getTotalPages()
+        );
+    }
+
 }

@@ -37,39 +37,83 @@ public class DiscountCodeController {
     }
 
     @GetMapping("/all")
-    public GenericResponse<PagedResponse<DiscountCodeDto>> getAllDiscountCodes(
+    public ResponseEntity<GenericResponse<PagedResponse<DiscountCodeDto>>> getAllDiscountCodes(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        logger.info("GET /api/v1/discountcode/all called with pagination - page: {}, size: {}", page, size);
-        GenericResponse<PagedResponse<DiscountCodeDto>> genericResponseDto = new GenericResponse<>();
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(required = false) Long companyId,
+            @RequestParam(required = false) Long storeId) {
+        logger.info("GET /api/v1/discountcode/all called with pagination - page: {}, size: {}, companyId: {}, storeId: {}",
+                   page, size, companyId, storeId);
+
+        var response = new GenericResponse<PagedResponse<DiscountCodeDto>>();
+
         try {
-            PagedResponse<DiscountCodeDto> pagedDiscountCodes = codeService.getAllDiscountCodes(page, size);
-            if (pagedDiscountCodes.getContent() == null || pagedDiscountCodes.getContent().isEmpty()) {
-                logger.warn("Discount code list not found");
-                genericResponseDto.status = -1;
-                genericResponseDto.message = "Discount code list not found";
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
             }
-            genericResponseDto.data = pagedDiscountCodes;
+
+            PagedResponse<DiscountCodeDto> pagedDiscountCodes = codeService.getDiscountCodesForCurrentUserWithFiltering(
+                userResult.user, page, size, companyId, storeId);
+
+            if (pagedDiscountCodes.getContent() == null || pagedDiscountCodes.getContent().isEmpty()) {
+                logger.warn("Discount code list not found for user access level");
+                response.status = -1;
+                response.message = "No discount codes found for your access level";
+            } else {
+                response.message = "Discount codes retrieved successfully";
+            }
+            response.data = pagedDiscountCodes;
+
         } catch (Exception e) {
             logger.error("Error fetching discount codes with pagination: {}", e.getMessage());
-            genericResponseDto.status = -1;
-            genericResponseDto.message = "Error fetching discount codes: " + e.getMessage();
+            response.status = -1;
+            response.message = "Error fetching discount codes: " + e.getMessage();
         }
-        return genericResponseDto;
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{code}")
-    public GenericResponse<DiscountCodeDto> discountCode(@PathVariable String code) {
+    public ResponseEntity<GenericResponse<DiscountCodeDto>> discountCode(@PathVariable String code) {
         logger.info("GET /api/v1/discountcode/{} called", code);
-        GenericResponse<DiscountCodeDto> response = new GenericResponse<>();
-        var dto = codeService.getDiscountCode(code);
-        if(dto == null){
-            logger.warn("Discount code not found for code {}", code);
+        var response = new GenericResponse<DiscountCodeDto>();
+
+        try {
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+
+            var dto = codeService.getDiscountCode(code);
+            if (dto == null) {
+                logger.warn("Discount code not found for code {}", code);
+                response.status = -1;
+                response.message = "Discount code not found";
+                return ResponseEntity.ok(response);
+            }
+
+            // Check RBAC access
+            if (!codeService.hasAccessToDiscountCode(userResult.user, dto)) {
+                logger.warn("User {} does not have access to discount code {}", userResult.user.getUsername(), code);
+                response.status = 403;
+                response.message = "Access denied to this discount code";
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            response.data = dto;
+            response.message = "Discount code retrieved successfully";
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Error fetching discount code {}: {}", code, e.getMessage());
             response.status = -1;
-            response.message = "Discount code not found";
+            response.message = "Error fetching discount code: " + e.getMessage();
+            return ResponseEntity.ok(response);
         }
-        response.data = dto;
-        return response;
     }
 
     @PostMapping("/issue")

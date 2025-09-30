@@ -21,7 +21,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/api/v1/giftcard/all?page={{page}}&size={{size}}",
+							"raw": "{{baseUrl}}/api/v1/giftcard/all?page={{page}}&size={{size}}&companyId={{companyId}}&storeId={{storeId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -41,10 +41,20 @@
 									"key": "size",
 									"value": "{{size}}",
 									"description": "Page size (default: 10, max: 100)"
+								},
+								{
+									"key": "companyId",
+									"value": "{{companyId}}",
+									"description": "Filter by company ID (optional, SUPERADMIN only)"
+								},
+								{
+									"key": "storeId",
+									"value": "{{storeId}}",
+									"description": "Filter by store ID (optional, SUPERADMIN only)"
 								}
 							]
 						},
-						"description": "Get a list of all gift cards with pagination"
+						"description": "Get a list of gift cards with pagination and RBAC filtering. SUPERADMIN can filter by companyId and/or storeId. COMPANY_USER sees only their company's gift cards. STORE_USER sees only their store's company gift cards."
 					},
 					"response": [
 						{
@@ -98,7 +108,7 @@
 								"{{serialNo}}"
 							]
 						},
-						"description": "Get details of a specific gift card by serial number"
+						"description": "Get details of a specific gift card by serial number. Access is controlled by RBAC - users can only access gift cards from their assigned company/store."
 					},
 					"response": [
 						{
@@ -148,7 +158,7 @@
 								"{{gcidentifier}}"
 							]
 						},
-						"description": "Get details of a specific gift card by identifier"
+						"description": "Get details of a specific gift card by identifier. Access is controlled by RBAC - users can only access gift cards from their assigned company/store."
 					},
 					"response": [
 						{
@@ -1113,7 +1123,7 @@
 								"{{serialNo}}"
 							]
 						},
-						"description": "Get transaction history for a gift card"
+						"description": "Get transaction history for a gift card. Access is controlled by RBAC - users can only access transactions for gift cards from their assigned company/store."
 					},
 					"response": [
 						{
@@ -1151,7 +1161,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/api/v1/giftcard/transaction/aggregations",
+							"raw": "{{baseUrl}}/api/v1/giftcard/transaction/aggregations?companyId={{companyId}}&storeId={{storeId}}",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -1161,9 +1171,21 @@
 								"giftcard",
 								"transaction",
 								"aggregations"
+							],
+							"query": [
+								{
+									"key": "companyId",
+									"value": "{{companyId}}",
+									"description": "Filter by company ID (optional, SUPERADMIN only)"
+								},
+								{
+									"key": "storeId",
+									"value": "{{storeId}}",
+									"description": "Filter by store ID (optional, SUPERADMIN only)"
+								}
 							]
 						},
-						"description": "Get transaction aggregations for today, last 7 days, and last 30 days. Returns count and amounts for Confirmed, Refunded, and Reversed transactions. For STORE_USER, only returns data for their assigned store. For SUPERADMIN, returns data for all stores."
+						"description": "Get transaction aggregations for today, last 7 days, and last 30 days. Returns count and amounts for CONFIRMED transactions only. SUPERADMIN can filter by companyId and/or storeId. COMPANY_USER sees only their company's data. STORE_USER sees only their store's data."
 					},
 					"response": [
 						{
@@ -1185,7 +1207,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": {\n    \"today\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 15,\n        \"totalAmount\": 150000,\n        \"totalOrderAmount\": 200000\n      },\n      {\n        \"status\": \"Refunded\",\n        \"count\": 2,\n        \"totalAmount\": 20000,\n        \"totalOrderAmount\": 25000\n      },\n      {\n        \"status\": \"Reversed\",\n        \"count\": 1,\n        \"totalAmount\": 10000,\n        \"totalOrderAmount\": 12000\n      }\n    ],\n    \"last7Days\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 85,\n        \"totalAmount\": 850000,\n        \"totalOrderAmount\": 1200000\n      },\n      {\n        \"status\": \"Refunded\",\n        \"count\": 8,\n        \"totalAmount\": 80000,\n        \"totalOrderAmount\": 100000\n      },\n      {\n        \"status\": \"Reversed\",\n        \"count\": 3,\n        \"totalAmount\": 30000,\n        \"totalOrderAmount\": 35000\n      }\n    ],\n    \"last30Days\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 350,\n        \"totalAmount\": 3500000,\n        \"totalOrderAmount\": 5000000\n      },\n      {\n        \"status\": \"Refunded\",\n        \"count\": 25,\n        \"totalAmount\": 250000,\n        \"totalOrderAmount\": 300000\n      },\n      {\n        \"status\": \"Reversed\",\n        \"count\": 12,\n        \"totalAmount\": 120000,\n        \"totalOrderAmount\": 140000\n      }\n    ]\n  }\n}"
+							"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": {\n    \"today\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 15,\n        \"totalAmount\": 150000,\n        \"totalOrderAmount\": 200000\n      }\n    ],\n    \"last7Days\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 85,\n        \"totalAmount\": 850000,\n        \"totalOrderAmount\": 1200000\n      }\n    ],\n    \"last30Days\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 350,\n        \"totalAmount\": 3500000,\n        \"totalOrderAmount\": 5000000\n      }\n    ]\n  }\n}"
 						},
 						{
 							"name": "Success Response - STORE_USER",
@@ -1206,7 +1228,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": {\n    \"today\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 5,\n        \"totalAmount\": 50000,\n        \"totalOrderAmount\": 75000\n      },\n      {\n        \"status\": \"Refunded\",\n        \"count\": 0,\n        \"totalAmount\": 0,\n        \"totalOrderAmount\": 0\n      },\n      {\n        \"status\": \"Reversed\",\n        \"count\": 1,\n        \"totalAmount\": 5000,\n        \"totalOrderAmount\": 6000\n      }\n    ],\n    \"last7Days\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 25,\n        \"totalAmount\": 250000,\n        \"totalOrderAmount\": 375000\n      },\n      {\n        \"status\": \"Refunded\",\n        \"count\": 2,\n        \"totalAmount\": 20000,\n        \"totalOrderAmount\": 25000\n      },\n      {\n        \"status\": \"Reversed\",\n        \"count\": 1,\n        \"totalAmount\": 5000,\n        \"totalOrderAmount\": 6000\n      }\n    ],\n    \"last30Days\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 100,\n        \"totalAmount\": 1000000,\n        \"totalOrderAmount\": 1500000\n      },\n      {\n        \"status\": \"Refunded\",\n        \"count\": 5,\n        \"totalAmount\": 50000,\n        \"totalOrderAmount\": 60000\n      },\n      {\n        \"status\": \"Reversed\",\n        \"count\": 3,\n        \"totalAmount\": 15000,\n        \"totalOrderAmount\": 18000\n      }\n    ]\n  }\n}"
+							"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": {\n    \"today\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 5,\n        \"totalAmount\": 50000,\n        \"totalOrderAmount\": 75000\n      }\n    ],\n    \"last7Days\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 25,\n        \"totalAmount\": 250000,\n        \"totalOrderAmount\": 375000\n      }\n    ],\n    \"last30Days\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 100,\n        \"totalAmount\": 1000000,\n        \"totalOrderAmount\": 1500000\n      }\n    ]\n  }\n}"
 						},
 						{
 							"name": "Success Response - No Data",
@@ -1227,7 +1249,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": {\n    \"today\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 0,\n        \"totalAmount\": 0,\n        \"totalOrderAmount\": 0\n      },\n      {\n        \"status\": \"Refunded\",\n        \"count\": 0,\n        \"totalAmount\": 0,\n        \"totalOrderAmount\": 0\n      },\n      {\n        \"status\": \"Reversed\",\n        \"count\": 0,\n        \"totalAmount\": 0,\n        \"totalOrderAmount\": 0\n      }\n    ],\n    \"last7Days\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 0,\n        \"totalAmount\": 0,\n        \"totalOrderAmount\": 0\n      },\n      {\n        \"status\": \"Refunded\",\n        \"count\": 0,\n        \"totalAmount\": 0,\n        \"totalOrderAmount\": 0\n      },\n      {\n        \"status\": \"Reversed\",\n        \"count\": 0,\n        \"totalAmount\": 0,\n        \"totalOrderAmount\": 0\n      }\n    ],\n    \"last30Days\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 0,\n        \"totalAmount\": 0,\n        \"totalOrderAmount\": 0\n      },\n      {\n        \"status\": \"Refunded\",\n        \"count\": 0,\n        \"totalAmount\": 0,\n        \"totalOrderAmount\": 0\n      },\n      {\n        \"status\": \"Reversed\",\n        \"count\": 0,\n        \"totalAmount\": 0,\n        \"totalOrderAmount\": 0\n      }\n    ]\n  }\n}"
+							"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": {\n    \"today\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 0,\n        \"totalAmount\": 0,\n        \"totalOrderAmount\": 0\n      }\n    ],\n    \"last7Days\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 0,\n        \"totalAmount\": 0,\n        \"totalOrderAmount\": 0\n      }\n    ],\n    \"last30Days\": [\n      {\n        \"status\": \"Confirmed\",\n        \"count\": 0,\n        \"totalAmount\": 0,\n        \"totalOrderAmount\": 0\n      }\n    ]\n  }\n}"
 						},
 						{
 							"name": "Error Response - Unauthorized",
@@ -1365,6 +1387,18 @@
 			"key": "orderAmountLarge",
 			"value": "5000000",
 			"type": "string"
+		},
+		{
+			"key": "companyId",
+			"value": "1",
+			"type": "string",
+			"description": "Company ID for filtering (SUPERADMIN only)"
+		},
+		{
+			"key": "storeId",
+			"value": "1",
+			"type": "string",
+			"description": "Store ID for filtering (SUPERADMIN only)"
 		}
 	]
 }

@@ -596,6 +596,147 @@ public class GiftCardService {
         
         return getGiftCardsForUser(currentUser, page, size);
     }
+
+    /**
+     * Get gift cards with RBAC and optional filtering for superadmin
+     * - SUPERADMIN: Can filter by companyId and/or storeId
+     * - COMPANY_USER: Only sees their company's gift cards
+     * - STORE_USER: Only sees their store's company's gift cards
+     */
+    @Transactional(readOnly = true)
+    public PagedResponse<GiftCardDto> getGiftCardsForCurrentUserWithFiltering(User user, int page, int size, Long companyId, Long storeId) {
+        logger.debug("Fetching gift cards for user: {} with role: {} - page: {}, size: {}, companyId: {}, storeId: {}", 
+                    user.getUsername(), user.getRole().getName(), page, size, companyId, storeId);
+        
+        // Validate pagination parameters
+        if (page < 0) {
+            page = 0;
+        }
+        if (size <= 0) {
+            size = 10; // Default page size
+        }
+        if (size > 100) {
+            size = 100; // Maximum page size
+        }
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<GiftCard> giftCardPage;
+        
+        // Role-based data filtering
+        switch (user.getRole().getName()) {
+            case "SUPERADMIN":
+            case "ADMIN":
+            case "API_USER":
+                // Superadmin can filter by company and/or store
+                if (companyId != null) {
+                    // Validate company exists
+                    var company = companyRepository.findById(companyId);
+                    if (company.isEmpty()) {
+                        logger.warn("Company not found with ID: {}", companyId);
+                        throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND);
+                    }
+                    
+                    if (storeId != null) {
+                        // Filter by both company and store
+                        var store = storeRepository.findById(storeId);
+                        if (store.isEmpty()) {
+                            logger.warn("Store not found with ID: {}", storeId);
+                            throw new ValidationException(ErrorCodes.STORE_NOT_FOUND);
+                        }
+                        // Validate store belongs to company
+                        if (!store.get().getCompany().getId().equals(companyId)) {
+                            logger.warn("Store {} does not belong to company {}", storeId, companyId);
+                            throw new ValidationException(ErrorCodes.STORE_NOT_FOUND);
+                        }
+                        // For now, return company's gift cards (store filtering would require additional repository method)
+                        giftCardPage = giftCardRepository.findByCompany(company.get(), pageable);
+                    } else {
+                        // Filter by company only
+                        giftCardPage = giftCardRepository.findByCompany(company.get(), pageable);
+                    }
+                } else if (storeId != null) {
+                    // Filter by store only
+                    var store = storeRepository.findById(storeId);
+                    if (store.isEmpty()) {
+                        logger.warn("Store not found with ID: {}", storeId);
+                        throw new ValidationException(ErrorCodes.STORE_NOT_FOUND);
+                    }
+                    giftCardPage = giftCardRepository.findByCompany(store.get().getCompany(), pageable);
+                } else {
+                    // No filtering - return all gift cards
+                    giftCardPage = giftCardRepository.findAll(pageable);
+                }
+                break;
+                
+            case "COMPANY_USER":
+                // Return gift cards of user's company
+                if (user.getCompany() == null) {
+                    logger.warn("COMPANY_USER {} has no company assigned", user.getUsername());
+                    giftCardPage = Page.empty(pageable);
+                } else {
+                    logger.debug("User {} has company access - returning gift cards for company: {}", 
+                               user.getUsername(), user.getCompany().getId());
+                    giftCardPage = giftCardRepository.findByCompany(user.getCompany(), pageable);
+                }
+                break;
+                
+            case "STORE_USER":
+                // Return gift cards of user's store's company
+                if (user.getStore() == null) {
+                    logger.warn("STORE_USER {} has no store assigned", user.getUsername());
+                    giftCardPage = Page.empty(pageable);
+                } else {
+                    logger.debug("User {} has store access - returning gift cards for store's company: {}", 
+                               user.getUsername(), user.getStore().getCompany().getId());
+                    giftCardPage = giftCardRepository.findByCompany(user.getStore().getCompany(), pageable);
+                }
+                break;
+                
+            default:
+                logger.warn("Unknown role {} for user {} - returning empty result", 
+                           user.getRole().getName(), user.getUsername());
+                giftCardPage = Page.empty(pageable);
+                break;
+        }
+        
+        List<GiftCardDto> giftCards = giftCardMapper.getFrom(giftCardPage.getContent());
+        
+        return new PagedResponse<>(
+            giftCards,
+            giftCardPage.getNumber(),
+            giftCardPage.getSize(),
+            giftCardPage.getTotalElements(),
+            giftCardPage.getTotalPages()
+        );
+    }
+
+    /**
+     * Check if user has access to a specific gift card
+     */
+    public boolean hasAccessToGiftCard(User user, GiftCardDto giftCard) {
+        String roleName = user.getRole().getName();
+        
+        switch (roleName) {
+            case "SUPERADMIN":
+            case "ADMIN":
+            case "API_USER":
+                return true;
+                
+            case "COMPANY_USER":
+                return user.getCompany() != null && 
+                       giftCard.companyId != null && 
+                       user.getCompany().getId().equals(giftCard.companyId);
+                       
+            case "STORE_USER":
+                return user.getStore() != null && 
+                       user.getStore().getCompany() != null &&
+                       giftCard.companyId != null &&
+                       user.getStore().getCompany().getId().equals(giftCard.companyId);
+                       
+            default:
+                return false;
+        }
+    }
 }
 
 
