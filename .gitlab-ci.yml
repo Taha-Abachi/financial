@@ -29,7 +29,7 @@ build-and-push:
 
 sonarqube-analyze:
   stage: analyzing
-  image: 192.168.0.214:5000:gradle:8.10.2
+  image: 192.168.0.214:5000/library/gradle:8.10.2
   services:
   - name: docker:dind
     command: ["--insecure-registry=192.168.0.214:5000"]
@@ -65,7 +65,7 @@ staging-deploy:
         if [ \$(docker ps -a -q -f name=^/$CONTAINER_NAME\$) ]; then
           docker stop $CONTAINER_NAME && docker rm $CONTAINER_NAME
         fi && \
-        docker run -d --restart always --name $CONTAINER_NAME -p 8003:8000 $IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+        docker run -d --restart always --name $CONTAINER_NAME -p 8082:8082 $IMAGE_NAME:$CI_COMMIT_SHORT_SHA
       "
   needs: ["build-and-push"]
   only:
