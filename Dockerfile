@@ -1,15 +1,18 @@
-# Use an official OpenJDK runtime as the base image
-FROM openjdk:21-jdk
+FROM 192.168.0.214:5000/gradle:8.10.2 AS builder
 
-LABEL authors="t.abachi"
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy the built JAR file into the container
-COPY financial-0.0.1-SNAPSHOT.jar financial-0.0.1-SNAPSHOT.jar
+COPY build.gradle settings.gradle ./
+COPY src ./src
 
-# Expose the port your application runs on
+RUN gradle clean build --no-daemon
+
+FROM 192.168.0.214:5000/openjdk:21-jdk
+
+WORKDIR /app
+
+COPY --from=builder /app/build/libs/*.jar app.jar
+
 EXPOSE 8081
 
-# Command to run the application
-ENTRYPOINT ["java", "-jar", "financial-0.0.1-SNAPSHOT.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
