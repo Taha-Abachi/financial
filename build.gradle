@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.4.3'
 	id 'io.spring.dependency-management' version '1.1.4'
+	id "org.sonarqube" version "5.0.0.4638"
 }
 
 group = 'com.pars'
@@ -51,4 +52,12 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+sonar {
+  properties {
+    property "sonar.projectKey", "meta_gift-card_financial_6ff4d91e-4f2b-4eba-9f9e-515a25a214c1"
+    property "sonar.projectName", "financial"
+    property "sonar.qualitygate.wait", true 
+  }
 }
