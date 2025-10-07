@@ -29,12 +29,12 @@ build-and-push:
 
 sonarqube-analyze:
   stage: analyzing
-  image: 192.168.0.214:5000/library/gradle:8.10.2
+  image: gradle:8.10.2-jdk21
   services:
   - name: docker:dind
     command: ["--insecure-registry=192.168.0.214:5000"]
-  before_script:
-    - echo $CI_REGISTRY_PASSWORD | docker login http://192.168.0.214:5000 -u $CI_REGISTRY_USER --password-stdin
+  #before_script:
+  #  - echo $CI_REGISTRY_PASSWORD | docker login http://192.168.0.214:5000 -u $CI_REGISTRY_USER --password-stdin
   script:
     - gradle sonarqube \
         -Dsonar.host.url=$SONAR_HOST_URL \
