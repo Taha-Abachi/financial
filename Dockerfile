@@ -1,4 +1,4 @@
-FROM 192.168.0.214:5000/gradle:8.10.2 AS builder
+FROM 192.168.0.214:5000/library/gradle:8.10.2 AS builder
 
 WORKDIR /app
 
