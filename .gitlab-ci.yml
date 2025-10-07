@@ -65,7 +65,8 @@ staging-deploy:
         if [ \$(docker ps -a -q -f name=^/$CONTAINER_NAME\$) ]; then
           docker stop $CONTAINER_NAME && docker rm $CONTAINER_NAME
         fi && \
-        docker run -d --restart always --name $CONTAINER_NAME -p 8082:8082 $IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+        docker run -d --name $CONTAINER_NAME --hostname $CONTAINER_NAME -p 8082:8082 -e POSTGRES_DB=credit -e POSTGRES_USER=pars \
+        -e POSTGRES_PASSWORD=srap -e POSTGRES_HOST=credit-db --network spring-pars --restart always $IMAGE_NAME:$CI_COMMIT_SHORT_SHA
       "
   needs: ["build-and-push"]
   only:
