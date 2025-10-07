@@ -1,46 +1,74 @@
 stages:
   - build
-  - deploy
+  - analyzing
+  - push
+  - staging-deploy
 
 variables:
-  DOCKER_IMAGE: "192.168.0.214:5002/my-app:$CI_COMMIT_SHORT_SHA"
-  DOCKER_HOST: tcp://docker:2375  # برای اتصال به Docker Daemon سرویس DinD
+  IMAGE_TAG: $CI_COMMIT_SHORT_SHA
+  GIT_DEPTH: "0"
+  SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
 
-before_script:
-  - 'which ssh-agent || ( apt-get update -y && apt-get install openssh-client -y )'
-  - eval $(ssh-agent -s)
-  - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
-  - mkdir -p ~/.ssh
-  - chmod 700 ~/.ssh
-  - ssh-keyscan 192.168.0.222 >> ~/.ssh/known_hosts
-  - chmod 644 ~/.ssh/known_hosts
-
-build:
+build-and-push:
   stage: build
-  image: docker:stable
+  image: 192.168.0.214:5000/docker:24.0.5
   services:
-    - name: dind:27.3.1-1
-      alias: docker
-  tags:
-    # - gift-runner
+    - name: docker:dind
+      command: ["--insecure-registry=192.168.0.214:5000"]
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | docker login http://192.168.0.214:5000 -u $CI_REGISTRY_USER --password-stdin
   script:
-    - docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD 192.168.0.214:5002
-    - docker build -t $DOCKER_IMAGE .
-    - docker push $DOCKER_IMAGE
+    - docker build -t $IMAGE_NAME:$CI_COMMIT_SHORT_SHA .
+    - docker push $IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+  only:
+    - stage
+  tags:
+    - giftcard
 
-deploy:
-  stage: deploy
-  image: docker:stable
+sonarqube-analyze:
+  stage: analyzing
+  image: 192.168.0.214:5000:gradle:8.10.2
   services:
-    - name: dind:27.3.1-1
-      alias: docker
-  tags:
-    # - gift-runner
+  - name: docker:dind
+    command: ["--insecure-registry=192.168.0.214:5000"]
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD | docker login http://192.168.0.214:5000 -u $CI_REGISTRY_USER --password-stdin
   script:
-    - ssh root@192.168.0.222 "
-        docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PASSWORD 192.168.0.214:5002 &&
-        docker pull $DOCKER_IMAGE &&
-        docker stop my-app || true &&
-        docker rm my-app || true &&
-        docker run -d --name my-app -p 8080:8080 $DOCKER_IMAGE
+    - gradle sonarqube \
+        -Dsonar.host.url=$SONAR_HOST_URL \
+        -Dsonar.login=$SONAR_TOKEN
+  allow_failure: true
+  only:
+    - stage
+  tags:
+    - giftcard
+  needs:
+    - build-and-push
+
+staging-deploy:
+  stage: staging-deploy
+  image: alpine:3.20
+  before_script:
+    - apk add --no-cache openssh-client docker-cli
+    - mkdir -p ~/.ssh
+    - echo "$DEPLOY_SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan 192.168.0.222 >> ~/.ssh/known_hosts
+
+  script:
+    - |
+      ssh -o StrictHostKeyChecking=no $DEPLOY_USER@192.168.0.222 "
+        echo \"$CI_REGISTRY_PASSWORD\" | docker login http://192.168.0.214:5000 -u \"$CI_REGISTRY_USER\" --password-stdin && \
+        docker pull $IMAGE_NAME:$CI_COMMIT_SHORT_SHA && \
+        if [ \$(docker ps -a -q -f name=^/$CONTAINER_NAME\$) ]; then
+          docker stop $CONTAINER_NAME && docker rm $CONTAINER_NAME
+        fi && \
+        docker run -d --restart always --name $CONTAINER_NAME -p 8003:8000 $IMAGE_NAME:$CI_COMMIT_SHORT_SHA
       "
+  needs: ["build-and-push"]
+  only:
+    - stage
+  tags:
+    - giftcard
