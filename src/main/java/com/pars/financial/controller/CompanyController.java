@@ -1,7 +1,5 @@
 package com.pars.financial.controller;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -41,13 +39,13 @@ public class CompanyController {
     /**
      * Get all companies with pagination
      * @param page the page number (0-based, default: 0)
-     * @param size the page size (default: 10, max: 100)
+     * @param size the page size (default: 10000, max: 100)
      * @return paginated list of companies
      */
     @GetMapping
     public ResponseEntity<PagedResponse<CompanyDto>> getAllCompanies(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10000") int size) {
         logger.info("Fetching companies with pagination - page: {}, size: {}", page, size);
         PagedResponse<CompanyDto> companies = companyService.getAllCompanies(page, size);
         return ResponseEntity.ok(companies);
@@ -143,13 +141,9 @@ public class CompanyController {
             @RequestParam(defaultValue = "10") int size) {
         logger.info("Fetching stores for company ID: {} with pagination - page: {}, size: {}", companyId, page, size);
         
-        // Verify company exists
+        // Verify company exists - findById throws ValidationException if not found
         try {
-            Company company = companyService.findById(companyId);
-            if (company == null) {
-                logger.warn("Company not found with ID: {}", companyId);
-                return ResponseEntity.notFound().build();
-            }
+            companyService.findById(companyId);
         } catch (Exception e) {
             logger.warn("Company not found with ID: {}", companyId);
             return ResponseEntity.notFound().build();

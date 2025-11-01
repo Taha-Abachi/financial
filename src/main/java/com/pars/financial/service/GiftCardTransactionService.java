@@ -217,6 +217,7 @@ public class GiftCardTransactionService {
         throw new GenericException("General Failure", null, -121);
     }
 
+    @SuppressWarnings("null")
     public GiftCardTransactionDto settleTransaction(User user, String clientTransactionId, long amount, String serialNo, UUID transactionId, TransactionType trxType, long orderAmount) {
         logger.info("Processing {} transaction for gift card: {}, amount: {}, transactionId: {}, orderAmount: {}", 
             trxType, serialNo, amount, transactionId, orderAmount);
@@ -340,6 +341,10 @@ public class GiftCardTransactionService {
                 transaction.setStatus(TransactionStatus.Confirmed);
                 debitTransaction.setStatus(TransactionStatus.Confirmed);
             }
+            case Credit -> {}
+            case Debit -> {}
+            case Redeem -> {}
+            default -> {}
         }
         var savedTransaction = transactionRepository.save(transaction);
         transactionRepository.save(debitTransaction);

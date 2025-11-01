@@ -55,14 +55,14 @@ public class CreditApplication {
                 "IIQ4G8A1IPB8KA8S"
         };
 
-        String[] test_apiKeys = new String[]//[4];
-        {
-                "1A1603AE1C9B62A3",
-                "AC004E2BC35D92A4",
-                "E9893A2122463696",
-                "F8B47401F2E3BD91",
+        // String[] test_apiKeys = new String[]//[4];
+        // {
+        //         "1A1603AE1C9B62A3",
+        //         "AC004E2BC35D92A4",
+        //         "E9893A2122463696",
+        //         "F8B47401F2E3BD91",
 
-        };
+        // };
 
 //        for (int i = 0; i < ops_apiKeys.length; i++) {
 //            ops_apiKeys[i] = RandomStringGenerator.generateRandomHexString(16);
@@ -70,7 +70,7 @@ public class CreditApplication {
 //        }
         var debug_SecretKey = "0123456789ABCDEF0123456789ABCDEF";
         var ops_SecretKey = "969382DCD1578F69B1C983AE0A18397E";
-        var test_SecretKey = "888882DCD1578F69B1C983AE0A18397E";
+        // var test_SecretKey = "888882DCD1578F69B1C983AE0A18397E";
 
         showEncryptedApiKey(ops_SecretKey, ops_apiKeys);
         showEncryptedApiKey(debug_SecretKey, ops_apiKeys);

@@ -49,6 +49,7 @@ public class AuthenticationService {
     @Transactional
     public LoginResponse login(LoginRequest loginRequest, String loginIp, String userAgent, String referrer) {
         try {
+            @SuppressWarnings("unused")
             Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword())
             );

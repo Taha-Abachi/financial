@@ -21,7 +21,7 @@ public interface BatchRepository extends JpaRepository<Batch, Long> {
     List<Batch> findByCompanyIdAndStatus(Long companyId, Batch.BatchStatus status);
     
     // Pagination methods
-    Page<Batch> findAll(Pageable pageable);
+    // findAll(Pageable) is already provided by JpaRepository, no need to redeclare
     Page<Batch> findByCompanyId(Long companyId, Pageable pageable);
     Page<Batch> findByRequestUserId(Long requestUserId, Pageable pageable);
     Page<Batch> findByBatchType(Batch.BatchType batchType, Pageable pageable);

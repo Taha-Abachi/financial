@@ -1,7 +1,6 @@
 package com.pars.financial.security;
 
 import com.pars.financial.service.JwtService;
-import com.pars.financial.security.ApiKeyAuthenticationToken;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
