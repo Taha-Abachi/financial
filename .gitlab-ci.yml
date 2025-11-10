@@ -20,7 +20,7 @@ build-and-push:
   before_script:
     - echo $CI_REGISTRY_PASSWORD | docker login http://192.168.0.214:5000 -u $CI_REGISTRY_USER --password-stdin
   script:
-    - docker build -t $IMAGE_NAME:$CI_COMMIT_SHORT_SHA .
+    - docker build -t $IMAGE_NAME:$CI_COMMIT_SHORT_SHA -f docker/stage.Dockerfile .
     - docker push $IMAGE_NAME:$CI_COMMIT_SHORT_SHA
   only:
     - stage
@@ -44,8 +44,6 @@ sonarqube-analyze:
     - stage
   tags:
     - giftcard
-  needs:
-    - build-and-push
 
 staging-deploy:
   stage: staging-deploy
@@ -66,9 +64,8 @@ staging-deploy:
           docker stop $CONTAINER_NAME && docker rm $CONTAINER_NAME
         fi && \
         docker run -d --name $CONTAINER_NAME --hostname $CONTAINER_NAME -p 8082:8082 -e POSTGRES_DB=credit -e POSTGRES_USER=pars \
-        -e POSTGRES_PASSWORD=srap -e POSTGRES_HOST=credit-db --network spring-pars --restart always $IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+        -e POSTGRES_PASSWORD=srap -e POSTGRES_HOST=credit-db --restart always $IMAGE_NAME:$CI_COMMIT_SHORT_SHA
       "
-  needs: ["build-and-push"]
   only:
     - stage
   tags:
