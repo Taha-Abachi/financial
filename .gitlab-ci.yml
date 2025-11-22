@@ -69,7 +69,10 @@ staging-deploy:
         -e POSTGRES_USER=taha \
         -e POSTGRES_PASSWORD=m73MFiQO4rSnhnPl \
         -e POSTGRES_HOST=192.168.0.211 \
-        --restart always $IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+        --network meta-net \
+        --network-alias $CONTAINER_NAME \
+        --restart unless-stopped \
+         $IMAGE_NAME:$CI_COMMIT_SHORT_SHA
       "
   only:
     - stage
@@ -111,11 +114,19 @@ production-deploy:
           docker stop $CONTAINER_NAME && docker rm $CONTAINER_NAME
         fi && \
         docker run -d --name $CONTAINER_NAME --hostname $CONTAINER_NAME \
-        -p 8082:8082 -e POSTGRES_DB=credit -e POSTGRES_USER=pars \
-        -e POSTGRES_PASSWORD=srap -e POSTGRES_HOST=credit-db \
-        --restart always $IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+        -p 8082:8082 \
+        -e PORT_NUMBER=8082 \
+        -e POSTGRES_DB=$PROD_DB \
+        -e POSTGRES_USER=$PROD_DB_USER \
+        -e POSTGRES_PASSWORD=$PROD_DB_PASS \
+        -e POSTGRES_HOST=$PROD_DB_HOST \
+        --network meta-net \
+        --network-alias $CONTAINER_NAME \
+        --restart unless-stopped \
+         $IMAGE_NAME:$CI_COMMIT_SHORT_SHA
       "
   only:
     - main
   tags:
     - prod
+
