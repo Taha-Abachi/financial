@@ -226,7 +226,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"realAmount\": 1000,\n    \"balance\": 1000,\n    \"remainingValidityPeriod\": 30,\n    \"storeLimited\": false,\n    \"allowedStoreIds\": [],\n    \"itemCategoryLimited\": false,\n    \"allowedItemCategoryIds\": []\n}"
+							"raw": "{\n    \"realAmount\": 1000,\n    \"balance\": 1000,\n    \"remainingValidityPeriod\": 30,\n    \"type\": \"PHYSICAL\",\n    \"storeLimited\": false,\n    \"allowedStoreIds\": [],\n    \"itemCategoryLimited\": false,\n    \"allowedItemCategoryIds\": []\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/giftcard/issue",
@@ -240,7 +240,7 @@
 								"issue"
 							]
 						},
-						"description": "Create a single gift card. Can include store and item category limitations."
+						"description": "Create a single gift card. Can include store and item category limitations. Type can be PHYSICAL or DIGITAL (default: PHYSICAL)."
 					},
 					"response": [
 						{
@@ -288,7 +288,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"realAmount\": 1000,\n    \"balance\": 1000,\n    \"remainingValidityPeriod\": 30,\n    \"count\": 5,\n    \"storeLimited\": false,\n    \"allowedStoreIds\": [],\n    \"itemCategoryLimited\": false,\n    \"allowedItemCategoryIds\": []\n}"
+							"raw": "{\n    \"realAmount\": 1000,\n    \"balance\": 1000,\n    \"remainingValidityPeriod\": 30,\n    \"count\": 5,\n    \"type\": \"PHYSICAL\",\n    \"storeLimited\": false,\n    \"allowedStoreIds\": [],\n    \"itemCategoryLimited\": false,\n    \"allowedItemCategoryIds\": []\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/giftcard/issuelist",
@@ -302,7 +302,7 @@
 								"issuelist"
 							]
 						},
-						"description": "Create multiple gift cards at once. Can include store and item category limitations."
+						"description": "Create multiple gift cards at once. Can include store and item category limitations. Type can be PHYSICAL or DIGITAL (default: PHYSICAL)."
 					},
 					"response": [
 						{
@@ -559,6 +559,237 @@
 					]
 				},
 				{
+					"name": "Register Gift Card",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "X-API-KEY",
+								"value": "{{API_USER_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/giftcard/register/{{serialNo}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"giftcard",
+								"register",
+								"{{serialNo}}"
+							]
+						},
+						"description": "Register a gift card to the current authenticated user. Sets the gift card's customer if it is not already set. Requires user authentication and a mobile phone number. Returns error if gift card is already registered to a customer."
+					},
+						"response": [
+							{
+								"name": "Success Response",
+								"originalRequest": {
+									"method": "POST",
+									"header": [],
+									"url": {
+										"raw": ""
+									}
+								},
+								"status": "OK",
+								"code": 200,
+								"_postman_previewlanguage": "json",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"cookie": [],
+								"body": ""
+							},
+							{
+								"name": "Error - Already Registered",
+								"originalRequest": {
+									"method": "POST",
+									"header": [],
+									"url": {
+										"raw": ""
+									}
+								},
+								"status": "Bad Request",
+								"code": 400,
+								"_postman_previewlanguage": "json",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"cookie": [],
+								"body": "{\n  \"status\": -1,\n  \"message\": \"Gift card is already registered to a customer\",\n  \"data\": null\n}"
+							}
+						]
+					},
+					{
+						"name": "Get Gift Cards by Customer",
+						"request": {
+							"method": "GET",
+							"header": [
+								{
+									"key": "Authorization",
+									"value": "Bearer {{accessToken}}",
+									"type": "text"
+								},
+								{
+									"key": "X-API-KEY",
+									"value": "{{API_USER_KEY}}",
+									"type": "text"
+								}
+							],
+							"url": {
+								"raw": "{{baseUrl}}/api/v1/giftcard/customer/{{customerId}}?page={{page}}&size={{size}}",
+								"host": [
+									"{{baseUrl}}"
+								],
+								"path": [
+									"api",
+									"v1",
+									"giftcard",
+									"customer",
+									"{{customerId}}"
+								],
+								"query": [
+									{
+										"key": "page",
+										"value": "{{page}}",
+										"description": "Page number (0-based, default: 0)"
+									},
+									{
+										"key": "size",
+										"value": "{{size}}",
+										"description": "Page size (default: 10, max: 100)"
+									}
+								]
+							},
+							"description": "Get gift cards for a specific customer. Accessible by API users (SUPERADMIN, ADMIN, API_USER) or the customer themselves (matched by phone number). API users can access any customer's gift cards. Regular customers can only access their own gift cards."
+						},
+						"response": [
+							{
+								"name": "Success Response",
+								"originalRequest": {
+									"method": "GET",
+									"header": [],
+									"url": {
+										"raw": ""
+									}
+								},
+								"status": "OK",
+								"code": 200,
+								"_postman_previewlanguage": "json",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"cookie": [],
+								"body": ""
+							},
+							{
+								"name": "Error - Access Denied",
+								"originalRequest": {
+									"method": "GET",
+									"header": [],
+									"url": {
+										"raw": ""
+									}
+								},
+								"status": "Bad Request",
+								"code": 400,
+								"_postman_previewlanguage": "json",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"cookie": [],
+								"body": "{\n  \"status\": -1,\n  \"message\": \"Access denied to this customer's gift cards\",\n  \"data\": null\n}"
+							}
+						]
+					},
+					{
+						"name": "Get My Gift Cards",
+						"request": {
+							"method": "GET",
+							"header": [
+								{
+									"key": "Authorization",
+									"value": "Bearer {{accessToken}}",
+									"type": "text"
+								},
+								{
+									"key": "X-API-KEY",
+									"value": "{{API_USER_KEY}}",
+									"type": "text"
+								}
+							],
+							"url": {
+								"raw": "{{baseUrl}}/api/v1/giftcard/customer/my?page={{page}}&size={{size}}",
+								"host": [
+									"{{baseUrl}}"
+								],
+								"path": [
+									"api",
+									"v1",
+									"giftcard",
+									"customer",
+									"my"
+								],
+								"query": [
+									{
+										"key": "page",
+										"value": "{{page}}",
+										"description": "Page number (0-based, default: 0)"
+									},
+									{
+										"key": "size",
+										"value": "{{size}}",
+										"description": "Page size (default: 10, max: 100)"
+									}
+								]
+							},
+							"description": "Get gift cards for the current authenticated user's customer. Automatically finds customer by user's phone number. Returns paginated list of gift cards registered to the current user."
+						},
+						"response": [
+							{
+								"name": "Success Response",
+								"originalRequest": {
+									"method": "GET",
+									"header": [],
+									"url": {
+										"raw": ""
+									}
+								},
+								"status": "OK",
+								"code": 200,
+								"_postman_previewlanguage": "json",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"cookie": [],
+								"body": ""
+							}
+						]
+					},
+				{
 					"name": "Issue Gift Card (Store + Item Category Limited)",
 					"request": {
 						"method": "POST",
@@ -581,7 +812,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"realAmount\": 1000,\n    \"balance\": 1000,\n    \"remainingValidityPeriod\": 30,\n    \"storeLimited\": true,\n    \"allowedStoreIds\": [1, 2, 3],\n    \"itemCategoryLimited\": true,\n    \"allowedItemCategoryIds\": [1, 2]\n}"
+							"raw": "{\n    \"realAmount\": 1000,\n    \"balance\": 1000,\n    \"remainingValidityPeriod\": 30,\n    \"type\": \"PHYSICAL\",\n    \"storeLimited\": true,\n    \"allowedStoreIds\": [1, 2, 3],\n    \"itemCategoryLimited\": true,\n    \"allowedItemCategoryIds\": [1, 2]\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/giftcard/issue",
@@ -648,7 +879,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"realAmount\": 1000,\n    \"balance\": 1000,\n    \"remainingValidityPeriod\": 30,\n    \"storeLimited\": false,\n    \"allowedStoreIds\": [],\n    \"itemCategoryLimited\": true,\n    \"allowedItemCategoryIds\": [1, 2, 3]\n}"
+							"raw": "{\n    \"realAmount\": 1000,\n    \"balance\": 1000,\n    \"remainingValidityPeriod\": 30,\n    \"type\": \"DIGITAL\",\n    \"storeLimited\": false,\n    \"allowedStoreIds\": [],\n    \"itemCategoryLimited\": true,\n    \"allowedItemCategoryIds\": [1, 2, 3]\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/giftcard/issue",
@@ -1399,6 +1630,12 @@
 			"value": "1",
 			"type": "string",
 			"description": "Store ID for filtering (SUPERADMIN only)"
+		},
+		{
+			"key": "customerId",
+			"value": "1",
+			"type": "string",
+			"description": "Customer ID for getting gift cards"
 		}
 	]
 }
