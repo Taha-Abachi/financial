@@ -789,6 +789,200 @@
 							}
 						]
 					},
+					{
+						"name": "Block Gift Card",
+						"request": {
+							"method": "PUT",
+							"header": [
+								{
+									"key": "Authorization",
+									"value": "Bearer {{accessToken}}",
+									"type": "text"
+								},
+								{
+									"key": "X-API-KEY",
+									"value": "{{API_USER_KEY}}",
+									"type": "text"
+								}
+							],
+							"url": {
+								"raw": "{{baseUrl}}/api/v1/giftcard/block/{{serialNo}}",
+								"host": [
+									"{{baseUrl}}"
+								],
+								"path": [
+									"api",
+									"v1",
+									"giftcard",
+									"block",
+									"{{serialNo}}"
+								]
+							},
+							"description": "Block a gift card by serial number. Only accessible by ADMIN and SUPERADMIN. Records the user who blocked the card and the block date."
+						},
+						"response": [
+							{
+								"name": "Success Response",
+								"originalRequest": {
+									"method": "PUT",
+									"header": [],
+									"url": {
+										"raw": ""
+									}
+								},
+								"status": "OK",
+								"code": 200,
+								"_postman_previewlanguage": "json",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"cookie": [],
+								"body": ""
+							},
+							{
+								"name": "Error - Already Blocked",
+								"originalRequest": {
+									"method": "PUT",
+									"header": [],
+									"url": {
+										"raw": ""
+									}
+								},
+								"status": "Bad Request",
+								"code": 400,
+								"_postman_previewlanguage": "json",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"cookie": [],
+								"body": "{\n  \"status\": -1,\n  \"message\": \"Gift card is already blocked\",\n  \"data\": null\n}"
+							},
+							{
+								"name": "Error - Not Found",
+								"originalRequest": {
+									"method": "PUT",
+									"header": [],
+									"url": {
+										"raw": ""
+									}
+								},
+								"status": "Not Found",
+								"code": 404,
+								"_postman_previewlanguage": "json",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"cookie": [],
+								"body": "{\n  \"status\": -1,\n  \"message\": \"Gift Card Not Found with serial No: {{serialNo}}\",\n  \"data\": null\n}"
+							}
+						]
+					},
+					{
+						"name": "Unblock Gift Card",
+						"request": {
+							"method": "PUT",
+							"header": [
+								{
+									"key": "Authorization",
+									"value": "Bearer {{accessToken}}",
+									"type": "text"
+								},
+								{
+									"key": "X-API-KEY",
+									"value": "{{API_USER_KEY}}",
+									"type": "text"
+								}
+							],
+							"url": {
+								"raw": "{{baseUrl}}/api/v1/giftcard/unblock/{{serialNo}}",
+								"host": [
+									"{{baseUrl}}"
+								],
+								"path": [
+									"api",
+									"v1",
+									"giftcard",
+									"unblock",
+									"{{serialNo}}"
+								]
+							},
+							"description": "Unblock a gift card by serial number. Only accessible by ADMIN and SUPERADMIN. Clears the blockedBy and blockedDate fields."
+						},
+						"response": [
+							{
+								"name": "Success Response",
+								"originalRequest": {
+									"method": "PUT",
+									"header": [],
+									"url": {
+										"raw": ""
+									}
+								},
+								"status": "OK",
+								"code": 200,
+								"_postman_previewlanguage": "json",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"cookie": [],
+								"body": ""
+							},
+							{
+								"name": "Error - Not Blocked",
+								"originalRequest": {
+									"method": "PUT",
+									"header": [],
+									"url": {
+										"raw": ""
+									}
+								},
+								"status": "Bad Request",
+								"code": 400,
+								"_postman_previewlanguage": "json",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"cookie": [],
+								"body": "{\n  \"status\": -1,\n  \"message\": \"Gift card is not blocked\",\n  \"data\": null\n}"
+							},
+							{
+								"name": "Error - Not Found",
+								"originalRequest": {
+									"method": "PUT",
+									"header": [],
+									"url": {
+										"raw": ""
+									}
+								},
+								"status": "Not Found",
+								"code": 404,
+								"_postman_previewlanguage": "json",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"cookie": [],
+								"body": "{\n  \"status\": -1,\n  \"message\": \"Gift Card Not Found with serial No: {{serialNo}}\",\n  \"data\": null\n}"
+							}
+						]
+					},
 				{
 					"name": "Issue Gift Card (Store + Item Category Limited)",
 					"request": {

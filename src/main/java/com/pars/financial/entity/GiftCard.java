@@ -53,6 +53,12 @@ public class GiftCard {
     @Column(columnDefinition = "boolean default false")
     private boolean blocked = false;
 
+    @ManyToOne
+    @JoinColumn(name = "blocked_by_user_id")
+    private User blockedBy;
+
+    private LocalDateTime blockedDate;
+
     @Column(columnDefinition = "boolean default false")
     private boolean storeLimited = false;
 
@@ -205,6 +211,22 @@ public class GiftCard {
 
     public void setBlocked(boolean blocked) {
         this.blocked = blocked;
+    }
+
+    public User getBlockedBy() {
+        return blockedBy;
+    }
+
+    public void setBlockedBy(User blockedBy) {
+        this.blockedBy = blockedBy;
+    }
+
+    public LocalDateTime getBlockedDate() {
+        return blockedDate;
+    }
+
+    public void setBlockedDate(LocalDateTime blockedDate) {
+        this.blockedDate = blockedDate;
     }
 
     public boolean isStoreLimited() {

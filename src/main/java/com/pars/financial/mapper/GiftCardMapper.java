@@ -52,6 +52,13 @@ public class GiftCardMapper {
         // Map type
         dto.type = gc.getType();
         
+        // Map blocked information
+        if (gc.getBlockedBy() != null) {
+            dto.blockedByUserId = gc.getBlockedBy().getId();
+            dto.blockedByUsername = gc.getBlockedBy().getUsername();
+        }
+        dto.blockedDate = gc.getBlockedDate();
+        
         dto.transactions = new ArrayList<>();
         var debits = gc.getTransactions().stream().filter(p->p.getTransactionType() == TransactionType.Debit).toList();
         for(GiftCardTransaction transaction : debits) {

@@ -2,6 +2,7 @@ package com.pars.financial.dto;
 
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.pars.financial.enums.GiftCardType;
@@ -22,6 +23,9 @@ public class GiftCardDto {
     public Long batchId;
     public String batchNumber;
     public GiftCardType type;
+    public Long blockedByUserId;
+    public String blockedByUsername;
+    public LocalDateTime blockedDate;
 
     public List<GiftCardTransactionDto> transactions;
 

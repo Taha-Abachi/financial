@@ -439,4 +439,94 @@ public class GiftCardController {
         }
         return ResponseEntity.ok(response);
     }
+
+    @PutMapping("/block/{serialNo}")
+    public ResponseEntity<GenericResponse<GiftCardDto>> blockGiftCard(
+            @PathVariable String serialNo) {
+        logger.info("PUT /api/v1/giftcard/block/{} called", serialNo);
+        var response = new GenericResponse<GiftCardDto>();
+
+        try {
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+
+            GiftCardDto giftCard = giftCardService.blockGiftCard(serialNo, true);
+            response.data = giftCard;
+            response.status = 200;
+            response.message = "Gift card blocked successfully";
+
+            logger.info("Successfully blocked gift card: {}", serialNo);
+            return ResponseEntity.ok(response);
+
+        } catch (com.pars.financial.exception.GiftCardNotFoundException e) {
+            logger.warn("Gift card not found: {}", serialNo);
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (com.pars.financial.exception.ValidationException e) {
+            logger.warn("Validation error blocking gift card {}: {}", serialNo, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error blocking gift card {}: {}", serialNo, e.getMessage());
+            response.status = 401;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        } catch (Exception e) {
+            logger.error("Error blocking gift card {}: {}", serialNo, e.getMessage(), e);
+            response.status = -1;
+            response.message = "Failed to block gift card: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PutMapping("/unblock/{serialNo}")
+    public ResponseEntity<GenericResponse<GiftCardDto>> unblockGiftCard(
+            @PathVariable String serialNo) {
+        logger.info("PUT /api/v1/giftcard/unblock/{} called", serialNo);
+        var response = new GenericResponse<GiftCardDto>();
+
+        try {
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+
+            GiftCardDto giftCard = giftCardService.blockGiftCard(serialNo, false);
+            response.data = giftCard;
+            response.status = 200;
+            response.message = "Gift card unblocked successfully";
+
+            logger.info("Successfully unblocked gift card: {}", serialNo);
+            return ResponseEntity.ok(response);
+
+        } catch (com.pars.financial.exception.GiftCardNotFoundException e) {
+            logger.warn("Gift card not found: {}", serialNo);
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (com.pars.financial.exception.ValidationException e) {
+            logger.warn("Validation error unblocking gift card {}: {}", serialNo, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error unblocking gift card {}: {}", serialNo, e.getMessage());
+            response.status = 401;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        } catch (Exception e) {
+            logger.error("Error unblocking gift card {}: {}", serialNo, e.getMessage(), e);
+            response.status = -1;
+            response.message = "Failed to unblock gift card: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
 }

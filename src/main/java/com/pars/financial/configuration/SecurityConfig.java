@@ -98,6 +98,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/giftcard/transaction/company/*").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN", "COMPANY_USER")
                         .requestMatchers("/api/v1/giftcard/report").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN")
                         .requestMatchers("/api/v1/giftcard/report/company/*").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN", "COMPANY_USER")
+                        .requestMatchers("/api/v1/giftcard/block/*").hasAnyRole("ADMIN", "SUPERADMIN")
+                        .requestMatchers("/api/v1/giftcard/unblock/*").hasAnyRole("ADMIN", "SUPERADMIN")
                         .requestMatchers("/api/v1/giftcard/*").hasAnyRole("ADMIN","API_USER", "SUPERADMIN", "COMPANY_USER")
                         .requestMatchers("/api/v1/giftcard/identifier/*").hasAnyRole("ADMIN","API_USER", "SUPERADMIN", "COMPANY_USER")
                         .requestMatchers("/api/v1/giftcard/transaction/checkStatus/").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN")

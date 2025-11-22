@@ -169,6 +169,12 @@ public class GiftCardTransactionService {
 
         var gc = giftCardRepository.findBySerialNo(serialNo.toUpperCase());
         if (gc != null){
+            // Check if gift card is blocked
+            if (gc.isBlocked()) {
+                logger.warn("Attempted to use blocked gift card: {}", serialNo);
+                throw new ValidationException(ErrorCodes.GIFT_CARD_INVALID, "Gift card is blocked and cannot be used");
+            }
+            
             validateStoreLimit(gc, storeId);
             validateCompanyAccess(gc, storeId);
             
@@ -231,6 +237,13 @@ public class GiftCardTransactionService {
         if (gc == null) {
             logger.warn("Gift card not found: {}", serialNo);
             throw new GiftCardNotFoundException("Gift Card Not Found.");
+        }
+        
+        // Check if gift card is blocked (for refund/reversal operations, we still allow them)
+        // But for other operations like confirmation, we should check
+        if (gc.isBlocked() && (trxType != TransactionType.Reversal && trxType != TransactionType.Refund)) {
+            logger.warn("Attempted to use blocked gift card: {} for transaction type: {}", serialNo, trxType);
+            throw new ValidationException(ErrorCodes.GIFT_CARD_INVALID, "Gift card is blocked and cannot be used");
         }
         
         GiftCardTransaction debitTransaction;

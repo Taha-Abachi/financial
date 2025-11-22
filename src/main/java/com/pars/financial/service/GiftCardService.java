@@ -908,6 +908,49 @@ public class GiftCardService {
             giftCardPage.getTotalPages()
         );
     }
+
+    /**
+     * Block or unblock a gift card by serial number
+     * @param serialNo the serial number of the gift card
+     * @param block true to block, false to unblock
+     * @return the updated gift card DTO
+     * @throws GiftCardNotFoundException if gift card not found
+     */
+    @Transactional
+    public GiftCardDto blockGiftCard(String serialNo, boolean block) {
+        logger.info("{} gift card with serialNo: {}", block ? "Blocking" : "Unblocking", serialNo);
+        
+        User currentUser = securityContextService.getCurrentUserOrThrow();
+        
+        GiftCard giftCard = giftCardRepository.findBySerialNo(serialNo);
+        if (giftCard == null) {
+            logger.warn("Gift card not found with serialNo: {}", serialNo);
+            throw new GiftCardNotFoundException("Gift Card Not Found with serial No: " + serialNo);
+        }
+
+        if (block) {
+            if (giftCard.isBlocked()) {
+                logger.warn("Gift card {} is already blocked", serialNo);
+                throw new ValidationException(ErrorCodes.GIFT_CARD_INVALID, "Gift card is already blocked");
+            }
+            giftCard.setBlocked(true);
+            giftCard.setBlockedBy(currentUser);
+            giftCard.setBlockedDate(java.time.LocalDateTime.now());
+            logger.info("Gift card {} blocked by user {}", serialNo, currentUser.getUsername());
+        } else {
+            if (!giftCard.isBlocked()) {
+                logger.warn("Gift card {} is not blocked", serialNo);
+                throw new ValidationException(ErrorCodes.GIFT_CARD_INVALID, "Gift card is not blocked");
+            }
+            giftCard.setBlocked(false);
+            giftCard.setBlockedBy(null);
+            giftCard.setBlockedDate(null);
+            logger.info("Gift card {} unblocked by user {}", serialNo, currentUser.getUsername());
+        }
+
+        GiftCard savedGiftCard = giftCardRepository.save(giftCard);
+        return giftCardMapper.getFrom(savedGiftCard);
+    }
 }
 
 
