@@ -16,7 +16,6 @@ import com.pars.financial.entity.GiftCardTransaction;
 import com.pars.financial.entity.DiscountCodeTransaction;
 import com.pars.financial.entity.Store;
 import com.pars.financial.entity.User;
-import com.pars.financial.enums.TransactionType;
 import com.pars.financial.repository.DiscountCodeTransactionRepository;
 import com.pars.financial.repository.GiftCardTransactionRepository;
 import com.pars.financial.repository.StoreRepository;
@@ -36,6 +35,39 @@ public class StoreUserService {
         this.giftCardTransactionRepository = giftCardTransactionRepository;
         this.discountCodeTransactionRepository = discountCodeTransactionRepository;
         this.storeRepository = storeRepository;
+    }
+
+    /**
+     * Get transaction summary based on user role
+     * - STORE_USER: Transactions for their assigned store
+     * - COMPANY_USER: Transactions for all stores in their company
+     * - SUPERADMIN: All transactions across all stores
+     */
+    @Transactional(readOnly = true)
+    public StoreTransactionSummary getTransactionSummary(User user) {
+        if (user == null || user.getRole() == null) {
+            logger.warn("Invalid user or user role");
+            return null;
+        }
+
+        String roleName = user.getRole().getName();
+        
+        switch (roleName) {
+            case "STORE_USER":
+                return getStoreTransactionSummary(user);
+                
+            case "COMPANY_USER":
+                return getCompanyTransactionSummary(user);
+                
+            case "SUPERADMIN":
+            case "ADMIN":
+                return getAllTransactionSummary(user);
+                
+            default:
+                logger.warn("User {} with role {} is not authorized for transaction summary", 
+                           user.getUsername(), roleName);
+                return null;
+        }
     }
 
     /**
@@ -62,11 +94,11 @@ public class StoreUserService {
         LocalDateTime last7DaysStart = todayStart.minusDays(7);
         LocalDateTime last30DaysStart = todayStart.minusDays(30);
 
-        // Get gift card transactions for the store
-        List<GiftCardTransaction> giftCardTransactions = giftCardTransactionRepository.findByStoreId(storeId);
+        // Get confirmed debit gift card transactions for the store
+        List<GiftCardTransaction> giftCardTransactions = giftCardTransactionRepository.findConfirmedDebitTransactionsByStoreId(storeId);
         
-        // Get discount code transactions for the store
-        List<DiscountCodeTransaction> discountCodeTransactions = discountCodeTransactionRepository.findByStoreId(storeId);
+        // Get confirmed redeem discount code transactions for the store
+        List<DiscountCodeTransaction> discountCodeTransactions = discountCodeTransactionRepository.findConfirmedRedeemTransactionsByStoreId(storeId);
 
         // Calculate gift card transaction totals
         calculateGiftCardTotals(summary, giftCardTransactions, todayStart, todayEnd, last7DaysStart, last30DaysStart);
@@ -76,6 +108,87 @@ public class StoreUserService {
 
         logger.info("Store transaction summary calculated for store {}: Today: {}, 7 days: {}, 30 days: {}", 
             storeName, summary.getTodayTotal(), summary.getLast7DaysTotal(), summary.getLast30DaysTotal());
+
+        return summary;
+    }
+
+    /**
+     * Get company transaction summary for a company user
+     * Includes transactions from all stores in the company
+     */
+    @Transactional(readOnly = true)
+    public StoreTransactionSummary getCompanyTransactionSummary(User companyUser) {
+        if (companyUser.getCompany() == null) {
+            logger.warn("Company user {} has no associated company", companyUser.getUsername());
+            return null;
+        }
+
+        Long companyId = companyUser.getCompany().getId();
+        String companyName = companyUser.getCompany().getName();
+        
+        logger.info("Getting transaction summary for company user {} (company: {})", 
+                   companyUser.getUsername(), companyName);
+
+        // Use companyId and companyName for the summary (storeId will be null, storeName will be company name)
+        StoreTransactionSummary summary = new StoreTransactionSummary(null, "Company: " + companyName);
+
+        // Calculate time boundaries
+        LocalDateTime todayStart = LocalDate.now().atStartOfDay();
+        LocalDateTime todayEnd = LocalDate.now().atTime(LocalTime.MAX);
+        LocalDateTime last7DaysStart = todayStart.minusDays(7);
+        LocalDateTime last30DaysStart = todayStart.minusDays(30);
+
+        // Get confirmed debit gift card transactions from all stores belonging to the company
+        List<GiftCardTransaction> giftCardTransactions = giftCardTransactionRepository.findConfirmedDebitTransactionsByStoreCompanyId(companyId);
+        
+        // Get confirmed redeem discount code transactions from all stores belonging to the company
+        List<DiscountCodeTransaction> discountCodeTransactions = 
+            discountCodeTransactionRepository.findConfirmedRedeemTransactionsByStoreCompanyId(companyId);
+
+        // Calculate gift card transaction totals
+        calculateGiftCardTotals(summary, giftCardTransactions, todayStart, todayEnd, last7DaysStart, last30DaysStart);
+
+        // Calculate discount code transaction totals
+        calculateDiscountCodeTotals(summary, discountCodeTransactions, todayStart, todayEnd, last7DaysStart, last30DaysStart);
+
+        logger.info("Company transaction summary calculated for company {}: Today: {}, 7 days: {}, 30 days: {}", 
+            companyName, summary.getTodayTotal(), summary.getLast7DaysTotal(), summary.getLast30DaysTotal());
+
+        return summary;
+    }
+
+    /**
+     * Get all transactions summary for SUPERADMIN
+     * Includes transactions from all stores across all companies
+     */
+    @Transactional(readOnly = true)
+    public StoreTransactionSummary getAllTransactionSummary(User adminUser) {
+        logger.info("Getting transaction summary for admin user {} (all transactions)", adminUser.getUsername());
+
+        StoreTransactionSummary summary = new StoreTransactionSummary(null, "All Transactions");
+
+        // Calculate time boundaries
+        LocalDateTime todayStart = LocalDate.now().atStartOfDay();
+        LocalDateTime todayEnd = LocalDate.now().atTime(LocalTime.MAX);
+        LocalDateTime last7DaysStart = todayStart.minusDays(7);
+        LocalDateTime last30DaysStart = todayStart.minusDays(30);
+
+        // Get all confirmed debit gift card transactions
+        List<GiftCardTransaction> giftCardTransactions = 
+            giftCardTransactionRepository.findAllConfirmedDebitTransactions();
+        
+        // Get all confirmed redeem discount code transactions
+        List<DiscountCodeTransaction> discountCodeTransactions = 
+            discountCodeTransactionRepository.findAllConfirmedRedeemTransactions();
+
+        // Calculate gift card transaction totals
+        calculateGiftCardTotals(summary, giftCardTransactions, todayStart, todayEnd, last7DaysStart, last30DaysStart);
+
+        // Calculate discount code transaction totals
+        calculateDiscountCodeTotals(summary, discountCodeTransactions, todayStart, todayEnd, last7DaysStart, last30DaysStart);
+
+        logger.info("All transactions summary calculated: Today: {}, 7 days: {}, 30 days: {}", 
+            summary.getTodayTotal(), summary.getLast7DaysTotal(), summary.getLast30DaysTotal());
 
         return summary;
     }
@@ -173,29 +286,27 @@ public class StoreUserService {
                                        LocalDateTime todayStart, LocalDateTime todayEnd,
                                        LocalDateTime last7DaysStart, LocalDateTime last30DaysStart) {
         
+        // Transactions are already filtered to confirmed debit transactions at repository level
         for (GiftCardTransaction transaction : transactions) {
             LocalDateTime trxDate = transaction.getTrxDate();
             BigDecimal amount = BigDecimal.valueOf(transaction.getAmount());
 
-            // Only count debit transactions (actual spending)
-            if (TransactionType.Debit.equals(transaction.getTransactionType())) {
-                // Today
-                if (trxDate.isAfter(todayStart) && trxDate.isBefore(todayEnd)) {
-                    summary.setTodayTotal(summary.getTodayTotal().add(amount));
-                    summary.setTodayTransactionCount(summary.getTodayTransactionCount() + 1);
-                }
+            // Today
+            if (trxDate.isAfter(todayStart) && trxDate.isBefore(todayEnd)) {
+                summary.setTodayTotal(summary.getTodayTotal().add(amount));
+                summary.setTodayTransactionCount(summary.getTodayTransactionCount() + 1);
+            }
 
-                // Last 7 days
-                if (trxDate.isAfter(last7DaysStart) && trxDate.isBefore(todayEnd)) {
-                    summary.setLast7DaysTotal(summary.getLast7DaysTotal().add(amount));
-                    summary.setLast7DaysTransactionCount(summary.getLast7DaysTransactionCount() + 1);
-                }
+            // Last 7 days
+            if (trxDate.isAfter(last7DaysStart) && trxDate.isBefore(todayEnd)) {
+                summary.setLast7DaysTotal(summary.getLast7DaysTotal().add(amount));
+                summary.setLast7DaysTransactionCount(summary.getLast7DaysTransactionCount() + 1);
+            }
 
-                // Last 30 days
-                if (trxDate.isAfter(last30DaysStart) && trxDate.isBefore(todayEnd)) {
-                    summary.setLast30DaysTotal(summary.getLast30DaysTotal().add(amount));
-                    summary.setLast30DaysTransactionCount(summary.getLast30DaysTransactionCount() + 1);
-                }
+            // Last 30 days
+            if (trxDate.isAfter(last30DaysStart) && trxDate.isBefore(todayEnd)) {
+                summary.setLast30DaysTotal(summary.getLast30DaysTotal().add(amount));
+                summary.setLast30DaysTransactionCount(summary.getLast30DaysTransactionCount() + 1);
             }
         }
     }
@@ -204,29 +315,27 @@ public class StoreUserService {
                                            LocalDateTime todayStart, LocalDateTime todayEnd,
                                            LocalDateTime last7DaysStart, LocalDateTime last30DaysStart) {
         
+        // Transactions are already filtered to confirmed redeem transactions at repository level
         for (DiscountCodeTransaction transaction : transactions) {
             LocalDateTime trxDate = transaction.getTrxDate();
             BigDecimal discountAmount = BigDecimal.valueOf(transaction.getDiscountAmount());
 
-            // Only count redeem transactions (actual discount usage)
-            if (TransactionType.Redeem.equals(transaction.getTrxType())) {
-                // Today
-                if (trxDate.isAfter(todayStart) && trxDate.isBefore(todayEnd)) {
-                    summary.setTodayTotal(summary.getTodayTotal().add(discountAmount));
-                    summary.setTodayTransactionCount(summary.getTodayTransactionCount() + 1);
-                }
+            // Today
+            if (trxDate.isAfter(todayStart) && trxDate.isBefore(todayEnd)) {
+                summary.setTodayTotal(summary.getTodayTotal().add(discountAmount));
+                summary.setTodayTransactionCount(summary.getTodayTransactionCount() + 1);
+            }
 
-                // Last 7 days
-                if (trxDate.isAfter(last7DaysStart) && trxDate.isBefore(todayEnd)) {
-                    summary.setLast7DaysTotal(summary.getLast7DaysTotal().add(discountAmount));
-                    summary.setLast7DaysTransactionCount(summary.getLast7DaysTransactionCount() + 1);
-                }
+            // Last 7 days
+            if (trxDate.isAfter(last7DaysStart) && trxDate.isBefore(todayEnd)) {
+                summary.setLast7DaysTotal(summary.getLast7DaysTotal().add(discountAmount));
+                summary.setLast7DaysTransactionCount(summary.getLast7DaysTransactionCount() + 1);
+            }
 
-                // Last 30 days
-                if (trxDate.isAfter(last30DaysStart) && trxDate.isBefore(todayEnd)) {
-                    summary.setLast30DaysTotal(summary.getLast30DaysTotal().add(discountAmount));
-                    summary.setLast30DaysTransactionCount(summary.getLast30DaysTransactionCount() + 1);
-                }
+            // Last 30 days
+            if (trxDate.isAfter(last30DaysStart) && trxDate.isBefore(todayEnd)) {
+                summary.setLast30DaysTotal(summary.getLast30DaysTotal().add(discountAmount));
+                summary.setLast30DaysTransactionCount(summary.getLast30DaysTransactionCount() + 1);
             }
         }
     }

@@ -4,6 +4,8 @@ package com.pars.financial.dto;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.pars.financial.enums.GiftCardType;
+
 public class GiftCardDto {
     public String serialNo;
     public long balance;
@@ -19,6 +21,7 @@ public class GiftCardDto {
     public boolean itemCategoryLimited;
     public Long batchId;
     public String batchNumber;
+    public GiftCardType type;
 
     public List<GiftCardTransactionDto> transactions;
 
@@ -76,5 +79,13 @@ public class GiftCardDto {
 
     public void setBatchNumber(String batchNumber) {
         this.batchNumber = batchNumber;
+    }
+
+    public GiftCardType getType() {
+        return type;
+    }
+
+    public void setType(GiftCardType type) {
+        this.type = type;
     }
 }

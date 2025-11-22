@@ -49,6 +49,9 @@ public class GiftCardMapper {
             dto.batchNumber = batch.getBatchNumber();
         }
         
+        // Map type
+        dto.type = gc.getType();
+        
         dto.transactions = new ArrayList<>();
         var debits = gc.getTransactions().stream().filter(p->p.getTransactionType() == TransactionType.Debit).toList();
         for(GiftCardTransaction transaction : debits) {

@@ -2,6 +2,7 @@ package com.pars.financial.controller;
 
 import com.pars.financial.dto.BatchCreateRequest;
 import com.pars.financial.dto.BatchDto;
+import com.pars.financial.dto.BatchDetailDto;
 import com.pars.financial.dto.BatchReportDto;
 import com.pars.financial.dto.GenericResponse;
 import com.pars.financial.dto.PagedResponse;
@@ -32,13 +33,17 @@ public class BatchController {
 
     @GetMapping("/list")
     public ResponseEntity<GenericResponse<PagedResponse<BatchDto>>> getAllBatches(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) Long companyId) {
-        logger.info("GET /api/v1/batches/list called with pagination - page: {}, size: {}, companyId: {}", page, size, companyId);
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(value = "size", required = false) Integer size,
+            @RequestParam(value = "companyId", required = false) Long companyId) {
+        // Use defaults if not provided
+        int pageValue = (page != null) ? page : 0;
+        int sizeValue = (size != null) ? size : 10;
+        
+        logger.info("GET /api/v1/batches/list called with pagination - page: {}, size: {}, companyId: {}", pageValue, sizeValue, companyId);
         var response = new GenericResponse<PagedResponse<BatchDto>>();
         try {
-            PagedResponse<BatchDto> pagedBatches = batchService.getBatchesForCurrentUser(page, size, companyId);
+            PagedResponse<BatchDto> pagedBatches = batchService.getBatchesForCurrentUser(pageValue, sizeValue, companyId);
             
             if (pagedBatches.getContent() == null || pagedBatches.getContent().isEmpty()) {
                 response.status = -1;
@@ -95,6 +100,16 @@ public class BatchController {
             response.message = e.getMessage();
         }
         return response;
+    }
+
+    @GetMapping("/batch-number/{batchNumber}/details")
+    public ResponseEntity<GenericResponse<BatchDetailDto>> getBatchDetailsByBatchNumber(@PathVariable(value = "batchNumber") String batchNumber) {
+        logger.info("GET /api/v1/batches/batch-number/{}/details called", batchNumber);
+        BatchDetailDto batchDetails = batchService.getBatchDetailsByBatchNumber(batchNumber);
+        var response = new GenericResponse<BatchDetailDto>();
+        response.data = batchDetails;
+        response.message = "Batch details retrieved successfully";
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/create")

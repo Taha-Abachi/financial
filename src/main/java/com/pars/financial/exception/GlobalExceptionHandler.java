@@ -2,17 +2,33 @@ package com.pars.financial.exception;
 
 import com.pars.financial.constants.ErrorCodes;
 import com.pars.financial.dto.GenericResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<GenericResponse<?>> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
+        logger.error("Validation error: {}", ex.getMessage());
+        String errorMessage = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .findFirst()
+                .orElse("Validation failed");
+        ValidationException validationException = new ValidationException(ErrorCodes.INVALID_REQUEST, errorMessage);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new GenericResponse<>(validationException));
+    }
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<GenericResponse<?>> handleRuntimeException(RuntimeException ex) {
+        logger.error("Runtime exception: {}", ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new GenericResponse<>(ErrorCodes.SYSTEM_ERROR));
     }

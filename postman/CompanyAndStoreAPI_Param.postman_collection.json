@@ -1672,7 +1672,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/api/v1/store/user/transaction-summary",
+							"raw": "{{baseUrl}}/api/v1/store/transaction-summary",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -1680,11 +1680,10 @@
 								"api",
 								"v1",
 								"store",
-								"user",
 								"transaction-summary"
 							]
 						},
-						"description": "Get transaction summary for the authenticated store user including today, last 7 days, and last 30 days subtotals"
+						"description": "Get transaction summary based on user role. STORE_USER sees store transactions, COMPANY_USER sees company transactions, SUPERADMIN/ADMIN sees all transactions. Includes today, last 7 days, and last 30 days subtotals for confirmed debit/redeem transactions."
 					},
 					"response": [
 						{
@@ -1698,7 +1697,7 @@
 									}
 								],
 								"url": {
-									"raw": "{{baseUrl}}/api/v1/store/user/transaction-summary",
+									"raw": "{{baseUrl}}/api/v1/store/transaction-summary",
 									"host": [
 										"{{baseUrl}}"
 									],
@@ -1706,7 +1705,6 @@
 										"api",
 										"v1",
 										"store",
-										"user",
 										"transaction-summary"
 									]
 								}

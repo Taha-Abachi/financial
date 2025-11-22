@@ -97,18 +97,29 @@ public class AuthenticationService {
     @Transactional
     public RefreshTokenResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
         try {
-            // Validate refresh token from JWT
-            if (!jwtService.isRefreshToken(refreshTokenRequest.getRefreshToken())) {
-                throw new GenericException("Invalid refresh token");
+            String refreshTokenValue = refreshTokenRequest.getRefreshToken();
+            
+            // First, try to find the refresh token in the database (UUID format)
+            RefreshToken storedRefreshToken = refreshTokenRepository.findByToken(refreshTokenValue)
+                .orElse(null);
+            
+            User user;
+            
+            // If not found as UUID, try to parse as JWT (for backwards compatibility)
+            if (storedRefreshToken == null) {
+                if (!jwtService.isRefreshToken(refreshTokenValue)) {
+                    throw new GenericException("Invalid refresh token");
+                }
+                String username = jwtService.extractUsername(refreshTokenValue);
+                user = userRepository.findByUsername(username)
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+                // Try to find by JWT token (if stored as JWT)
+                storedRefreshToken = refreshTokenRepository.findByToken(refreshTokenValue)
+                    .orElseThrow(() -> new GenericException("Refresh token not found"));
+            } else {
+                // Token found in database, get user from the token entity
+                user = storedRefreshToken.getUser();
             }
-
-            String username = jwtService.extractUsername(refreshTokenRequest.getRefreshToken());
-            User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
-            // Check if refresh token exists in database and is not revoked
-            RefreshToken storedRefreshToken = refreshTokenRepository.findByToken(refreshTokenRequest.getRefreshToken())
-                .orElseThrow(() -> new GenericException("Refresh token not found"));
 
             if (storedRefreshToken.isRevoked()) {
                 throw new GenericException("Refresh token has been revoked");

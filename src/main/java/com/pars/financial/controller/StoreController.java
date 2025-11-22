@@ -58,13 +58,16 @@ public class StoreController {
 
     @GetMapping
     public ResponseEntity<GenericResponse<PagedResponse<StoreDto>>> getStores(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) Long companyId) {
+            @RequestParam(value="page", defaultValue = "0", required = false) Integer page,
+            @RequestParam(value="size", defaultValue = "10", required = false) Integer size,
+            @RequestParam(value="companyId", required = false) Long companyId) {
+        logger.info("GET /api/v1/store called with pagination - page: {}, size: {}, companyId: {}", page, size, companyId);
         GenericResponse<PagedResponse<StoreDto>> genericResponseDto = new GenericResponse<>();
+        int pageValue = (page != null) ? page : 0;
+        int sizeValue = (size != null) ? size : 10;    
         try {
-            PagedResponse<StoreDto> pagedStores = storeService.getStoresForCurrentUser(page, size, companyId);
-            
+            PagedResponse<StoreDto> pagedStores = storeService.getStoresForCurrentUser(pageValue, sizeValue, companyId);
+            logger.info("Found {} stores for current user (page {})", pagedStores.getContent().size(), pageValue);
             if (pagedStores.getContent() == null || pagedStores.getContent().isEmpty()) {
                 genericResponseDto.status = -1;
                 if (companyId != null) {
@@ -202,20 +205,23 @@ public class StoreController {
     // ==================== STORE USER ENDPOINTS ====================
 
     /**
-     * Get store transaction summary with time-based subtotals for store users
+     * Get transaction summary with RBAC support
+     * - SUPERADMIN/ADMIN: All transactions across all stores
+     * - COMPANY_USER: All transactions for all stores in their company
+     * - STORE_USER: Transactions for their assigned store
      */
-    @GetMapping("/user/transaction-summary")
-    @Operation(summary = "Get store transaction summary", 
-               description = "Get transaction summary for the authenticated store user including today, last 7 days, and last 30 days subtotals")
+    @GetMapping("/transaction-summary")
+    @Operation(summary = "Get transaction summary", 
+               description = "Get transaction summary based on user role. SUPERADMIN sees all transactions, COMPANY_USER sees company transactions, STORE_USER sees store transactions")
     @ApiResponses(value = {
         @ApiResponse(responseCode = "200", description = "Transaction summary retrieved successfully",
                     content = @Content(schema = @Schema(implementation = StoreTransactionSummary.class))),
         @ApiResponse(responseCode = "401", description = "Unauthorized - Invalid or missing authentication"),
-        @ApiResponse(responseCode = "403", description = "Forbidden - User is not a store user"),
-        @ApiResponse(responseCode = "404", description = "Store not found for user")
+        @ApiResponse(responseCode = "403", description = "Forbidden - User role not authorized"),
+        @ApiResponse(responseCode = "404", description = "Store/Company not found for user")
     })
-    public ResponseEntity<GenericResponse<StoreTransactionSummary>> getStoreUserTransactionSummary() {
-        logger.info("GET /api/v1/store/user/transaction-summary called");
+    public ResponseEntity<GenericResponse<StoreTransactionSummary>> getTransactionSummary() {
+        logger.info("GET /api/v1/store/transaction-summary called");
 
         GenericResponse<StoreTransactionSummary> response = new GenericResponse<>();
 
@@ -227,17 +233,11 @@ public class StoreController {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
             }
 
-            if (!storeUserService.isStoreUser(currentUser)) {
-                response.status = -1;
-                response.message = "Access denied. User must be a store user with an associated store.";
-                logger.warn("Non-store user {} attempted to access store user endpoint", currentUser.getUsername());
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
-            }
-
-            StoreTransactionSummary summary = storeUserService.getStoreTransactionSummary(currentUser);
+            // Authorization is handled by Spring Security in SecurityConfig
+            StoreTransactionSummary summary = storeUserService.getTransactionSummary(currentUser);
             if (summary == null) {
                 response.status = -1;
-                response.message = "Store not found for user";
+                response.message = "Transaction summary not available. Please ensure your user is properly configured with a store or company.";
                 return ResponseEntity.notFound().build();
             }
 

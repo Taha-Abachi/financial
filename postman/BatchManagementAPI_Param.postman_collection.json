@@ -105,6 +105,78 @@
 			]
 		},
 		{
+			"name": "Get Batch Details by Batch Number (ADMIN or SUPERADMIN)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/batches/batch-number/BATCH12345678/details",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"batches",
+						"batch-number",
+						"BATCH12345678",
+						"details"
+					]
+				},
+				"description": "Get batch details including list of gift cards or discount codes created in the batch"
+			},
+			"response": [
+				{
+					"name": "Success Response - Gift Card Batch",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": ""
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"status\": 0,\n  \"message\": \"Batch details retrieved successfully\",\n  \"data\": {\n    \"batch\": {\n      \"id\": 2,\n      \"batchNumber\": \"BATCH87654321\",\n      \"batchType\": \"GIFT_CARD\",\n      \"description\": \"Corporate gift cards for employees\",\n      \"requestDate\": \"2024-01-01T10:00:00\",\n      \"totalCount\": 50,\n      \"status\": \"COMPLETED\",\n      \"processedCount\": 50,\n      \"failedCount\": 0,\n      \"errorMessage\": null,\n      \"createdAt\": \"2024-01-01T10:00:00\",\n      \"updatedAt\": \"2024-01-01T10:05:00\",\n      \"requestUser\": {\n        \"id\": 1,\n        \"name\": \"Administrator\"\n      },\n      \"company\": {\n        \"id\": 1,\n        \"name\": \"Test Company\"\n      }\n    },\n    \"giftCards\": [\n      {\n        \"serialNo\": \"GC1234567890\",\n        \"balance\": 5000,\n        \"realAmount\": 5000,\n        \"remainingValidityPeriod\": 90,\n        \"expiryDate\": \"2024-04-01\",\n        \"isActive\": true,\n        \"isBlocked\": false,\n        \"isAnonymous\": true,\n        \"identifier\": 1234567890,\n        \"companyId\": 1,\n        \"storeLimited\": false,\n        \"itemCategoryLimited\": false,\n        \"batchId\": 2,\n        \"batchNumber\": \"BATCH87654321\"\n      },\n      {\n        \"serialNo\": \"GC0987654321\",\n        \"balance\": 10000,\n        \"realAmount\": 10000,\n        \"remainingValidityPeriod\": 180,\n        \"expiryDate\": \"2024-07-01\",\n        \"isActive\": true,\n        \"isBlocked\": false,\n        \"isAnonymous\": true,\n        \"identifier\": 9876543210,\n        \"companyId\": 1,\n        \"storeLimited\": true,\n        \"itemCategoryLimited\": false,\n        \"batchId\": 2,\n        \"batchNumber\": \"BATCH87654321\"\n      }\n    ],\n    \"discountCodes\": null\n  }\n}"
+				},
+				{
+					"name": "Success Response - Discount Code Batch",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": ""
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n  \"status\": 0,\n  \"message\": \"Batch details retrieved successfully\",\n  \"data\": {\n    \"batch\": {\n      \"id\": 1,\n      \"batchNumber\": \"BATCH12345678\",\n      \"batchType\": \"DISCOUNT_CODE\",\n      \"description\": \"Holiday promotion discount codes\",\n      \"requestDate\": \"2024-01-01T10:00:00\",\n      \"totalCount\": 100,\n      \"status\": \"COMPLETED\",\n      \"processedCount\": 100,\n      \"failedCount\": 0,\n      \"errorMessage\": null,\n      \"createdAt\": \"2024-01-01T10:00:00\",\n      \"updatedAt\": \"2024-01-01T10:05:00\",\n      \"requestUser\": {\n        \"id\": 1,\n        \"name\": \"Administrator\"\n      },\n      \"company\": {\n        \"id\": 1,\n        \"name\": \"Test Company\"\n      }\n    },\n    \"giftCards\": null,\n    \"discountCodes\": [\n      {\n        \"code\": \"HOLIDAY10\",\n        \"serialNo\": 1001,\n        \"percentage\": 10,\n        \"maxDiscountAmount\": 5000,\n        \"minimumBillAmount\": 1000,\n        \"constantDiscountAmount\": 0,\n        \"discountType\": \"PERCENTAGE\",\n        \"usageLimit\": 1,\n        \"currentUsageCount\": 0,\n        \"issueDate\": \"2024-01-01T10:00:00\",\n        \"expireDate\": \"2024-01-31\",\n        \"remainingValidityPeriod\": 30,\n        \"used\": false,\n        \"active\": true,\n        \"isUsable\": true,\n        \"redeemDate\": null,\n        \"transactions\": [],\n        \"companyId\": 1,\n        \"storeLimited\": false,\n        \"itemCategoryLimited\": false,\n        \"batchId\": 1,\n        \"batchNumber\": \"BATCH12345678\"\n      },\n      {\n        \"code\": \"HOLIDAY20\",\n        \"serialNo\": 1002,\n        \"percentage\": 20,\n        \"maxDiscountAmount\": 10000,\n        \"minimumBillAmount\": 2000,\n        \"constantDiscountAmount\": 0,\n        \"discountType\": \"PERCENTAGE\",\n        \"usageLimit\": 1,\n        \"currentUsageCount\": 0,\n        \"issueDate\": \"2024-01-01T10:00:00\",\n        \"expireDate\": \"2024-03-01\",\n        \"remainingValidityPeriod\": 60,\n        \"used\": false,\n        \"active\": true,\n        \"isUsable\": true,\n        \"redeemDate\": null,\n        \"transactions\": [],\n        \"companyId\": 1,\n        \"storeLimited\": true,\n        \"itemCategoryLimited\": false,\n        \"batchId\": 1,\n        \"batchNumber\": \"BATCH12345678\"\n      }\n    ]\n  }\n}"
+				}
+			]
+		},
+		{
 			"name": "Create Discount Code Batch (ADMIN or SUPERADMIN)",
 			"request": {
 				"method": "POST",
@@ -194,7 +266,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"batchType\": \"GIFT_CARD\",\n    \"description\": \"Corporate gift cards for employees\",\n    \"totalCount\": 50,\n    \"companyId\": 1,\n    \"requestUserId\": 1,\n    \"giftCardRequests\": [\n        {\n            \"companyId\": 1,\n            \"balance\": 5000,\n            \"remainingValidityPeriod\": 90,\n            \"count\": 25,\n            \"storeLimited\": false,\n            \"allowedStoreIds\": [],\n            \"itemCategoryLimited\": false,\n            \"allowedItemCategoryIds\": []\n        },\n        {\n            \"companyId\": 1,\n            \"balance\": 10000,\n            \"remainingValidityPeriod\": 180,\n            \"count\": 25,\n            \"storeLimited\": true,\n            \"allowedStoreIds\": [1, 2, 3],\n            \"itemCategoryLimited\": false,\n            \"allowedItemCategoryIds\": []\n        }\n    ]\n}"
+					"raw": "{\n    \"batchType\": \"GIFT_CARD\",\n    \"description\": \"Corporate gift cards for employees\",\n    \"totalCount\": 50,\n    \"companyId\": 1,\n    \"requestUserId\": 1,\n    \"giftCardRequests\": [\n        {\n            \"companyId\": 1,\n            \"balance\": 5000,\n            \"realAmount\": 5000,\n            \"remainingValidityPeriod\": 90,\n            \"count\": 25,\n            \"storeLimited\": false,\n            \"allowedStoreIds\": [],\n            \"itemCategoryLimited\": false,\n            \"allowedItemCategoryIds\": []\n        },\n        {\n            \"companyId\": 1,\n            \"balance\": 10000,\n            \"realAmount\": 10000,\n            \"remainingValidityPeriod\": 180,\n            \"count\": 25,\n            \"storeLimited\": true,\n            \"allowedStoreIds\": [1, 2, 3],\n            \"itemCategoryLimited\": false,\n            \"allowedItemCategoryIds\": []\n        }\n    ]\n}"
 				},
 				"url": {
 					"raw": "{{baseUrl}}/api/v1/batches/create",

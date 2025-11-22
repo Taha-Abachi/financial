@@ -129,6 +129,11 @@ public class StoreService {
      */
     @Transactional(readOnly = true)
     public PagedResponse<StoreDto> getStoresForUser(User user, int page, int size) {
+        if (user == null || user.getRole() == null) {
+            logger.warn("User or user role is null - returning empty result");
+            return new PagedResponse<>(List.of(), 0, size > 0 ? size : 10, 0, 0);
+        }
+        
         logger.debug("Fetching stores for user: {} with role: {} - page: {}, size: {}", 
                     user.getUsername(), user.getRole().getName(), page, size);
         
@@ -147,7 +152,8 @@ public class StoreService {
         Page<Store> storePage;
         
         // Role-based data filtering
-        switch (user.getRole().getName()) {
+        String roleName = user.getRole().getName();
+        switch (roleName) {
             case "SUPERADMIN":
             case "ADMIN":
             case "API_USER":
@@ -184,7 +190,7 @@ public class StoreService {
                 
             default:
                 logger.warn("Unknown role {} for user {} - returning empty result", 
-                           user.getRole().getName(), user.getUsername());
+                           roleName, user.getUsername());
                 storePage = Page.empty(pageable);
                 break;
         }
@@ -272,6 +278,10 @@ public class StoreService {
      * Check if user can filter by a specific company
      */
     private boolean canUserFilterByCompany(User user, Long companyId) {
+        if (user == null || user.getRole() == null) {
+            return false;
+        }
+        
         String roleName = user.getRole().getName();
         
         switch (roleName) {
@@ -297,6 +307,10 @@ public class StoreService {
      * Check if user has access to a specific store
      */
     private boolean hasAccessToStore(User user, StoreDto store) {
+        if (user == null || user.getRole() == null) {
+            return false;
+        }
+        
         String roleName = user.getRole().getName();
         
         switch (roleName) {

@@ -8,6 +8,8 @@ import java.util.Set;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -20,6 +22,8 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+
+import com.pars.financial.enums.GiftCardType;
 
 @Entity
 @Table(indexes = {
@@ -85,6 +89,10 @@ public class GiftCard {
     @ManyToOne
     @JoinColumn(name = "batch_id")
     private Batch batch;
+
+    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "varchar(20) NOT NULL DEFAULT 'PHYSICAL'")
+    private GiftCardType type = GiftCardType.PHYSICAL;
 
     public Customer getCustomer() {
         return customer;
@@ -237,5 +245,13 @@ public class GiftCard {
 
     public void setTransactions(List<GiftCardTransaction> transactions) {
         this.transactions = transactions;
+    }
+
+    public GiftCardType getType() {
+        return type;
+    }
+
+    public void setType(GiftCardType type) {
+        this.type = type;
     }
 }

@@ -32,8 +32,10 @@ public class SecurityContextService {
         String username = authentication.getName();
         try {
             User user = userService.getUserEntityByUsername(username);
-            if (user != null) {
+            if (user != null && user.getRole() != null) {
                 logger.debug("Retrieved current user: {} with role: {}", username, user.getRole().getName());
+            } else if (user != null) {
+                logger.warn("User {} has no role assigned", username);
             }
             return user;
         } catch (Exception e) {

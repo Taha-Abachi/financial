@@ -1,5 +1,6 @@
 package com.pars.financial.dto;
 
+import com.pars.financial.enums.GiftCardType;
 
 public class GiftCardIssueRequest {
     private long balance;
@@ -11,6 +12,7 @@ public class GiftCardIssueRequest {
     private java.util.List<Long> allowedStoreIds;
     private boolean itemCategoryLimited = false;
     private java.util.List<Long> allowedItemCategoryIds;
+    private GiftCardType type = GiftCardType.PHYSICAL;
 
     public long getCompanyId() {
         return companyId;
@@ -77,5 +79,13 @@ public class GiftCardIssueRequest {
 
     public void setAllowedItemCategoryIds(java.util.List<Long> allowedItemCategoryIds) {
         this.allowedItemCategoryIds = allowedItemCategoryIds;
+    }
+
+    public GiftCardType getType() {
+        return type;
+    }
+
+    public void setType(GiftCardType type) {
+        this.type = type;
     }
 }

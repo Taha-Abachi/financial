@@ -29,7 +29,7 @@ public class JwtService {
     public String generateAccessToken(User user, String loginIp, String userAgent, String referrer) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", user.getId());
-        claims.put("role", user.getRole().getName());
+        claims.put("role", user.getRole() != null ? user.getRole().getName() : null);
         claims.put("loginIp", loginIp);
         claims.put("userAgent", userAgent);
         claims.put("referrer", referrer);
@@ -41,7 +41,7 @@ public class JwtService {
     public String generateRefreshToken(User user, String loginIp, String userAgent, String referrer) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", user.getId());
-        claims.put("role", user.getRole().getName());
+        claims.put("role", user.getRole() != null ? user.getRole().getName() : null);
         claims.put("loginIp", loginIp);
         claims.put("userAgent", userAgent);
         claims.put("referrer", referrer);

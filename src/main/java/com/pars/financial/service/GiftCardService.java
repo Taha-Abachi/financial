@@ -7,6 +7,7 @@ import com.pars.financial.dto.PagedResponse;
 import com.pars.financial.entity.GiftCard;
 import com.pars.financial.entity.Store;
 import com.pars.financial.entity.User;
+import com.pars.financial.enums.GiftCardType;
 import com.pars.financial.exception.GiftCardNotFoundException;
 import com.pars.financial.constants.ErrorCodes;
 import com.pars.financial.exception.ValidationException;
@@ -68,10 +69,14 @@ public class GiftCardService {
     }
 
     private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod, long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds) {
-        return issueGiftCard(realAmount, amount, validityPeriod, companyId, storeLimited, allowedStoreIds, itemCategoryLimited, allowedItemCategoryIds, null);
+        return issueGiftCard(realAmount, amount, validityPeriod, companyId, storeLimited, allowedStoreIds, itemCategoryLimited, allowedItemCategoryIds, null, GiftCardType.PHYSICAL);
     }
 
     private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod, long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, com.pars.financial.entity.Batch batch) {
+        return issueGiftCard(realAmount, amount, validityPeriod, companyId, storeLimited, allowedStoreIds, itemCategoryLimited, allowedItemCategoryIds, batch, GiftCardType.PHYSICAL);
+    }
+
+    private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod, long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, com.pars.financial.entity.Batch batch, GiftCardType type) {
         logger.debug("Issuing new gift card with realAmount: {}, amount: {}, validityPeriod: {}, storeLimited: {}, itemCategoryLimited: {}", realAmount, amount, validityPeriod, storeLimited, itemCategoryLimited);
         validateRealAmount(realAmount);
         var company = companyRepository.findById(companyId);
@@ -124,6 +129,9 @@ public class GiftCardService {
         if (batch != null) {
             gc.setBatch(batch);
         }
+        
+        // Set type (default to PHYSICAL if null)
+        gc.setType(type != null ? type : GiftCardType.PHYSICAL);
         
         logger.debug("Created gift card with serialNo: {}", gc.getSerialNo());
         return gc;
@@ -190,7 +198,8 @@ public class GiftCardService {
         logger.info("Generating new gift card with request: {}", request);
         var giftCard = issueGiftCard(request.getRealAmount(), request.getBalance(), request.getRemainingValidityPeriod(), 
                                    request.getCompanyId(), request.isStoreLimited(), request.getAllowedStoreIds(), 
-                                   request.isItemCategoryLimited(), request.getAllowedItemCategoryIds());
+                                   request.isItemCategoryLimited(), request.getAllowedItemCategoryIds(), null, 
+                                   request.getType() != null ? request.getType() : GiftCardType.PHYSICAL);
         var savedCard = giftCardRepository.save(giftCard);
         logger.info("Generated gift card with serialNo: {}", savedCard.getSerialNo());
         return giftCardMapper.getFrom(savedCard);
@@ -210,10 +219,11 @@ public class GiftCardService {
     public List<GiftCardDto> generateGiftCards(GiftCardIssueRequest request) {
         logger.info("Generating {} gift cards with request: {}", request.getCount(), request);
         var ls = new ArrayList<GiftCard>();
+        GiftCardType cardType = request.getType() != null ? request.getType() : GiftCardType.PHYSICAL;
         for (var i = 0; i < request.getCount(); i++) {
             ls.add(issueGiftCard(request.getRealAmount(), request.getBalance(), request.getRemainingValidityPeriod(), 
                                 request.getCompanyId(), request.isStoreLimited(), request.getAllowedStoreIds(), 
-                                request.isItemCategoryLimited(), request.getAllowedItemCategoryIds()));
+                                request.isItemCategoryLimited(), request.getAllowedItemCategoryIds(), null, cardType));
         }
         var savedCards = giftCardRepository.saveAll(ls);
         logger.info("Generated {} gift cards successfully", request.getCount());
@@ -223,10 +233,11 @@ public class GiftCardService {
     public List<GiftCardDto> generateGiftCards(GiftCardIssueRequest request, com.pars.financial.entity.Batch batch) {
         logger.info("Generating {} gift cards with request: {} for batch: {}", request.getCount(), request, batch.getBatchNumber());
         var ls = new ArrayList<GiftCard>();
+        GiftCardType cardType = request.getType() != null ? request.getType() : GiftCardType.PHYSICAL;
         for (var i = 0; i < request.getCount(); i++) {
             ls.add(issueGiftCard(request.getRealAmount(), request.getBalance(), request.getRemainingValidityPeriod(), 
                                 request.getCompanyId(), request.isStoreLimited(), request.getAllowedStoreIds(), 
-                                request.isItemCategoryLimited(), request.getAllowedItemCategoryIds(), batch));
+                                request.isItemCategoryLimited(), request.getAllowedItemCategoryIds(), batch, cardType));
         }
         var savedCards = giftCardRepository.saveAll(ls);
         logger.info("Generated {} gift cards successfully for batch: {}", request.getCount(), batch.getBatchNumber());

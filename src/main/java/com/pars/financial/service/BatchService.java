@@ -21,9 +21,16 @@ import com.pars.financial.exception.ValidationException;
 import com.pars.financial.repository.BatchRepository;
 import com.pars.financial.repository.CompanyRepository;
 import com.pars.financial.repository.UserRepository;
+import com.pars.financial.repository.GiftCardRepository;
+import com.pars.financial.repository.DiscountCodeRepository;
+import com.pars.financial.mapper.GiftCardMapper;
+import com.pars.financial.mapper.DiscountCodeMapper;
 import com.pars.financial.utils.RandomStringGenerator;
 import com.pars.financial.entity.User;
 import com.pars.financial.dto.PagedResponse;
+import com.pars.financial.dto.BatchDetailDto;
+import com.pars.financial.dto.GiftCardDto;
+import com.pars.financial.dto.DiscountCodeDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -39,8 +46,12 @@ public class BatchService {
     private final GiftCardService giftCardService;
     private final ObjectMapper objectMapper;
     private final SecurityContextService securityContextService;
+    private final GiftCardRepository giftCardRepository;
+    private final DiscountCodeRepository discountCodeRepository;
+    private final GiftCardMapper giftCardMapper;
+    private final DiscountCodeMapper discountCodeMapper;
 
-    public BatchService(BatchRepository batchRepository, CompanyRepository companyRepository, UserRepository userRepository, DiscountCodeService discountCodeService, GiftCardService giftCardService, ObjectMapper objectMapper, SecurityContextService securityContextService) {
+    public BatchService(BatchRepository batchRepository, CompanyRepository companyRepository, UserRepository userRepository, DiscountCodeService discountCodeService, GiftCardService giftCardService, ObjectMapper objectMapper, SecurityContextService securityContextService, GiftCardRepository giftCardRepository, DiscountCodeRepository discountCodeRepository, GiftCardMapper giftCardMapper, DiscountCodeMapper discountCodeMapper) {
         this.batchRepository = batchRepository;
         this.companyRepository = companyRepository;
         this.userRepository = userRepository;
@@ -48,6 +59,10 @@ public class BatchService {
         this.giftCardService = giftCardService;
         this.objectMapper = objectMapper;
         this.securityContextService = securityContextService;
+        this.giftCardRepository = giftCardRepository;
+        this.discountCodeRepository = discountCodeRepository;
+        this.giftCardMapper = giftCardMapper;
+        this.discountCodeMapper = discountCodeMapper;
     }
 
     public List<BatchDto> getAllBatches() {
@@ -75,6 +90,41 @@ public class BatchService {
             throw new ValidationException(ErrorCodes.BATCH_NOT_FOUND);
         }
         return BatchDto.fromEntity(batch.get());
+    }
+
+    @Transactional(readOnly = true)
+    public BatchDetailDto getBatchDetailsByBatchNumber(String batchNumber) {
+        logger.info("Fetching batch details by batch number: {}", batchNumber);
+        
+        // Get the batch
+        var batchOptional = batchRepository.findByBatchNumber(batchNumber);
+        if (batchOptional.isEmpty()) {
+            logger.warn("Batch not found with batch number: {}", batchNumber);
+            throw new ValidationException(ErrorCodes.BATCH_NOT_FOUND);
+        }
+        
+        Batch batch = batchOptional.get();
+        logger.debug("Found batch with id: {}, type: {}", batch.getId(), batch.getBatchType());
+        
+        BatchDto batchDto = BatchDto.fromEntity(batch);
+        
+        List<GiftCardDto> giftCards = null;
+        List<DiscountCodeDto> discountCodes = null;
+        
+        // Fetch gift cards or discount codes based on batch type
+        if (batch.getBatchType() == Batch.BatchType.GIFT_CARD) {
+            logger.debug("Fetching gift cards for batch id: {}", batch.getId());
+            var giftCardEntities = giftCardRepository.findByBatchId(batch.getId());
+            giftCards = giftCardMapper.getFrom(giftCardEntities);
+            logger.debug("Found {} gift cards for batch {}", giftCards != null ? giftCards.size() : 0, batchNumber);
+        } else if (batch.getBatchType() == Batch.BatchType.DISCOUNT_CODE) {
+            logger.debug("Fetching discount codes for batch id: {}", batch.getId());
+            var discountCodeEntities = discountCodeRepository.findByBatchId(batch.getId());
+            discountCodes = discountCodeMapper.getFrom(discountCodeEntities);
+            logger.debug("Found {} discount codes for batch {}", discountCodes != null ? discountCodes.size() : 0, batchNumber);
+        }
+        
+        return new BatchDetailDto(batchDto, giftCards, discountCodes);
     }
 
     @Transactional
@@ -205,6 +255,15 @@ public class BatchService {
         if (request.getGiftCardRequests() != null && !request.getGiftCardRequests().isEmpty()) {
             for (int i = 0; i < request.getGiftCardRequests().size(); i++) {
                 var giftCardRequest = request.getGiftCardRequests().get(i);
+                
+                // Validate that realAmount is provided for gift card requests
+                if (giftCardRequest.getRealAmount() <= 0) {
+                    logger.error("Gift card request {} in batch {} is missing realAmount or has invalid value", 
+                                i + 1, batch.getBatchNumber());
+                    throw new ValidationException(ErrorCodes.INVALID_REQUEST, 
+                        "Real amount is required for gift card requests. Gift card request at index " + (i + 1) + " is missing realAmount.");
+                }
+                
                 try {
                     giftCardService.generateGiftCards(giftCardRequest, batch);
                     processed += giftCardRequest.getCount();
@@ -223,6 +282,7 @@ public class BatchService {
                     var defaultRequest = new com.pars.financial.dto.GiftCardIssueRequest();
                     defaultRequest.setCompanyId(company.getId());
                     defaultRequest.setBalance(1000L);
+                    defaultRequest.setRealAmount(1000L); // Set realAmount to match balance for default requests
                     defaultRequest.setRemainingValidityPeriod(30L);
                     defaultRequest.setCount(1);
                     
@@ -408,6 +468,17 @@ public class BatchService {
      */
     @Transactional(readOnly = true)
     public PagedResponse<BatchDto> getBatchesForUser(User user, int page, int size) {
+        // Validate user and role
+        if (user == null) {
+            logger.warn("User is null - returning empty result");
+            return new PagedResponse<>(List.of(), 0, size, 0, 0);
+        }
+        
+        if (user.getRole() == null) {
+            logger.warn("User {} has no role assigned - returning empty result", user.getUsername());
+            return new PagedResponse<>(List.of(), 0, size, 0, 0);
+        }
+        
         logger.debug("Fetching batches for user: {} with role: {} - page: {}, size: {}", 
                     user.getUsername(), user.getRole().getName(), page, size);
         
@@ -517,6 +588,9 @@ public class BatchService {
      * Check if user can filter by a specific company
      */
     private boolean canUserFilterByCompany(User user, Long companyId) {
+        if (user == null || user.getRole() == null) {
+            return false;
+        }
         String roleName = user.getRole().getName();
         
         switch (roleName) {
@@ -542,6 +616,9 @@ public class BatchService {
      * Check if user has access to a specific batch
      */
     private boolean hasAccessToBatch(User user, BatchDto batch) {
+        if (user == null || user.getRole() == null || batch == null) {
+            return false;
+        }
         String roleName = user.getRole().getName();
         
         switch (roleName) {

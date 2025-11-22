@@ -82,6 +82,7 @@ public class SecurityConfig {
                         // API endpoints
                         .requestMatchers("/api/v1/customer").hasAnyRole("ADMIN", "SUPERADMIN")
                         .requestMatchers("/api/v1/store").hasAnyRole("ADMIN", "SUPERADMIN", "COMPANY_USER")
+                        .requestMatchers("/api/v1/store/transaction-summary").hasAnyRole("ADMIN", "SUPERADMIN", "COMPANY_USER", "STORE_USER")
                         .requestMatchers("/api/v1/companies").hasAnyRole("ADMIN", "SUPERADMIN", "COMPANY_USER")
                         .requestMatchers("/api/v1/giftcard/issue*").hasAnyRole("ADMIN", "SUPERADMIN")
                         .requestMatchers("/api/v1/discountcode/issue*").hasAnyRole("ADMIN", "SUPERADMIN")

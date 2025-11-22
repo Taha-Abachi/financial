@@ -50,8 +50,20 @@ public interface DiscountCodeTransactionRepository extends JpaRepository<Discoun
     
     Page<DiscountCodeTransaction> findByStoreId(Long storeId, Pageable pageable);
     
+    // Store-specific methods - confirmed redeem transactions only
+    @org.springframework.data.jpa.repository.Query("SELECT t FROM DiscountCodeTransaction t WHERE t.store.id = :storeId AND t.trxType = 'Redeem' AND t.status = 'Confirmed'")
+    java.util.List<DiscountCodeTransaction> findConfirmedRedeemTransactionsByStoreId(@org.springframework.data.repository.query.Param("storeId") Long storeId);
+    
     @org.springframework.data.jpa.repository.Query("SELECT t FROM DiscountCodeTransaction t WHERE t.store.company.id = :companyId")
     Page<DiscountCodeTransaction> findByCompanyId(@org.springframework.data.repository.query.Param("companyId") Long companyId, Pageable pageable);
+    
+    // Company-specific methods - get confirmed redeem transactions from all stores belonging to a company
+    @org.springframework.data.jpa.repository.Query("SELECT t FROM DiscountCodeTransaction t WHERE t.store.company.id = :companyId AND t.trxType = 'Redeem' AND t.status = 'Confirmed'")
+    java.util.List<DiscountCodeTransaction> findConfirmedRedeemTransactionsByStoreCompanyId(@org.springframework.data.repository.query.Param("companyId") Long companyId);
+    
+    // All confirmed redeem transactions (for SUPERADMIN)
+    @org.springframework.data.jpa.repository.Query("SELECT t FROM DiscountCodeTransaction t WHERE t.trxType = 'Redeem' AND t.status = 'Confirmed'")
+    java.util.List<DiscountCodeTransaction> findAllConfirmedRedeemTransactions();
     
     java.util.List<DiscountCodeTransaction> findByStoreIdAndDiscountCodeCode(Long storeId, String discountCode);
 }

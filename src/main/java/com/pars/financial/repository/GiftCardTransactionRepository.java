@@ -63,6 +63,18 @@ public interface GiftCardTransactionRepository extends JpaRepository<GiftCardTra
     
     List<GiftCardTransaction> findByStoreIdAndGiftCardSerialNo(Long storeId, String serialNo);
     
+    // Store-specific methods - confirmed debit transactions only
+    @Query("SELECT t FROM GiftCardTransaction t WHERE t.store.id = :storeId AND t.transactionType = 'Debit' AND t.status = 'Confirmed'")
+    List<GiftCardTransaction> findConfirmedDebitTransactionsByStoreId(@Param("storeId") Long storeId);
+    
+    // Company-specific methods - get confirmed debit transactions from all stores belonging to a company
+    @Query("SELECT t FROM GiftCardTransaction t WHERE t.store.company.id = :companyId AND t.transactionType = 'Debit' AND t.status = 'Confirmed'")
+    List<GiftCardTransaction> findConfirmedDebitTransactionsByStoreCompanyId(@Param("companyId") Long companyId);
+    
+    // All confirmed debit transactions (for SUPERADMIN)
+    @Query("SELECT t FROM GiftCardTransaction t WHERE t.transactionType = 'Debit' AND t.status = 'Confirmed'")
+    List<GiftCardTransaction> findAllConfirmedDebitTransactions();
+    
     // Aggregation methods for transaction statistics
     @Query("SELECT t.status, COUNT(t), COALESCE(SUM(t.Amount), 0), COALESCE(SUM(t.orderAmount), 0) " +
            "FROM GiftCardTransaction t " +

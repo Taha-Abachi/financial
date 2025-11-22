@@ -44,10 +44,12 @@ public class CompanyController {
      */
     @GetMapping
     public ResponseEntity<PagedResponse<CompanyDto>> getAllCompanies(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10000") int size) {
+            @RequestParam(value = "page", defaultValue = "0", required = false) Integer page,
+            @RequestParam(value = "size", defaultValue = "10000", required = false) Integer size) {
         logger.info("Fetching companies with pagination - page: {}, size: {}", page, size);
-        PagedResponse<CompanyDto> companies = companyService.getAllCompanies(page, size);
+        int pageValue = (page != null) ? page : 0;
+        int sizeValue = (size != null) ? size : 10000;
+        PagedResponse<CompanyDto> companies = companyService.getAllCompanies(pageValue, sizeValue);
         return ResponseEntity.ok(companies);
     }
 
