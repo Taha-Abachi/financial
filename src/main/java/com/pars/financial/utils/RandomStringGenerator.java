@@ -72,12 +72,8 @@ public class RandomStringGenerator {
         return sb.toString();
     }
 
-    public static void main(String[] args) {
-        // Example usage
-        String randomUppercase = generateRandomUppercaseString(10);
-        String randomNumeric = generateRandomNumericString(8);
-
-        System.out.println("Random Uppercase String: " + randomUppercase);
-        System.out.println("Random Numeric String: " + randomNumeric);
-    }
+    // Example usage (removed main method to avoid VS Code main class selection prompt)
+    // To test this class, use:
+    // String randomUppercase = RandomStringGenerator.generateRandomUppercaseString(10);
+    // String randomNumeric = RandomStringGenerator.generateRandomNumericString(8);
 }
