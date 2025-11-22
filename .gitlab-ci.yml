@@ -90,8 +90,8 @@ prod-build-push:
   before_script:
     - echo $CI_REGISTRY_PASSWORD_prod | docker login http://192.168.15.3:5000 -u $CI_REGISTRY_USER --password-stdin
   script:
-    - docker build -t $IMAGE_NAME:$CI_COMMIT_SHORT_SHA -f docker/prod.Dockerfile .
-    - docker push $IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+    - docker build -t $IMAGE_NAME_prod:$CI_COMMIT_SHORT_SHA -f docker/prod.Dockerfile .
+    - docker push $IMAGE_NAME_prod:$CI_COMMIT_SHORT_SHA
   only:
     - main
   tags:
@@ -109,7 +109,7 @@ production-deploy:
     - |
       ssh -o $DEPLOY_USER@192.168.15.12 "
         echo \"$CI_REGISTRY_PASSWORD\" | docker login http://192.168.0.214:5000 -u \"$CI_REGISTRY_USER\" --password-stdin && \
-        docker pull $IMAGE_NAME:$CI_COMMIT_SHORT_SHA && \
+        docker pull $IMAGE_NAME_prod:$CI_COMMIT_SHORT_SHA && \
         if [ \$(docker ps -a -q -f name=^/$CONTAINER_NAME\$) ]; then
           docker stop $CONTAINER_NAME && docker rm $CONTAINER_NAME
         fi && \
@@ -123,7 +123,7 @@ production-deploy:
         --network meta-net \
         --network-alias $CONTAINER_NAME \
         --restart unless-stopped \
-         $IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+         $IMAGE_NAME_prod:$CI_COMMIT_SHORT_SHA
       "
   only:
     - main
