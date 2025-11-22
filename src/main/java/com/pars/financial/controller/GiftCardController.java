@@ -167,6 +167,52 @@ public class GiftCardController {
         return genericResponseDto;
     }
 
+    @PostMapping("/register/{serialNo}")
+    public ResponseEntity<GenericResponse<GiftCardDto>> registerGiftCard(@PathVariable String serialNo) {
+        logger.info("POST /api/v1/giftcard/register/{} called", serialNo);
+        var response = new GenericResponse<GiftCardDto>();
+        
+        try {
+            // Check authentication
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+            
+            // Register gift card
+            GiftCardDto giftCard = giftCardService.registerGiftCard(serialNo);
+            response.data = giftCard;
+            response.status = 200;
+            response.message = "Gift card registered successfully";
+            
+            logger.info("Successfully registered gift card: {}", serialNo);
+            return ResponseEntity.ok(response);
+            
+        } catch (com.pars.financial.exception.GiftCardNotFoundException e) {
+            logger.warn("Gift card not found: {}", serialNo);
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (com.pars.financial.exception.ValidationException e) {
+            logger.warn("Validation error registering gift card {}: {}", serialNo, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error registering gift card {}: {}", serialNo, e.getMessage());
+            response.status = 401;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        } catch (Exception e) {
+            logger.error("Error registering gift card {}: {}", serialNo, e.getMessage(), e);
+            response.status = -1;
+            response.message = "Failed to register gift card: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
     @PostMapping("/{serialNo}/limit-stores")
     public GenericResponse<Void> limitToStores(@PathVariable String serialNo, @RequestBody StoreLimitationRequest request) {
         logger.info("POST /api/v1/giftcard/{}/limit-stores called with storeIds: {}", serialNo, request.storeIds);

@@ -4,6 +4,7 @@ import com.pars.financial.dto.GiftCardDto;
 import com.pars.financial.dto.GiftCardIssueRequest;
 import com.pars.financial.dto.GiftCardReportDto;
 import com.pars.financial.dto.PagedResponse;
+import com.pars.financial.entity.Customer;
 import com.pars.financial.entity.GiftCard;
 import com.pars.financial.entity.Store;
 import com.pars.financial.entity.User;
@@ -13,6 +14,7 @@ import com.pars.financial.constants.ErrorCodes;
 import com.pars.financial.exception.ValidationException;
 import com.pars.financial.mapper.GiftCardMapper;
 import com.pars.financial.repository.CompanyRepository;
+import com.pars.financial.repository.CustomerRepository;
 import com.pars.financial.repository.GiftCardRepository;
 import com.pars.financial.repository.GiftCardTransactionRepository;
 import com.pars.financial.repository.ItemCategoryRepository;
@@ -50,8 +52,10 @@ public class GiftCardService {
     final ItemCategoryRepository itemCategoryRepository;
     final GiftCardTransactionRepository giftCardTransactionRepository;
     final SecurityContextService securityContextService;
+    final CustomerService customerService;
+    final CustomerRepository customerRepository;
 
-    public GiftCardService(GiftCardRepository giftCardRepository, GiftCardMapper giftCardMapper, StoreRepository storeRepository, CompanyRepository companyRepository, ItemCategoryRepository itemCategoryRepository, GiftCardTransactionRepository giftCardTransactionRepository, SecurityContextService securityContextService) {
+    public GiftCardService(GiftCardRepository giftCardRepository, GiftCardMapper giftCardMapper, StoreRepository storeRepository, CompanyRepository companyRepository, ItemCategoryRepository itemCategoryRepository, GiftCardTransactionRepository giftCardTransactionRepository, SecurityContextService securityContextService, CustomerService customerService, CustomerRepository customerRepository) {
         this.giftCardRepository = giftCardRepository;
         this.giftCardMapper = giftCardMapper;
         this.storeRepository = storeRepository;
@@ -59,6 +63,8 @@ public class GiftCardService {
         this.itemCategoryRepository = itemCategoryRepository;
         this.giftCardTransactionRepository = giftCardTransactionRepository;
         this.securityContextService = securityContextService;
+        this.customerService = customerService;
+        this.customerRepository = customerRepository;
     }
 
     private void validateRealAmount(long realAmount) {
@@ -747,6 +753,63 @@ public class GiftCardService {
             default:
                 return false;
         }
+    }
+
+    /**
+     * Register a gift card to the current authenticated user
+     * Sets the gift card's customer if it is not already set
+     * @param serialNo the gift card serial number
+     * @return the updated gift card DTO
+     * @throws GiftCardNotFoundException if gift card not found
+     * @throws ValidationException if gift card is already registered to a customer
+     * @throws IllegalStateException if user is not authenticated
+     */
+    @Transactional
+    public GiftCardDto registerGiftCard(String serialNo) {
+        logger.info("Registering gift card with serialNo: {}", serialNo);
+        
+        // Get current authenticated user (throws exception if not authenticated)
+        User currentUser = securityContextService.getCurrentUserOrThrow();
+        
+        // Validate user has phone number
+        if (currentUser.getMobilePhoneNumber() == null || currentUser.getMobilePhoneNumber().trim().isEmpty()) {
+            logger.error("User {} does not have a mobile phone number", currentUser.getUsername());
+            throw new ValidationException(ErrorCodes.CUSTOMER_PHONE_REQUIRED, "User mobile phone number is required for gift card registration");
+        }
+        
+        // Find gift card
+        GiftCard giftCard = giftCardRepository.findBySerialNo(serialNo);
+        if (giftCard == null) {
+            logger.warn("Gift card not found with serialNo: {}", serialNo);
+            throw new GiftCardNotFoundException("Gift Card Not Found with serial No: " + serialNo);
+        }
+        
+        // Check if gift card is already registered to a customer
+        if (giftCard.getCustomer() != null) {
+            logger.warn("Gift card {} is already registered to customer {}", serialNo, giftCard.getCustomer().getId());
+            throw new ValidationException(ErrorCodes.CONFLICT, "Gift card is already registered to a customer");
+        }
+        
+        // Find or create customer based on user's phone number
+        Customer customer = customerRepository.findByPrimaryPhoneNumber(currentUser.getMobilePhoneNumber());
+        if (customer == null) {
+            logger.info("Creating new customer for phone number: {}", currentUser.getMobilePhoneNumber());
+            customer = customerService.createCustomer(currentUser.getMobilePhoneNumber());
+            // Optionally set customer name from user if available
+            if (customer.getName() == null && currentUser.getName() != null) {
+                customer.setName(currentUser.getName());
+            }
+            customer = customerRepository.save(customer);
+        } else {
+            logger.debug("Found existing customer {} for phone number: {}", customer.getId(), currentUser.getMobilePhoneNumber());
+        }
+        
+        // Register gift card to customer
+        giftCard.setCustomer(customer);
+        GiftCard savedGiftCard = giftCardRepository.save(giftCard);
+        
+        logger.info("Successfully registered gift card {} to customer {}", serialNo, customer.getId());
+        return giftCardMapper.getFrom(savedGiftCard);
     }
 }
 
