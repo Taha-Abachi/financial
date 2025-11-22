@@ -94,8 +94,8 @@ prod-build-push:
   tags:
     - prod
 
-staging-deploy:
-  stage: staging-deploy
+production-deploy:
+  stage: production-deploy
   image: 192.168.0.214:5000/alpine-cli:latest
   before_script:
     - mkdir -p ~/.ssh
