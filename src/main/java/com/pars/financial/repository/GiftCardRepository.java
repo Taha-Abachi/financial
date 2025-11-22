@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.pars.financial.entity.Company;
+import com.pars.financial.entity.Customer;
 import com.pars.financial.entity.GiftCard;
 
 @Repository
@@ -19,6 +20,8 @@ public interface GiftCardRepository extends JpaRepository<GiftCard, Long> {
     GiftCard findByIdentifier(Long identifier);
     List<GiftCard> findByCompany(Company company);
     Page<GiftCard> findByCompany(Company company, Pageable pageable);
+    List<GiftCard> findByCustomer(Customer customer);
+    Page<GiftCard> findByCustomer(Customer customer, Pageable pageable);
     List<GiftCard> findByBatchId(Long batchId);
     
     // Statistics queries

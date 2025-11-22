@@ -354,4 +354,89 @@ public class GiftCardController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+    @GetMapping("/customer/{customerId}")
+    public ResponseEntity<GenericResponse<PagedResponse<GiftCardDto>>> getGiftCardsByCustomer(
+            @PathVariable Long customerId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        logger.info("GET /api/v1/giftcard/customer/{} called with pagination - page: {}, size: {}", customerId, page, size);
+        var response = new GenericResponse<PagedResponse<GiftCardDto>>();
+        
+        try {
+            // Check authentication
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+            
+            // Get gift cards for customer
+            PagedResponse<GiftCardDto> pagedGiftCards = giftCardService.getGiftCardsByCustomer(customerId, page, size);
+            
+            if (pagedGiftCards.getContent() == null || pagedGiftCards.getContent().isEmpty()) {
+                logger.debug("No gift cards found for customer: {}", customerId);
+                response.status = 0;
+                response.message = "No gift cards found for this customer";
+            } else {
+                response.message = "Gift cards retrieved successfully";
+            }
+            response.data = pagedGiftCards;
+            
+        } catch (com.pars.financial.exception.ValidationException e) {
+            logger.warn("Validation error fetching gift cards for customer {}: {}", customerId, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (Exception e) {
+            logger.error("Error fetching gift cards for customer {}: {}", customerId, e.getMessage(), e);
+            response.status = -1;
+            response.message = "Error fetching gift cards: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/customer/my")
+    public ResponseEntity<GenericResponse<PagedResponse<GiftCardDto>>> getMyGiftCards(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        logger.info("GET /api/v1/giftcard/customer/my called with pagination - page: {}, size: {}", page, size);
+        var response = new GenericResponse<PagedResponse<GiftCardDto>>();
+        
+        try {
+            // Check authentication
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+            
+            // Get gift cards for current user's customer (customerId = null means use current user)
+            PagedResponse<GiftCardDto> pagedGiftCards = giftCardService.getGiftCardsByCustomer(null, page, size);
+            
+            if (pagedGiftCards.getContent() == null || pagedGiftCards.getContent().isEmpty()) {
+                logger.debug("No gift cards found for current user");
+                response.status = 0;
+                response.message = "No gift cards found";
+            } else {
+                response.message = "Gift cards retrieved successfully";
+            }
+            response.data = pagedGiftCards;
+            
+        } catch (com.pars.financial.exception.ValidationException e) {
+            logger.warn("Validation error fetching gift cards for current user: {}", e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (Exception e) {
+            logger.error("Error fetching gift cards for current user: {}", e.getMessage(), e);
+            response.status = -1;
+            response.message = "Error fetching gift cards: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+        return ResponseEntity.ok(response);
+    }
 }

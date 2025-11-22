@@ -811,6 +811,103 @@ public class GiftCardService {
         logger.info("Successfully registered gift card {} to customer {}", serialNo, customer.getId());
         return giftCardMapper.getFrom(savedGiftCard);
     }
+
+    /**
+     * Get gift cards for a customer with access control
+     * Accessible by:
+     * - API users (SUPERADMIN, ADMIN, API_USER) - can access any customer's gift cards
+     * - Customer themselves - can only access their own gift cards (matched by phone number)
+     * 
+     * @param customerId the customer ID (optional - if null, uses current user's customer)
+     * @param page page number (0-indexed)
+     * @param size page size
+     * @return paginated list of gift cards
+     * @throws ValidationException if access denied or customer not found
+     */
+    @Transactional(readOnly = true)
+    public PagedResponse<GiftCardDto> getGiftCardsByCustomer(Long customerId, int page, int size) {
+        logger.info("Fetching gift cards for customer: {} - page: {}, size: {}", customerId, page, size);
+        
+        // Get current authenticated user
+        User currentUser = securityContextService.getCurrentUserOrThrow();
+        
+        // Validate pagination parameters
+        if (page < 0) {
+            page = 0;
+        }
+        if (size <= 0) {
+            size = 10; // Default page size
+        }
+        if (size > 100) {
+            size = 100; // Maximum page size
+        }
+        
+        Customer targetCustomer;
+        
+        // Determine target customer
+        if (customerId != null) {
+            // Customer ID provided - need to check access
+            var customerOpt = customerRepository.findById(customerId);
+            if (customerOpt.isEmpty()) {
+                logger.warn("Customer not found with ID: {}", customerId);
+                throw new ValidationException(ErrorCodes.CUSTOMER_NOT_FOUND, "Customer not found");
+            }
+            targetCustomer = customerOpt.get();
+            
+            // Check access control
+            String roleName = currentUser.getRole().getName();
+            boolean hasAccess = false;
+            
+            // API users have full access
+            if ("SUPERADMIN".equals(roleName) || "ADMIN".equals(roleName) || "API_USER".equals(roleName)) {
+                hasAccess = true;
+                logger.debug("API user {} accessing customer {} gift cards", currentUser.getUsername(), customerId);
+            } 
+            // Regular users can only access their own customer record
+            else if (currentUser.getMobilePhoneNumber() != null && 
+                     targetCustomer.getPrimaryPhoneNumber() != null &&
+                     currentUser.getMobilePhoneNumber().equals(targetCustomer.getPrimaryPhoneNumber())) {
+                hasAccess = true;
+                logger.debug("Customer {} accessing their own gift cards", customerId);
+            }
+            
+            if (!hasAccess) {
+                logger.warn("User {} attempted to access customer {} gift cards without permission", 
+                           currentUser.getUsername(), customerId);
+                throw new ValidationException(ErrorCodes.FORBIDDEN, "Access denied to this customer's gift cards");
+            }
+        } else {
+            // No customer ID provided - use current user's customer
+            if (currentUser.getMobilePhoneNumber() == null || currentUser.getMobilePhoneNumber().trim().isEmpty()) {
+                logger.error("User {} does not have a mobile phone number", currentUser.getUsername());
+                throw new ValidationException(ErrorCodes.CUSTOMER_PHONE_REQUIRED, "User mobile phone number is required");
+            }
+            
+            targetCustomer = customerRepository.findByPrimaryPhoneNumber(currentUser.getMobilePhoneNumber());
+            if (targetCustomer == null) {
+                logger.warn("Customer not found for user {} with phone number: {}", 
+                          currentUser.getUsername(), currentUser.getMobilePhoneNumber());
+                throw new ValidationException(ErrorCodes.CUSTOMER_NOT_FOUND, "Customer not found for current user");
+            }
+            logger.debug("Using current user's customer: {}", targetCustomer.getId());
+        }
+        
+        // Fetch gift cards for the customer
+        Pageable pageable = PageRequest.of(page, size);
+        Page<GiftCard> giftCardPage = giftCardRepository.findByCustomer(targetCustomer, pageable);
+        
+        List<GiftCardDto> giftCards = giftCardMapper.getFrom(giftCardPage.getContent());
+        
+        logger.info("Found {} gift cards for customer {}", giftCardPage.getTotalElements(), targetCustomer.getId());
+        
+        return new PagedResponse<>(
+            giftCards,
+            giftCardPage.getNumber(),
+            giftCardPage.getSize(),
+            giftCardPage.getTotalElements(),
+            giftCardPage.getTotalPages()
+        );
+    }
 }
 
 
