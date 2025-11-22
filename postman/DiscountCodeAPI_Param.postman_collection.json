@@ -1735,6 +1735,200 @@
 							"body": "{\n  \"status\": 200,\n  \"message\": \"Discount code report for company 1 generated successfully\",\n  \"data\": {\n    \"totalCount\": 800,\n    \"totalUsedCount\": 400,\n    \"totalUnusedCount\": 400,\n    \"totalActiveCount\": 700,\n    \"totalInactiveCount\": 100,\n    \"totalExpiredCount\": 50,\n    \"totalRedeemTransactions\": 500,\n    \"totalDiscountAmount\": 2000000,\n    \"totalOriginalAmount\": 10000000,\n    \"averagePercentage\": 18.0,\n    \"averageMaxDiscountAmount\": 7500.0,\n    \"averageMinimumBillAmount\": 1500.0,\n    \"averageUsageCount\": 1.25,\n    \"averageUsageLimit\": 1.0,\n    \"reportGeneratedAt\": \"2024-01-15T10:30:00\"\n  }\n}"
 						}
 					]
+				},
+				{
+					"name": "Block Discount Code",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "X-API-KEY",
+								"value": "{{API_USER_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discountcode/block/{{discountCode}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"discountcode",
+								"block",
+								"{{discountCode}}"
+							]
+						},
+						"description": "Block a discount code by code. Only accessible by ADMIN and SUPERADMIN. Records the user who blocked the code and the block date."
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						},
+						{
+							"name": "Error - Already Blocked",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": -1,\n  \"message\": \"Discount code is already blocked\",\n  \"data\": null\n}"
+						},
+						{
+							"name": "Error - Not Found",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": -1,\n  \"message\": \"Discount code not found: {{discountCode}}\",\n  \"data\": null\n}"
+						}
+					]
+				},
+				{
+					"name": "Unblock Discount Code",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "X-API-KEY",
+								"value": "{{API_USER_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discountcode/unblock/{{discountCode}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"discountcode",
+								"unblock",
+								"{{discountCode}}"
+							]
+						},
+						"description": "Unblock a discount code by code. Only accessible by ADMIN and SUPERADMIN. Clears the blockedBy and blockedDate fields."
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						},
+						{
+							"name": "Error - Not Blocked",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": -1,\n  \"message\": \"Discount code is not blocked\",\n  \"data\": null\n}"
+						},
+						{
+							"name": "Error - Not Found",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": -1,\n  \"message\": \"Discount code not found: {{discountCode}}\",\n  \"data\": null\n}"
+						}
+					]
 				}
 			]
 		}

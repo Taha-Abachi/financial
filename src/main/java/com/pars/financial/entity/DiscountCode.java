@@ -55,6 +55,14 @@ public class DiscountCode {
     private boolean used = false;
     @Column(columnDefinition = "boolean default true")
     private boolean isActive = true;
+    @Column(columnDefinition = "boolean default false")
+    private boolean blocked = false;
+
+    @ManyToOne
+    @JoinColumn(name = "blocked_by_user_id")
+    private User blockedBy;
+
+    private LocalDateTime blockedDate;
 
     @Column(columnDefinition = "boolean default false")
     private boolean storeLimited = false;
@@ -201,6 +209,30 @@ public class DiscountCode {
         isActive = active;
     }
 
+    public boolean isBlocked() {
+        return blocked;
+    }
+
+    public void setBlocked(boolean blocked) {
+        this.blocked = blocked;
+    }
+
+    public User getBlockedBy() {
+        return blockedBy;
+    }
+
+    public void setBlockedBy(User blockedBy) {
+        this.blockedBy = blockedBy;
+    }
+
+    public LocalDateTime getBlockedDate() {
+        return blockedDate;
+    }
+
+    public void setBlockedDate(LocalDateTime blockedDate) {
+        this.blockedDate = blockedDate;
+    }
+
     public DiscountType getDiscountType() {
         return discountType;
     }
@@ -270,6 +302,11 @@ public class DiscountCode {
      * @return true if the discount code is usable, false otherwise
      */
     public boolean calculateIsUsable() {
+        // Check if the discount code is blocked
+        if (blocked) {
+            return false;
+        }
+
         // Check if the discount code is active
         if (!isActive) {
             return false;

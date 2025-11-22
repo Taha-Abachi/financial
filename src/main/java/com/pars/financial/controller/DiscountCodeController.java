@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -23,6 +24,7 @@ import com.pars.financial.dto.PagedResponse;
 import com.pars.financial.dto.StoreLimitationRequest;
 import com.pars.financial.service.DiscountCodeService;
 import com.pars.financial.utils.ApiUserUtil;
+import com.pars.financial.exception.ValidationException;
 
 @RestController
 @RequestMapping("/api/v1/discountcode")
@@ -225,6 +227,86 @@ public class DiscountCodeController {
             logger.error("Error generating discount code report for company {}: {}", companyId, e.getMessage(), e);
             response.status = -1;
             response.message = "Failed to generate discount code report for company: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PutMapping("/block/{code}")
+    public ResponseEntity<GenericResponse<DiscountCodeDto>> blockDiscountCode(
+            @PathVariable String code) {
+        logger.info("PUT /api/v1/discountcode/block/{} called", code);
+        var response = new GenericResponse<DiscountCodeDto>();
+
+        try {
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+
+            DiscountCodeDto discountCode = codeService.blockDiscountCode(code, true);
+            response.data = discountCode;
+            response.status = 200;
+            response.message = "Discount code blocked successfully";
+
+            logger.info("Successfully blocked discount code: {}", code);
+            return ResponseEntity.ok(response);
+
+        } catch (ValidationException e) {
+            logger.warn("Validation error blocking discount code {}: {}", code, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error blocking discount code {}: {}", code, e.getMessage());
+            response.status = 401;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        } catch (Exception e) {
+            logger.error("Error blocking discount code {}: {}", code, e.getMessage(), e);
+            response.status = -1;
+            response.message = "Failed to block discount code: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PutMapping("/unblock/{code}")
+    public ResponseEntity<GenericResponse<DiscountCodeDto>> unblockDiscountCode(
+            @PathVariable String code) {
+        logger.info("PUT /api/v1/discountcode/unblock/{} called", code);
+        var response = new GenericResponse<DiscountCodeDto>();
+
+        try {
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+
+            DiscountCodeDto discountCode = codeService.blockDiscountCode(code, false);
+            response.data = discountCode;
+            response.status = 200;
+            response.message = "Discount code unblocked successfully";
+
+            logger.info("Successfully unblocked discount code: {}", code);
+            return ResponseEntity.ok(response);
+
+        } catch (ValidationException e) {
+            logger.warn("Validation error unblocking discount code {}: {}", code, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error unblocking discount code {}: {}", code, e.getMessage());
+            response.status = 401;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        } catch (Exception e) {
+            logger.error("Error unblocking discount code {}: {}", code, e.getMessage(), e);
+            response.status = -1;
+            response.message = "Failed to unblock discount code: " + e.getMessage();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }

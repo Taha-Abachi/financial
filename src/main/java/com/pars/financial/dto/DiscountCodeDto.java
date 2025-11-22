@@ -22,6 +22,10 @@ public class DiscountCodeDto {
     public boolean used;
     public boolean active;
     public boolean isUsable;
+    public boolean blocked;
+    public Long blockedByUserId;
+    public String blockedByUsername;
+    public LocalDateTime blockedDate;
     public LocalDateTime redeemDate;
     public ArrayList<DiscountCodeTransactionDto> transactions;
     public Long companyId;

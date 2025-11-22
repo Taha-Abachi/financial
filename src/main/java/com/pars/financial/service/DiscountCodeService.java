@@ -50,14 +50,16 @@ public class DiscountCodeService {
     private final StoreRepository storeRepository;
     private final ItemCategoryRepository itemCategoryRepository;
     private final DiscountCodeTransactionRepository discountCodeTransactionRepository;
+    private final SecurityContextService securityContextService;
 
-    public DiscountCodeService(DiscountCodeRepository codeRepository, DiscountCodeMapper mapper, CompanyRepository companyRepository, StoreRepository storeRepository, ItemCategoryRepository itemCategoryRepository, CustomerRepository customerRepository, DiscountCodeTransactionRepository discountCodeTransactionRepository) {
+    public DiscountCodeService(DiscountCodeRepository codeRepository, DiscountCodeMapper mapper, CompanyRepository companyRepository, StoreRepository storeRepository, ItemCategoryRepository itemCategoryRepository, CustomerRepository customerRepository, DiscountCodeTransactionRepository discountCodeTransactionRepository, SecurityContextService securityContextService) {
         this.codeRepository = codeRepository;
         this.mapper = mapper;
         this.companyRepository = companyRepository;
         this.storeRepository = storeRepository;
         this.itemCategoryRepository = itemCategoryRepository;
         this.discountCodeTransactionRepository = discountCodeTransactionRepository;
+        this.securityContextService = securityContextService;
     }
 
     private DiscountCode issueDiscountCode(int percentage, long validityPeriod, long maxDiscountAmount, long minimumBillAmount, int usageLimit, long constantDiscountAmount, DiscountType discountType, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, String customCode, Long customSerialNo) {
@@ -388,6 +390,14 @@ public class DiscountCodeService {
             return response;
         }
         
+        // Check if discount code is blocked
+        if(code.isBlocked()) {
+            response.isValid = false;
+            response.message = "Discount code is blocked and cannot be used.";
+            response.errorCode = "DISCOUNT_CODE_BLOCKED";
+            return response;
+        }
+        
         if(LocalDate.now().isAfter(code.getExpiryDate())){
             response.isValid = false;
             response.message = "Discount code is expired.";
@@ -704,6 +714,49 @@ public class DiscountCodeService {
             default:
                 return false;
         }
+    }
+
+    /**
+     * Block or unblock a discount code by code
+     * @param code the discount code
+     * @param block true to block, false to unblock
+     * @return the updated discount code DTO
+     * @throws ValidationException if discount code not found or already in the requested state
+     */
+    @Transactional
+    public DiscountCodeDto blockDiscountCode(String code, boolean block) {
+        logger.info("{} discount code: {}", block ? "Blocking" : "Unblocking", code);
+        
+        User currentUser = securityContextService.getCurrentUserOrThrow();
+        
+        DiscountCode discountCode = codeRepository.findByCode(code.toUpperCase());
+        if (discountCode == null) {
+            logger.warn("Discount code not found: {}", code);
+            throw new ValidationException(ErrorCodes.DISCOUNT_CODE_NOT_FOUND, "Discount code not found: " + code);
+        }
+
+        if (block) {
+            if (discountCode.isBlocked()) {
+                logger.warn("Discount code {} is already blocked", code);
+                throw new ValidationException(ErrorCodes.DISCOUNT_CODE_INVALID, "Discount code is already blocked");
+            }
+            discountCode.setBlocked(true);
+            discountCode.setBlockedBy(currentUser);
+            discountCode.setBlockedDate(LocalDateTime.now());
+            logger.info("Discount code {} blocked by user {}", code, currentUser.getUsername());
+        } else {
+            if (!discountCode.isBlocked()) {
+                logger.warn("Discount code {} is not blocked", code);
+                throw new ValidationException(ErrorCodes.DISCOUNT_CODE_INVALID, "Discount code is not blocked");
+            }
+            discountCode.setBlocked(false);
+            discountCode.setBlockedBy(null);
+            discountCode.setBlockedDate(null);
+            logger.info("Discount code {} unblocked by user {}", code, currentUser.getUsername());
+        }
+
+        DiscountCode savedDiscountCode = codeRepository.save(discountCode);
+        return mapper.getFrom(savedDiscountCode);
     }
 
 }

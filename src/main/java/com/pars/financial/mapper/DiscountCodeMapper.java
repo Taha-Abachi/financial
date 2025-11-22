@@ -36,10 +36,19 @@ public class DiscountCodeMapper {
         dto.percentage = code.getPercentage();
         dto.used = code.isUsed();
         dto.active = code.isActive();
+        dto.blocked = code.isBlocked();
         dto.isUsable = code.calculateIsUsable();
         dto.issueDate = code.getIssueDate();
         dto.expireDate = code.getExpiryDate();
         dto.redeemDate = code.getRedeemDate();
+        
+        // Map blocked information
+        if (code.getBlockedBy() != null) {
+            dto.blockedByUserId = code.getBlockedBy().getId();
+            dto.blockedByUsername = code.getBlockedBy().getUsername();
+        }
+        dto.blockedDate = code.getBlockedDate();
+        
         dto.companyId = code.getCompany() != null ? code.getCompany().getId() : null;
         dto.storeLimited = code.isStoreLimited();
         dto.itemCategoryLimited = code.isItemCategoryLimited();
