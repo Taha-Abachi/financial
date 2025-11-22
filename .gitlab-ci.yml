@@ -63,6 +63,54 @@ staging-deploy:
           docker stop $CONTAINER_NAME && docker rm $CONTAINER_NAME
         fi && \
         docker run -d --name $CONTAINER_NAME --hostname $CONTAINER_NAME \
+        -p 8082:8082 \
+        -e PORT_NUMBER=8082 \
+        -e POSTGRES_DB=credit \
+        -e POSTGRES_USER=pars \
+        -e POSTGRES_PASSWORD=srap \
+        -e POSTGRES_HOST=credit-db \
+        --restart always $IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+      "
+  only:
+    - stage
+  tags:
+    - giftcard
+
+prod-build-push:
+  stage: prod-build-push
+  image: 192.168.15.3:5000/docker:24.0.5
+  services:
+    - name: docker:dind
+      command: ["--insecure-registry=192.168.0.214:5000"]
+  variables:
+    DOCKER_TLS_CERTDIR: ""
+  before_script:
+    - echo $CI_REGISTRY_PASSWORD_prod | docker login http://192.168.15.3:5000 -u $CI_REGISTRY_USER --password-stdin
+  script:
+    - docker build -t $IMAGE_NAME:$CI_COMMIT_SHORT_SHA -f docker/prod.Dockerfile .
+    - docker push $IMAGE_NAME:$CI_COMMIT_SHORT_SHA
+  only:
+    - main
+  tags:
+    - prod
+
+staging-deploy:
+  stage: staging-deploy
+  image: 192.168.0.214:5000/alpine-cli:latest
+  before_script:
+    - mkdir -p ~/.ssh
+    - echo "$DEPLOY_SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - ssh-keyscan 192.168.15.12 >> ~/.ssh/known_hosts
+  script:
+    - |
+      ssh -o $DEPLOY_USER@192.168.15.12 "
+        echo \"$CI_REGISTRY_PASSWORD\" | docker login http://192.168.0.214:5000 -u \"$CI_REGISTRY_USER\" --password-stdin && \
+        docker pull $IMAGE_NAME:$CI_COMMIT_SHORT_SHA && \
+        if [ \$(docker ps -a -q -f name=^/$CONTAINER_NAME\$) ]; then
+          docker stop $CONTAINER_NAME && docker rm $CONTAINER_NAME
+        fi && \
+        docker run -d --name $CONTAINER_NAME --hostname $CONTAINER_NAME \
         -p 8082:8082 -e POSTGRES_DB=credit -e POSTGRES_USER=pars \
         -e POSTGRES_PASSWORD=srap -e POSTGRES_HOST=credit-db \
         --restart always $IMAGE_NAME:$CI_COMMIT_SHORT_SHA
