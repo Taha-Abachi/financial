@@ -116,6 +116,6 @@ staging-deploy:
         --restart always $IMAGE_NAME:$CI_COMMIT_SHORT_SHA
       "
   only:
-    - stage
+    - main
   tags:
-    - giftcard
+    - prod
