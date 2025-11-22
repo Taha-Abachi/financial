@@ -65,10 +65,10 @@ staging-deploy:
         docker run -d --name $CONTAINER_NAME --hostname $CONTAINER_NAME \
         -p 8082:8082 \
         -e PORT_NUMBER=8082 \
-        -e POSTGRES_DB=credit \
-        -e POSTGRES_USER=pars \
-        -e POSTGRES_PASSWORD=srap \
-        -e POSTGRES_HOST=credit-db \
+        -e POSTGRES_DB=giftcard_staging \
+        -e POSTGRES_USER=taha \
+        -e POSTGRES_PASSWORD=m73MFiQO4rSnhnPl \
+        -e POSTGRES_HOST=192.168.0.211 \
         --restart always $IMAGE_NAME:$CI_COMMIT_SHORT_SHA
       "
   only:
