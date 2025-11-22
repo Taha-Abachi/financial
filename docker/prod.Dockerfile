@@ -7,7 +7,7 @@ COPY src ./src
 
 RUN gradle clean build --no-daemon
 
-FROM 192.168.15.3:5000/openjdk:21-jdk
+FROM 192.168.15.3:5000/library/openjdk:21-jdk
 
 WORKDIR /app
 
