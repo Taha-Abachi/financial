@@ -15,11 +15,14 @@ import org.springframework.web.bind.annotation.RestController;
 import com.pars.financial.dto.CustomerDto;
 import com.pars.financial.dto.CustomerUpdateRequest;
 import com.pars.financial.dto.GenericResponse;
+import com.pars.financial.dto.PagedResponse;
 import com.pars.financial.entity.Customer;
 import com.pars.financial.exception.CustomerNotFoundException;
 import com.pars.financial.exception.ValidationException;
 import com.pars.financial.service.CustomerService;
+import com.pars.financial.service.SecurityContextService;
 import com.pars.financial.utils.ApiUserUtil;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -37,9 +40,11 @@ public class CustomerController {
     private static final Logger logger = LoggerFactory.getLogger(CustomerController.class);
 
     private final CustomerService customerService;
+    private final SecurityContextService securityContextService;
 
-    public CustomerController(CustomerService customerService) {
+    public CustomerController(CustomerService customerService, SecurityContextService securityContextService) {
         this.customerService = customerService;
+        this.securityContextService = securityContextService;
     }
 
     @Operation(
@@ -212,6 +217,83 @@ public class CustomerController {
             logger.error("Error updating customer {}: {}", id, e.getMessage(), e);
             response.status = -1;
             response.message = "Error updating customer: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @Operation(
+        summary = "Get all customers (ADMIN/SUPERADMIN only)",
+        description = "Retrieves a paginated list of all customers. Only accessible by ADMIN and SUPERADMIN roles."
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+            responseCode = "200",
+            description = "Customers retrieved successfully",
+            content = @Content(schema = @Schema(implementation = GenericResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "403",
+            description = "Access denied - insufficient permissions",
+            content = @Content(schema = @Schema(implementation = GenericResponse.class))
+        ),
+        @ApiResponse(
+            responseCode = "401",
+            description = "Unauthorized - authentication required",
+            content = @Content(schema = @Schema(implementation = GenericResponse.class))
+        )
+    })
+    @GetMapping("/list")
+    public ResponseEntity<GenericResponse<PagedResponse<CustomerDto>>> getAllCustomers(
+        @Parameter(description = "Page number (0-indexed)", required = false)
+        @RequestParam(defaultValue = "0") int page,
+        @Parameter(description = "Page size", required = false)
+        @RequestParam(defaultValue = "10") int size
+    ) {
+        logger.info("GET /api/v1/customer/list called with pagination - page: {}, size: {}", page, size);
+        var response = new GenericResponse<PagedResponse<CustomerDto>>();
+
+        try {
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+
+            // RBAC check: Only ADMIN and SUPERADMIN can access this endpoint
+            var currentUser = securityContextService.getCurrentUserOrThrow();
+            String roleName = currentUser.getRole() != null ? currentUser.getRole().getName() : null;
+            
+            if (roleName == null || (!"ADMIN".equals(roleName) && !"SUPERADMIN".equals(roleName))) {
+                logger.warn("User {} with role {} attempted to access customer list without permission", 
+                           currentUser.getUsername(), roleName);
+                response.status = -1;
+                response.message = "Access denied. Only ADMIN and SUPERADMIN can access this endpoint.";
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            PagedResponse<CustomerDto> pagedCustomers = customerService.getAllCustomers(page, size);
+
+            if (pagedCustomers.getContent() == null || pagedCustomers.getContent().isEmpty()) {
+                logger.debug("No customers found");
+                response.status = 0;
+                response.message = "No customers found";
+            } else {
+                response.message = "Customers retrieved successfully";
+            }
+            response.data = pagedCustomers;
+            response.status = 200;
+            return ResponseEntity.ok(response);
+
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error fetching customers: {}", e.getMessage());
+            response.status = 401;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        } catch (Exception e) {
+            logger.error("Error fetching customers: {}", e.getMessage(), e);
+            response.status = -1;
+            response.message = "Error fetching customers: " + e.getMessage();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }

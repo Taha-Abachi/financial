@@ -243,6 +243,145 @@
 					]
 				},
 				{
+					"name": "Get All Customers (ADMIN/SUPERADMIN)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/customer/list?page={{page}}&size={{size}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"customer",
+								"list"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "{{page}}",
+									"description": "Page number (0-indexed)"
+								},
+								{
+									"key": "size",
+									"value": "{{size}}",
+									"description": "Page size"
+								}
+							]
+						},
+						"description": "Retrieves a paginated list of all customers. Only accessible by ADMIN and SUPERADMIN roles. Requires authentication."
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/customer/list?page=0&size=10"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": 200,\n  \"message\": \"Customers retrieved successfully\",\n  \"data\": {\n    \"content\": [\n      {\n        \"name\": \"John\",\n        \"surName\": \"Doe\",\n        \"phoneNumber\": \"09123456789\"\n      },\n      {\n        \"name\": \"Jane\",\n        \"surName\": \"Smith\",\n        \"phoneNumber\": \"09123456790\"\n      }\n    ],\n    \"page\": 0,\n    \"size\": 10,\n    \"totalElements\": 2,\n    \"totalPages\": 1,\n    \"first\": true,\n    \"last\": true,\n    \"hasNext\": false,\n    \"hasPrevious\": false\n  }\n}"
+						},
+						{
+							"name": "Empty Result",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/customer/list?page=0&size=10"
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": 0,\n  \"message\": \"No customers found\",\n  \"data\": {\n    \"content\": [],\n    \"page\": 0,\n    \"size\": 10,\n    \"totalElements\": 0,\n    \"totalPages\": 0,\n    \"first\": true,\n    \"last\": true,\n    \"hasNext\": false,\n    \"hasPrevious\": false\n  }\n}"
+						},
+						{
+							"name": "Forbidden - Insufficient Permissions",
+							"originalRequest": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "Bearer {{accessToken}}"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/customer/list?page=0&size=10"
+								}
+							},
+							"status": "Forbidden",
+							"code": 403,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": -1,\n  \"message\": \"Access denied. Only ADMIN and SUPERADMIN can access this endpoint.\",\n  \"data\": null\n}"
+						},
+						{
+							"name": "Unauthorized",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/customer/list?page=0&size=10"
+								}
+							},
+							"status": "Unauthorized",
+							"code": 401,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": 401,\n  \"message\": \"Unauthorized access\",\n  \"data\": null\n}"
+						}
+					]
+				},
+				{
 					"name": "Create Customer",
 					"request": {
 						"method": "POST",
@@ -565,6 +704,18 @@
 			"value": "09123456789",
 			"type": "string",
 			"description": "Customer phone number"
+		},
+		{
+			"key": "page",
+			"value": "0",
+			"type": "string",
+			"description": "Page number for pagination (0-indexed)"
+		},
+		{
+			"key": "size",
+			"value": "10",
+			"type": "string",
+			"description": "Page size for pagination"
 		},
 		{
 			"key": "testUsername",

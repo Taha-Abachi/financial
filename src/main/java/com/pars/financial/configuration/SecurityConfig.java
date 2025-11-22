@@ -80,6 +80,7 @@ public class SecurityConfig {
                         // Authentication endpoints
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         // API endpoints
+                        .requestMatchers("/api/v1/customer/list").hasAnyRole("ADMIN", "SUPERADMIN")
                         .requestMatchers("/api/v1/customer").hasAnyRole("ADMIN", "SUPERADMIN")
                         .requestMatchers("/api/v1/store").hasAnyRole("ADMIN", "SUPERADMIN", "COMPANY_USER")
                         .requestMatchers("/api/v1/store/transaction-summary").hasAnyRole("ADMIN", "SUPERADMIN", "COMPANY_USER", "STORE_USER")

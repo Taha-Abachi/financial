@@ -1,6 +1,7 @@
 package com.pars.financial.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -14,15 +15,20 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.pars.financial.dto.CustomerDto;
 import com.pars.financial.dto.CustomerUpdateRequest;
+import com.pars.financial.dto.PagedResponse;
 import com.pars.financial.entity.Customer;
 import com.pars.financial.entity.User;
 import com.pars.financial.entity.UserRole;
 import com.pars.financial.constants.ErrorCodes;
 import com.pars.financial.exception.CustomerNotFoundException;
 import com.pars.financial.exception.ValidationException;
+import com.pars.financial.mapper.CustomerMapper;
 import com.pars.financial.repository.CustomerRepository;
 import com.pars.financial.repository.UserRepository;
 import com.pars.financial.repository.UserRoleRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @Service
 public class CustomerService {
@@ -33,13 +39,16 @@ public class CustomerService {
     private final UserRepository userRepository;
     private final UserRoleRepository userRoleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final CustomerMapper customerMapper;
 
     public CustomerService(CustomerRepository customerRepository, UserRepository userRepository, 
-                          UserRoleRepository userRoleRepository, PasswordEncoder passwordEncoder) {
+                          UserRoleRepository userRoleRepository, PasswordEncoder passwordEncoder,
+                          CustomerMapper customerMapper) {
         this.customerRepository = customerRepository;
         this.userRepository = userRepository;
         this.userRoleRepository = userRoleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.customerMapper = customerMapper;
     }
 
     @Cacheable(value = "customers", key = "#phoneNumber")
@@ -249,5 +258,43 @@ public class CustomerService {
         User savedUser = userRepository.save(user);
         logger.info("Created user {} for customer {} with phone number: {}", 
                     savedUser.getUsername(), customer.getId(), customer.getPrimaryPhoneNumber());
+    }
+
+    /**
+     * Get all customers with pagination
+     * Only accessible by ADMIN and SUPERADMIN roles
+     * @param page page number (0-indexed)
+     * @param size page size
+     * @return paginated list of customers
+     */
+    @Transactional(readOnly = true)
+    public PagedResponse<CustomerDto> getAllCustomers(int page, int size) {
+        logger.info("Fetching all customers with pagination - page: {}, size: {}", page, size);
+        
+        // Validate pagination parameters
+        if (page < 0) {
+            page = 0;
+        }
+        if (size <= 0) {
+            size = 10; // Default page size
+        }
+        if (size > 100) {
+            size = 100; // Maximum page size
+        }
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Customer> customerPage = customerRepository.findAll(pageable);
+        
+        List<CustomerDto> customers = customerMapper.getFrom(customerPage.getContent());
+        
+        logger.info("Found {} customers (page {} of {})", customerPage.getTotalElements(), page + 1, customerPage.getTotalPages());
+        
+        return new PagedResponse<>(
+            customers,
+            customerPage.getNumber(),
+            customerPage.getSize(),
+            customerPage.getTotalElements(),
+            customerPage.getTotalPages()
+        );
     }
 }
