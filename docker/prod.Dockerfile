@@ -16,12 +16,12 @@ RUN gradle clean build --no-daemon -x test
 # Extract the JAR file
 RUN find /app/build/libs -name "*.jar" -not -name "*-plain.jar" -exec cp {} /app/app.jar \;
 
-FROM 192.168.15.3:5000/library/eclipse-temurin:25-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 
 WORKDIR /app
 
-# Create non-root user for security
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+# Create non-root user for security (Alpine uses addgroup/adduser)
+RUN addgroup -S appuser && adduser -S -G appuser appuser
 
 # Copy only the JAR file from builder
 COPY --from=builder /app/app.jar app.jar
