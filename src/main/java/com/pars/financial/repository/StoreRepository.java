@@ -59,4 +59,21 @@ public interface StoreRepository extends JpaRepository<Store, Long> {
      */
     @Query("SELECT s FROM Store s LEFT JOIN FETCH s.company LEFT JOIN FETCH s.address LEFT JOIN FETCH s.phone_number WHERE s.company.id = :companyId AND s.isActive = true")
     Page<Store> findByCompanyIdWithRelationships(@Param("companyId") Long companyId, Pageable pageable);
+    
+    /**
+     * Find stores by company ID and ownership type (simple query without FETCH for proper pagination)
+     * @param companyId the company ID
+     * @param ownershipType the ownership type
+     * @param pageable pagination information
+     * @return paginated list of stores for the company with the specified ownership type
+     */
+    Page<Store> findByCompanyIdAndOwnershipTypeAndIsActiveTrue(Long companyId, com.pars.financial.enums.OwnershipType ownershipType, Pageable pageable);
+    
+    /**
+     * Find stores by ownership type only (simple query without FETCH for proper pagination)
+     * @param ownershipType the ownership type
+     * @param pageable pagination information
+     * @return paginated list of stores with the specified ownership type
+     */
+    Page<Store> findByOwnershipTypeAndIsActiveTrue(com.pars.financial.enums.OwnershipType ownershipType, Pageable pageable);
 }

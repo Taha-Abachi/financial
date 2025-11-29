@@ -4,6 +4,7 @@ import com.pars.financial.dto.GenericResponse;
 import com.pars.financial.dto.UserCreateRequest;
 import com.pars.financial.dto.UserDto;
 import com.pars.financial.dto.UserUpdateRequest;
+import com.pars.financial.exception.ValidationException;
 import com.pars.financial.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +42,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<GenericResponse<UserDto>> getUserById(@PathVariable Long id) {
+    public ResponseEntity<GenericResponse<UserDto>> getUserById(@PathVariable("id") Long id) {
         logger.info("GET /api/v1/users/{} called", id);
         var response = new GenericResponse<UserDto>();
         try {
@@ -117,7 +118,7 @@ public class UserController {
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<GenericResponse<UserDto>> updateUser(@PathVariable Long id, @RequestBody UserUpdateRequest request) {
+    public ResponseEntity<GenericResponse<UserDto>> updateUser(@PathVariable("id") Long id, @RequestBody UserUpdateRequest request) {
         logger.info("PUT /api/v1/users/update/{} called", id);
         var response = new GenericResponse<UserDto>();
         try {
@@ -139,7 +140,7 @@ public class UserController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<GenericResponse<Void>> deleteUser(@PathVariable Long id) {
+    public ResponseEntity<GenericResponse<Void>> deleteUser(@PathVariable("id") Long id) {
         logger.info("DELETE /api/v1/users/delete/{} called", id);
         var response = new GenericResponse<Void>();
         try {
@@ -160,7 +161,7 @@ public class UserController {
     }
 
     @PostMapping("/activate/{id}")
-    public ResponseEntity<GenericResponse<UserDto>> activateUser(@PathVariable Long id) {
+    public ResponseEntity<GenericResponse<UserDto>> activateUser(@PathVariable("id") Long id) {
         logger.info("POST /api/v1/users/activate/{} called", id);
         var response = new GenericResponse<UserDto>();
         try {
@@ -168,8 +169,8 @@ public class UserController {
             response.data = activatedUser;
             response.message = "User activated successfully";
             return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            logger.error("Validation error activating user with id {}: {}", id, e.getMessage());
+        } catch (ValidationException e) {
+            logger.warn("Validation error activating user with id {}: {}", id, e.getMessage());
             response.status = -1;
             response.message = e.getMessage();
             return ResponseEntity.badRequest().body(response);
@@ -182,7 +183,7 @@ public class UserController {
     }
 
     @PostMapping("/deactivate/{id}")
-    public ResponseEntity<GenericResponse<UserDto>> deactivateUser(@PathVariable Long id) {
+    public ResponseEntity<GenericResponse<UserDto>> deactivateUser(@PathVariable("id") Long id) {
         logger.info("POST /api/v1/users/deactivate/{} called", id);
         var response = new GenericResponse<UserDto>();
         try {
@@ -190,8 +191,8 @@ public class UserController {
             response.data = deactivatedUser;
             response.message = "User deactivated successfully";
             return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            logger.error("Validation error deactivating user with id {}: {}", id, e.getMessage());
+        } catch (ValidationException e) {
+            logger.warn("Validation error deactivating user with id {}: {}", id, e.getMessage());
             response.status = -1;
             response.message = e.getMessage();
             return ResponseEntity.badRequest().body(response);
@@ -204,7 +205,7 @@ public class UserController {
     }
 
     @PostMapping("/{id}/api-key/generate")
-    public ResponseEntity<GenericResponse<UserDto>> generateApiKey(@PathVariable Long id) {
+    public ResponseEntity<GenericResponse<UserDto>> generateApiKey(@PathVariable("id") Long id) {
         logger.info("POST /api/v1/users/{}/api-key/generate called", id);
         var response = new GenericResponse<UserDto>();
         try {
@@ -226,7 +227,7 @@ public class UserController {
     }
 
     @PostMapping("/{id}/api-key/revoke")
-    public ResponseEntity<GenericResponse<UserDto>> revokeApiKey(@PathVariable Long id) {
+    public ResponseEntity<GenericResponse<UserDto>> revokeApiKey(@PathVariable("id") Long id) {
         logger.info("POST /api/v1/users/{}/api-key/revoke called", id);
         var response = new GenericResponse<UserDto>();
         try {

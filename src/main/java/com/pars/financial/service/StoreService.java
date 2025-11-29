@@ -21,6 +21,7 @@ import com.pars.financial.entity.User;
 import com.pars.financial.entity.Company;
 import com.pars.financial.entity.Address;
 import com.pars.financial.entity.PhoneNumber;
+import com.pars.financial.enums.OwnershipType;
 import com.pars.financial.enums.PhoneNumberType;
 import com.pars.financial.mapper.StoreMapper;
 import com.pars.financial.repository.StoreRepository;
@@ -117,6 +118,169 @@ public class StoreService {
             storePage.getSize(),
             storePage.getTotalElements(),
             storePage.getTotalPages()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public PagedResponse<StoreDto> getStoresByCompanyAndOwnershipType(Long companyId, OwnershipType ownershipType, int page, int size) {
+        logger.info("Fetching stores for company ID: {} with ownership type: {} and pagination - page: {}, size: {}", companyId, ownershipType, page, size);
+        
+        // Validate pagination parameters
+        if (page < 0) {
+            page = 0;
+        }
+        if (size <= 0) {
+            size = 10; // Default page size
+        }
+        if (size > 100) {
+            size = 100; // Maximum page size
+        }
+        
+        Pageable pageable = PageRequest.of(page, size);
+        // Use simple query method name - Spring Data will generate the query correctly
+        logger.debug("Calling repository method: findByCompanyIdAndOwnershipTypeAndIsActiveTrue with companyId={}, ownershipType={}", companyId, ownershipType);
+        Page<Store> storePage = storeRepository.findByCompanyIdAndOwnershipTypeAndIsActiveTrue(companyId, ownershipType, pageable);
+        
+        logger.info("Query returned {} stores out of {} total for companyId={}, ownershipType={}", 
+                   storePage.getContent().size(), storePage.getTotalElements(), companyId, ownershipType);
+        
+        // Log each store's ownership type for debugging
+        storePage.getContent().forEach(store -> 
+            logger.debug("Store ID: {}, Name: {}, Company ID: {}, Ownership Type: {}", 
+                        store.getId(), store.getStore_name(), 
+                        store.getCompany() != null ? store.getCompany().getId() : "null",
+                        store.getOwnershipType()));
+        
+        // Filter to ensure only matching stores are returned (safety check)
+        List<Store> filteredStores = storePage.getContent().stream()
+            .filter(store -> {
+                boolean matches = store.getOwnershipType() == ownershipType && 
+                                 store.getCompany() != null && 
+                                 store.getCompany().getId().equals(companyId);
+                if (!matches) {
+                    logger.warn("Store {} doesn't match filter: ownershipType={} (expected {}), companyId={} (expected {})", 
+                               store.getId(), store.getOwnershipType(), ownershipType,
+                               store.getCompany() != null ? store.getCompany().getId() : "null", companyId);
+                }
+                return matches;
+            })
+            .toList();
+        
+        if (filteredStores.size() != storePage.getContent().size()) {
+            logger.error("Query returned {} stores but only {} match the filter! Filtering out mismatched stores.", 
+                        storePage.getContent().size(), filteredStores.size());
+        }
+        
+        // Eagerly fetch relationships for the filtered stores
+        List<Store> storesWithRelationships = filteredStores.stream()
+            .map(store -> storeRepository.findByIdWithRelationships(store.getId()))
+            .filter(store -> store != null)
+            .toList();
+        
+        List<StoreDto> stores = storeMapper.getFrom(storesWithRelationships);
+        
+        return new PagedResponse<>(
+            stores,
+            storePage.getNumber(),
+            storePage.getSize(),
+            storePage.getTotalElements(),
+            storePage.getTotalPages()
+        );
+    }
+
+    /**
+     * Get stores by ownership type based on user role and permissions
+     * - SUPERADMIN/ADMIN/API_USER: All stores with the specified ownership type
+     * - COMPANY_USER: Stores of their company with the specified ownership type
+     * - STORE_USER: Only their assigned store if it matches the ownership type
+     */
+    @Transactional(readOnly = true)
+    public PagedResponse<StoreDto> getStoresForUserByOwnershipType(User user, OwnershipType ownershipType, int page, int size) {
+        if (user == null || user.getRole() == null) {
+            logger.warn("User or user role is null - returning empty result");
+            return new PagedResponse<>(List.of(), 0, size > 0 ? size : 10, 0, 0);
+        }
+        
+        logger.info("Fetching stores for user: {} with role: {} filtered by ownershipType: {} - page: {}, size: {}", 
+                   user.getUsername(), user.getRole().getName(), ownershipType, page, size);
+        
+        // Validate pagination parameters
+        if (page < 0) {
+            page = 0;
+        }
+        if (size <= 0) {
+            size = 10; // Default page size
+        }
+        if (size > 100) {
+            size = 100; // Maximum page size
+        }
+        
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Store> storePage;
+        
+        // Role-based data filtering
+        String roleName = user.getRole().getName();
+        switch (roleName) {
+            case "SUPERADMIN":
+            case "ADMIN":
+            case "API_USER":
+                // Return all stores with the specified ownership type
+                logger.debug("User {} has admin access - returning all stores with ownershipType: {}", user.getUsername(), ownershipType);
+                storePage = storeRepository.findByOwnershipTypeAndIsActiveTrue(ownershipType, pageable);
+                break;
+                
+            case "COMPANY_USER":
+                // Return stores of user's company with the specified ownership type
+                if (user.getCompany() == null) {
+                    logger.warn("COMPANY_USER {} has no company assigned", user.getUsername());
+                    storePage = Page.empty(pageable);
+                } else {
+                    logger.debug("User {} has company access - returning stores for company: {} with ownershipType: {}", 
+                               user.getUsername(), user.getCompany().getId(), ownershipType);
+                    storePage = storeRepository.findByCompanyIdAndOwnershipTypeAndIsActiveTrue(user.getCompany().getId(), ownershipType, pageable);
+                }
+                break;
+                
+            case "STORE_USER":
+                // Return only user's assigned store if it matches the ownership type
+                if (user.getStore() == null) {
+                    logger.warn("STORE_USER {} has no store assigned", user.getUsername());
+                    storePage = Page.empty(pageable);
+                } else {
+                    // Check if the user's store matches the ownership type
+                    if (user.getStore().getOwnershipType() == ownershipType && user.getStore().getIsActive()) {
+                        logger.debug("User {} has store access - returning assigned store: {} with ownershipType: {}", 
+                                   user.getUsername(), user.getStore().getId(), ownershipType);
+                        List<Store> singleStore = List.of(user.getStore());
+                        storePage = new org.springframework.data.domain.PageImpl<>(singleStore, pageable, 1);
+                    } else {
+                        logger.debug("User {} store doesn't match ownershipType filter: {}", user.getUsername(), ownershipType);
+                        storePage = Page.empty(pageable);
+                    }
+                }
+                break;
+                
+            default:
+                logger.warn("Unknown role: {} for user: {}", roleName, user.getUsername());
+                storePage = Page.empty(pageable);
+                break;
+        }
+        
+        // Eagerly fetch relationships for the returned stores
+        List<Store> storesWithRelationships = storePage.getContent().stream()
+            .map(store -> storeRepository.findByIdWithRelationships(store.getId()))
+            .filter(store -> store != null)
+            .filter(store -> store.getOwnershipType() == ownershipType) // Additional safety check
+            .toList();
+        
+        List<StoreDto> stores = storeMapper.getFrom(storesWithRelationships);
+        
+        return new PagedResponse<>(
+            stores,
+            storePage.getNumber(),
+            storePage.getSize(),
+            storesWithRelationships.size(),
+            (int) Math.ceil((double) storesWithRelationships.size() / size)
         );
     }
 
@@ -225,10 +389,10 @@ public class StoreService {
     }
 
     /**
-     * Get stores with optional company filter based on current user's permissions
+     * Get stores with optional company and ownership type filters based on current user's permissions
      */
     @Transactional(readOnly = true)
-    public PagedResponse<StoreDto> getStoresForCurrentUser(int page, int size, Long companyId) {
+    public PagedResponse<StoreDto> getStoresForCurrentUser(int page, int size, Long companyId, OwnershipType ownershipType) {
         User currentUser = securityContextService.getCurrentUser();
         if (currentUser == null) {
             logger.warn("No authenticated user found");
@@ -242,9 +406,19 @@ public class StoreService {
                            currentUser.getUsername(), companyId);
                 return new PagedResponse<>(List.of(), 0, size, 0, 0);
             }
-            return getStoresByCompany(companyId, page, size);
+            // If ownershipType is also provided, filter by both
+            if (ownershipType != null) {
+                return getStoresByCompanyAndOwnershipType(companyId, ownershipType, page, size);
+            } else {
+                return getStoresByCompany(companyId, page, size);
+            }
         } else {
-            return getStoresForUser(currentUser, page, size);
+            // No companyId provided - check if ownershipType filter is requested
+            if (ownershipType != null) {
+                return getStoresForUserByOwnershipType(currentUser, ownershipType, page, size);
+            } else {
+                return getStoresForUser(currentUser, page, size);
+            }
         }
     }
 
