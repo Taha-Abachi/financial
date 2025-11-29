@@ -980,9 +980,9 @@
 								],
 								"cookie": [],
 								"body": "{\n  \"status\": -1,\n  \"message\": \"Gift Card Not Found with serial No: {{serialNo}}\",\n  \"data\": null\n}"
-							}
-						]
-					},
+						}
+					]
+				},
 				{
 					"name": "Issue Gift Card (Store + Item Category Limited)",
 					"request": {
