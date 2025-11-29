@@ -106,4 +106,63 @@ public interface GiftCardTransactionRepository extends JpaRepository<GiftCardTra
     List<Object[]> getTransactionAggregationsByDateRangeAndCompany(@Param("startDate") LocalDateTime startDate, 
                                                                    @Param("endDate") LocalDateTime endDate,
                                                                    @Param("companyId") Long companyId);
+    
+    // Settlement report queries - fetch fulfilled transactions with relationships
+    @Query("SELECT t FROM GiftCardTransaction t " +
+           "LEFT JOIN FETCH t.giftCard gc " +
+           "LEFT JOIN FETCH gc.company " +
+           "LEFT JOIN FETCH t.store s " +
+           "LEFT JOIN FETCH s.company " +
+           "LEFT JOIN FETCH t.customer " +
+           "WHERE t.transactionType = 'Debit' " +
+           "AND t.status = 'Confirmed' " +
+           "AND t.trxDate >= :startDate " +
+           "AND t.trxDate < :endDate")
+    List<GiftCardTransaction> findFulfilledTransactionsForSettlement(@Param("startDate") LocalDateTime startDate,
+                                                                      @Param("endDate") LocalDateTime endDate);
+    
+    @Query("SELECT t FROM GiftCardTransaction t " +
+           "LEFT JOIN FETCH t.giftCard gc " +
+           "LEFT JOIN FETCH gc.company " +
+           "LEFT JOIN FETCH t.store s " +
+           "LEFT JOIN FETCH s.company " +
+           "LEFT JOIN FETCH t.customer " +
+           "WHERE t.transactionType = 'Debit' " +
+           "AND t.status = 'Confirmed' " +
+           "AND t.trxDate >= :startDate " +
+           "AND t.trxDate < :endDate " +
+           "AND t.store.id = :storeId")
+    List<GiftCardTransaction> findFulfilledTransactionsForSettlementByStore(@Param("startDate") LocalDateTime startDate,
+                                                                           @Param("endDate") LocalDateTime endDate,
+                                                                           @Param("storeId") Long storeId);
+    
+    @Query("SELECT t FROM GiftCardTransaction t " +
+           "LEFT JOIN FETCH t.giftCard gc " +
+           "LEFT JOIN FETCH gc.company " +
+           "LEFT JOIN FETCH t.store s " +
+           "LEFT JOIN FETCH s.company " +
+           "LEFT JOIN FETCH t.customer " +
+           "WHERE t.transactionType = 'Debit' " +
+           "AND t.status = 'Confirmed' " +
+           "AND t.trxDate >= :startDate " +
+           "AND t.trxDate < :endDate " +
+           "AND gc.company.id = :companyId")
+    List<GiftCardTransaction> findFulfilledTransactionsForSettlementByIssuerCompany(@Param("startDate") LocalDateTime startDate,
+                                                                                   @Param("endDate") LocalDateTime endDate,
+                                                                                   @Param("companyId") Long companyId);
+    
+    @Query("SELECT t FROM GiftCardTransaction t " +
+           "LEFT JOIN FETCH t.giftCard gc " +
+           "LEFT JOIN FETCH gc.company " +
+           "LEFT JOIN FETCH t.store s " +
+           "LEFT JOIN FETCH s.company " +
+           "LEFT JOIN FETCH t.customer " +
+           "WHERE t.transactionType = 'Debit' " +
+           "AND t.status = 'Confirmed' " +
+           "AND t.trxDate >= :startDate " +
+           "AND t.trxDate < :endDate " +
+           "AND s.company.id = :companyId")
+    List<GiftCardTransaction> findFulfilledTransactionsForSettlementByStoreCompany(@Param("startDate") LocalDateTime startDate,
+                                                                                   @Param("endDate") LocalDateTime endDate,
+                                                                                   @Param("companyId") Long companyId);
 }
