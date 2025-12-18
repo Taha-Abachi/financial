@@ -31,6 +31,7 @@ public class GiftCardMapper {
         dto.remainingValidityPeriod = valDays <=0 ? 0 : valDays;
         dto.expiryDate = gc.getExpiryDate();
         dto.realAmount = gc.getRealAmount();
+        dto.initialAmount = gc.getInitialAmount();
         dto.isActive = gc.isActive();
         dto.isBlocked = gc.isBlocked();
         dto.isAnonymous = (gc.getCustomer() == null);

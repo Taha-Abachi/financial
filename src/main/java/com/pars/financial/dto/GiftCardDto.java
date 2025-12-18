@@ -11,6 +11,7 @@ public class GiftCardDto {
     public String serialNo;
     public long balance;
     public long realAmount;
+    public long initialAmount;
     public long remainingValidityPeriod;
     public LocalDate expiryDate;
     public boolean isActive;
@@ -43,6 +44,14 @@ public class GiftCardDto {
 
     public void setBalance(long balance) {
         this.balance = balance;
+    }
+
+    public long getInitialAmount() {
+        return initialAmount;
+    }
+
+    public void setInitialAmount(long initialAmount) {
+        this.initialAmount = initialAmount;
     }
 
     public long getRemainingValidityPeriod() {
