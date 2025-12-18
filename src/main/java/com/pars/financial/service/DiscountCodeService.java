@@ -138,12 +138,8 @@ public class DiscountCodeService {
             logger.debug("Assigned discount code to company: {}", company.get().getName());
         }
         
-        // Set type (default to GENERAL if not provided)
-        if (type != null) {
-            code.setType(type);
-        } else {
-            code.setType(DiscountCodeType.GENERAL);
-        }
+        // Set type (defaults to GENERAL if null via setType method)
+        code.setType(type);
         
         // Handle customer assignment for PERSONAL type
         if (code.getType() == DiscountCodeType.PERSONAL) {

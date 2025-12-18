@@ -311,7 +311,8 @@ public class DiscountCode {
     }
 
     public void setType(DiscountCodeType type) {
-        this.type = type;
+        // Default to GENERAL if null is passed
+        this.type = type != null ? type : DiscountCodeType.GENERAL;
     }
 
     public Customer getCustomer() {
