@@ -188,10 +188,16 @@ public class DiscountCodeService {
         }
         // For GENERAL type, phone number is ignored if provided
         
-        // Check if both code and serialNo are provided simultaneously and count is 1
+        // Validate: if custom code is provided, count must be exactly 1
         boolean hasCustomCode = dto.code != null && !dto.code.trim().isEmpty();
+        if (hasCustomCode && dto.count != 1) {
+            logger.error("When providing a custom discount code, count must be exactly 1. Provided count: {}", dto.count);
+            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "When providing a custom discount code, count must be exactly 1");
+        }
+        
+        // Check if both code and serialNo are provided simultaneously and count is 1
         boolean hasCustomSerialNo = dto.serialNo != null;
-        boolean isSingleCode = dto.count <= 1;
+        boolean isSingleCode = dto.count == 1;
         
         if (hasCustomCode && hasCustomSerialNo && isSingleCode) {
             // Check if the provided code and serialNo are not already in the database
@@ -231,8 +237,14 @@ public class DiscountCodeService {
         }
         // For GENERAL type, phone number is ignored if provided
         
-        // Check if both code and serialNo are provided simultaneously and count is 1
+        // Validate: if custom code is provided, count must be exactly 1
         boolean hasCustomCode = request.code != null && !request.code.trim().isEmpty();
+        if (hasCustomCode && request.count != 1) {
+            logger.error("When providing a custom discount code, count must be exactly 1. Provided count: {}", request.count);
+            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "When providing a custom discount code, count must be exactly 1");
+        }
+        
+        // Check if both code and serialNo are provided simultaneously and count is 1
         boolean hasCustomSerialNo = request.serialNo != null;
         boolean isSingleCode = request.count == 1;
         
@@ -277,8 +289,14 @@ public class DiscountCodeService {
         }
         // For GENERAL type, phone number is ignored if provided
         
-        // Check if both code and serialNo are provided simultaneously and count is 1
+        // Validate: if custom code is provided, count must be exactly 1
         boolean hasCustomCode = request.code != null && !request.code.trim().isEmpty();
+        if (hasCustomCode && request.count != 1) {
+            logger.error("When providing a custom discount code, count must be exactly 1. Provided count: {}", request.count);
+            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "When providing a custom discount code, count must be exactly 1");
+        }
+        
+        // Check if both code and serialNo are provided simultaneously and count is 1
         boolean hasCustomSerialNo = request.serialNo != null;
         boolean isSingleCode = request.count == 1;
         
