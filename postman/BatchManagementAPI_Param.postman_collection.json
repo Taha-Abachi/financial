@@ -172,7 +172,7 @@
 						}
 					],
 					"cookie": [],
-					"body": "{\n  \"status\": 0,\n  \"message\": \"Batch details retrieved successfully\",\n  \"data\": {\n    \"batch\": {\n      \"id\": 1,\n      \"batchNumber\": \"BATCH12345678\",\n      \"batchType\": \"DISCOUNT_CODE\",\n      \"description\": \"Holiday promotion discount codes\",\n      \"requestDate\": \"2024-01-01T10:00:00\",\n      \"totalCount\": 100,\n      \"status\": \"COMPLETED\",\n      \"processedCount\": 100,\n      \"failedCount\": 0,\n      \"errorMessage\": null,\n      \"createdAt\": \"2024-01-01T10:00:00\",\n      \"updatedAt\": \"2024-01-01T10:05:00\",\n      \"requestUser\": {\n        \"id\": 1,\n        \"name\": \"Administrator\"\n      },\n      \"company\": {\n        \"id\": 1,\n        \"name\": \"Test Company\"\n      }\n    },\n    \"giftCards\": null,\n    \"discountCodes\": [\n      {\n        \"code\": \"HOLIDAY10\",\n        \"serialNo\": 1001,\n        \"percentage\": 10,\n        \"maxDiscountAmount\": 5000,\n        \"minimumBillAmount\": 1000,\n        \"constantDiscountAmount\": 0,\n        \"discountType\": \"PERCENTAGE\",\n        \"usageLimit\": 1,\n        \"currentUsageCount\": 0,\n        \"issueDate\": \"2024-01-01T10:00:00\",\n        \"expireDate\": \"2024-01-31\",\n        \"remainingValidityPeriod\": 30,\n        \"used\": false,\n        \"active\": true,\n        \"isUsable\": true,\n        \"redeemDate\": null,\n        \"transactions\": [],\n        \"companyId\": 1,\n        \"storeLimited\": false,\n        \"itemCategoryLimited\": false,\n        \"batchId\": 1,\n        \"batchNumber\": \"BATCH12345678\"\n      },\n      {\n        \"code\": \"HOLIDAY20\",\n        \"serialNo\": 1002,\n        \"percentage\": 20,\n        \"maxDiscountAmount\": 10000,\n        \"minimumBillAmount\": 2000,\n        \"constantDiscountAmount\": 0,\n        \"discountType\": \"PERCENTAGE\",\n        \"usageLimit\": 1,\n        \"currentUsageCount\": 0,\n        \"issueDate\": \"2024-01-01T10:00:00\",\n        \"expireDate\": \"2024-03-01\",\n        \"remainingValidityPeriod\": 60,\n        \"used\": false,\n        \"active\": true,\n        \"isUsable\": true,\n        \"redeemDate\": null,\n        \"transactions\": [],\n        \"companyId\": 1,\n        \"storeLimited\": true,\n        \"itemCategoryLimited\": false,\n        \"batchId\": 1,\n        \"batchNumber\": \"BATCH12345678\"\n      }\n    ]\n  }\n}"
+					"body": "{\n  \"status\": 0,\n  \"message\": \"Batch details retrieved successfully\",\n  \"data\": {\n    \"batch\": {\n      \"id\": 1,\n      \"batchNumber\": \"BATCH12345678\",\n      \"batchType\": \"DISCOUNT_CODE\",\n      \"description\": \"Holiday promotion discount codes\",\n      \"requestDate\": \"2024-01-01T10:00:00\",\n      \"totalCount\": 100,\n      \"status\": \"COMPLETED\",\n      \"processedCount\": 100,\n      \"failedCount\": 0,\n      \"errorMessage\": null,\n      \"createdAt\": \"2024-01-01T10:00:00\",\n      \"updatedAt\": \"2024-01-01T10:05:00\",\n      \"requestUser\": {\n        \"id\": 1,\n        \"name\": \"Administrator\"\n      },\n      \"company\": {\n        \"id\": 1,\n        \"name\": \"Test Company\"\n      }\n    },\n    \"giftCards\": null,\n    \"discountCodes\": [\n      {\n        \"code\": \"HOLIDAY10\",\n        \"serialNo\": 1001,\n        \"percentage\": 10,\n        \"maxDiscountAmount\": 5000,\n        \"minimumBillAmount\": 1000,\n        \"constantDiscountAmount\": 0,\n        \"discountType\": \"PERCENTAGE\",\n        \"usageLimit\": 1,\n        \"currentUsageCount\": 0,\n        \"issueDate\": \"2024-01-01T10:00:00\",\n        \"expireDate\": \"2024-01-31\",\n        \"remainingValidityPeriod\": 30,\n        \"used\": false,\n        \"active\": true,\n        \"isUsable\": true,\n        \"redeemDate\": null,\n        \"transactions\": [],\n        \"type\": \"GENERAL\",\n        \"customerId\": null,\n        \"companyId\": 1,\n        \"storeLimited\": false,\n        \"itemCategoryLimited\": false,\n        \"batchId\": 1,\n        \"batchNumber\": \"BATCH12345678\"\n      },\n      {\n        \"code\": \"HOLIDAY20\",\n        \"serialNo\": 1002,\n        \"percentage\": 20,\n        \"maxDiscountAmount\": 10000,\n        \"minimumBillAmount\": 2000,\n        \"constantDiscountAmount\": 0,\n        \"discountType\": \"PERCENTAGE\",\n        \"usageLimit\": 1,\n        \"currentUsageCount\": 0,\n        \"issueDate\": \"2024-01-01T10:00:00\",\n        \"expireDate\": \"2024-03-01\",\n        \"remainingValidityPeriod\": 60,\n        \"used\": false,\n        \"active\": true,\n        \"isUsable\": true,\n        \"redeemDate\": null,\n        \"transactions\": [],\n        \"type\": \"GENERAL\",\n        \"customerId\": null,\n        \"companyId\": 1,\n        \"storeLimited\": true,\n        \"itemCategoryLimited\": false,\n        \"batchId\": 1,\n        \"batchNumber\": \"BATCH12345678\"\n      }\n    ]\n  }\n}"
 				}
 			]
 		},
@@ -199,7 +199,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"batchType\": \"DISCOUNT_CODE\",\n    \"description\": \"Holiday promotion discount codes\",\n    \"totalCount\": 100,\n    \"companyId\": 1,\n    \"requestUserId\": 1,\n    \"discountCodeRequests\": [\n        {\n            \"companyId\": 1,\n            \"percentage\": 10,\n            \"remainingValidityPeriod\": 30,\n            \"count\": 50,\n            \"maxDiscountAmount\": 5000,\n            \"minimumBillAmount\": 1000,\n            \"discountType\": \"PERCENTAGE\",\n            \"usageLimit\": 1,\n            \"storeLimited\": false,\n            \"allowedStoreIds\": [],\n            \"itemCategoryLimited\": false,\n            \"allowedItemCategoryIds\": []\n        },\n        {\n            \"companyId\": 1,\n            \"percentage\": 20,\n            \"remainingValidityPeriod\": 60,\n            \"count\": 50,\n            \"maxDiscountAmount\": 10000,\n            \"minimumBillAmount\": 2000,\n            \"discountType\": \"PERCENTAGE\",\n            \"usageLimit\": 1,\n            \"storeLimited\": true,\n            \"allowedStoreIds\": [1, 2],\n            \"itemCategoryLimited\": false,\n            \"allowedItemCategoryIds\": []\n        }\n    ]\n}"
+					"raw": "{\n    \"batchType\": \"DISCOUNT_CODE\",\n    \"description\": \"Holiday promotion discount codes\",\n    \"totalCount\": 100,\n    \"companyId\": 1,\n    \"requestUserId\": 1,\n    \"discountCodeRequests\": [\n        {\n            \"companyId\": 1,\n            \"percentage\": 10,\n            \"remainingValidityPeriod\": 30,\n            \"count\": 50,\n            \"maxDiscountAmount\": 5000,\n            \"minimumBillAmount\": 1000,\n            \"discountType\": \"PERCENTAGE\",\n            \"usageLimit\": 1,\n            \"type\": \"GENERAL\",\n            \"storeLimited\": false,\n            \"allowedStoreIds\": [],\n            \"itemCategoryLimited\": false,\n            \"allowedItemCategoryIds\": []\n        },\n        {\n            \"companyId\": 1,\n            \"percentage\": 20,\n            \"remainingValidityPeriod\": 60,\n            \"count\": 50,\n            \"maxDiscountAmount\": 10000,\n            \"minimumBillAmount\": 2000,\n            \"discountType\": \"PERCENTAGE\",\n            \"usageLimit\": 1,\n            \"type\": \"GENERAL\",\n            \"storeLimited\": true,\n            \"allowedStoreIds\": [1, 2],\n            \"itemCategoryLimited\": false,\n            \"allowedItemCategoryIds\": []\n        }\n    ]\n}"
 				},
 				"url": {
 					"raw": "{{baseUrl}}/api/v1/batches/create",
@@ -213,35 +213,60 @@
 						"create"
 					]
 				},
-				"description": "Create a new discount code batch"
+				"description": "Create a new discount code batch. Note: PERSONAL type discount codes cannot be created in batches - use single code creation endpoint for PERSONAL codes. Only GENERAL type is allowed in batch creation."
 			},
-			"response": [
-				{
-					"name": "Success Response",
-					"originalRequest": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"batchType\": \"DISCOUNT_CODE\",\n    \"description\": \"Holiday promotion discount codes\",\n    \"totalCount\": 100,\n    \"companyId\": 1,\n    \"requestUserId\": 1\n}"
-						},
-						"url": {
-							"raw": ""
-						}
-					},
-					"status": "OK",
-					"code": 200,
-					"_postman_previewlanguage": "json",
-					"header": [
+					"response": [
 						{
-							"key": "Content-Type",
-							"value": "application/json"
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"batchType\": \"DISCOUNT_CODE\",\n    \"description\": \"Holiday promotion discount codes\",\n    \"totalCount\": 100,\n    \"companyId\": 1,\n    \"requestUserId\": 1\n}"
+								},
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"batchNumber\": \"BATCH12345678\",\n    \"batchType\": \"DISCOUNT_CODE\",\n    \"description\": \"Holiday promotion discount codes\",\n    \"requestDate\": \"2024-01-01T10:00:00\",\n    \"totalCount\": 100,\n    \"status\": \"PENDING\",\n    \"processedCount\": 0,\n    \"failedCount\": 0,\n    \"createdAt\": \"2024-01-01T10:00:00\",\n    \"updatedAt\": \"2024-01-01T10:00:00\",\n    \"requestUser\": {\n      \"id\": 1,\n      \"name\": \"Administrator\"\n    },\n    \"company\": {\n      \"id\": 1,\n      \"name\": \"Test Company\"\n    }\n  }\n}"
+						},
+						{
+							"name": "Error - PERSONAL Type in Batch",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"batchType\": \"DISCOUNT_CODE\",\n    \"description\": \"Personal discount codes batch\",\n    \"totalCount\": 10,\n    \"companyId\": 1,\n    \"requestUserId\": 1,\n    \"discountCodeRequests\": [\n        {\n            \"companyId\": 1,\n            \"percentage\": 10,\n            \"remainingValidityPeriod\": 30,\n            \"count\": 10,\n            \"type\": \"PERSONAL\",\n            \"phoneNumber\": \"09123456789\"\n        }\n    ]\n}"
+								},
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": -1,\n  \"message\": \"Invalid request: PERSONAL discount codes can only be created one at a time using the single code creation endpoint\",\n  \"data\": null\n}"
 						}
-					],
-					"cookie": [],
-					"body": "{\n  \"status\": 0,\n  \"message\": \"Success\",\n  \"data\": {\n    \"id\": 1,\n    \"batchNumber\": \"BATCH12345678\",\n    \"batchType\": \"DISCOUNT_CODE\",\n    \"description\": \"Holiday promotion discount codes\",\n    \"requestDate\": \"2024-01-01T10:00:00\",\n    \"totalCount\": 100,\n    \"status\": \"PENDING\",\n    \"processedCount\": 0,\n    \"failedCount\": 0,\n    \"createdAt\": \"2024-01-01T10:00:00\",\n    \"updatedAt\": \"2024-01-01T10:00:00\",\n    \"requestUser\": {\n      \"id\": 1,\n      \"name\": \"Administrator\"\n    },\n    \"company\": {\n      \"id\": 1,\n      \"name\": \"Test Company\"\n    }\n  }\n}"
-				}
-			]
+					]
 		},
 		{
 			"name": "Create Gift Card Batch (ADMIN or SUPERADMIN)",

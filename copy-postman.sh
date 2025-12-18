@@ -1,0 +1,1 @@
+cp -r ./postman/*.json ../admin-panel/postman/

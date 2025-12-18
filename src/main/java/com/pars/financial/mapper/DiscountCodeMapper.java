@@ -59,6 +59,11 @@ public class DiscountCodeMapper {
             dto.batchId = batch.getId();
             dto.batchNumber = batch.getBatchNumber();
         }
+        
+        // Map type and customer information
+        dto.type = code.getType();
+        dto.customerId = code.getCustomer() != null ? code.getCustomer().getId() : null;
+        
         ArrayList<DiscountCodeTransactionDto> transactions = new ArrayList<>();
         code.getTransactions().stream().filter(t->t.getTrxType() == TransactionType.Redeem).forEach(p->
         {

@@ -1,6 +1,7 @@
 package com.pars.financial.dto;
 
 import com.pars.financial.enums.DiscountType;
+import com.pars.financial.enums.DiscountCodeType;
 
 public class DiscountCodeIssueRequest {
     public String code;
@@ -18,4 +19,6 @@ public class DiscountCodeIssueRequest {
     public java.util.List<Long> allowedStoreIds;
     public boolean itemCategoryLimited = false;
     public java.util.List<Long> allowedItemCategoryIds;
+    public DiscountCodeType type = DiscountCodeType.GENERAL;
+    public String phoneNumber;
 }

@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 import com.pars.financial.enums.DiscountType;
+import com.pars.financial.enums.DiscountCodeType;
 
 public class DiscountCodeDto {
     public String code;
@@ -33,6 +34,8 @@ public class DiscountCodeDto {
     public boolean itemCategoryLimited;
     public Long batchId;
     public String batchNumber;
+    public DiscountCodeType type;
+    public Long customerId;
 
     public Long getBatchId() {
         return batchId;

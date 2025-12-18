@@ -19,6 +19,8 @@ import com.pars.financial.repository.ItemCategoryRepository;
 import com.pars.financial.repository.StoreRepository;
 import com.pars.financial.repository.CustomerRepository;
 import com.pars.financial.entity.User;
+import com.pars.financial.entity.Customer;
+import com.pars.financial.enums.DiscountCodeType;
 import com.pars.financial.utils.RandomStringGenerator;
 
 import org.slf4j.Logger;
@@ -49,24 +51,28 @@ public class DiscountCodeService {
     private final CompanyRepository companyRepository;
     private final StoreRepository storeRepository;
     private final ItemCategoryRepository itemCategoryRepository;
+    private final CustomerRepository customerRepository;
     private final DiscountCodeTransactionRepository discountCodeTransactionRepository;
     private final SecurityContextService securityContextService;
+    private final CustomerService customerService;
 
-    public DiscountCodeService(DiscountCodeRepository codeRepository, DiscountCodeMapper mapper, CompanyRepository companyRepository, StoreRepository storeRepository, ItemCategoryRepository itemCategoryRepository, CustomerRepository customerRepository, DiscountCodeTransactionRepository discountCodeTransactionRepository, SecurityContextService securityContextService) {
+    public DiscountCodeService(DiscountCodeRepository codeRepository, DiscountCodeMapper mapper, CompanyRepository companyRepository, StoreRepository storeRepository, ItemCategoryRepository itemCategoryRepository, CustomerRepository customerRepository, DiscountCodeTransactionRepository discountCodeTransactionRepository, SecurityContextService securityContextService, CustomerService customerService) {
         this.codeRepository = codeRepository;
         this.mapper = mapper;
         this.companyRepository = companyRepository;
         this.storeRepository = storeRepository;
         this.itemCategoryRepository = itemCategoryRepository;
+        this.customerRepository = customerRepository;
         this.discountCodeTransactionRepository = discountCodeTransactionRepository;
         this.securityContextService = securityContextService;
+        this.customerService = customerService;
     }
 
-    private DiscountCode issueDiscountCode(int percentage, long validityPeriod, long maxDiscountAmount, long minimumBillAmount, int usageLimit, long constantDiscountAmount, DiscountType discountType, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, String customCode, Long customSerialNo) {
-        return issueDiscountCode(percentage, validityPeriod, maxDiscountAmount, minimumBillAmount, usageLimit, constantDiscountAmount, discountType, companyId, storeLimited, allowedStoreIds, itemCategoryLimited, allowedItemCategoryIds, customCode, customSerialNo, null);
+    private DiscountCode issueDiscountCode(int percentage, long validityPeriod, long maxDiscountAmount, long minimumBillAmount, int usageLimit, long constantDiscountAmount, DiscountType discountType, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, String customCode, Long customSerialNo, DiscountCodeType type, String phoneNumber) {
+        return issueDiscountCode(percentage, validityPeriod, maxDiscountAmount, minimumBillAmount, usageLimit, constantDiscountAmount, discountType, companyId, storeLimited, allowedStoreIds, itemCategoryLimited, allowedItemCategoryIds, customCode, customSerialNo, type, phoneNumber, null);
     }
 
-    private DiscountCode issueDiscountCode(int percentage, long validityPeriod, long maxDiscountAmount, long minimumBillAmount, int usageLimit, long constantDiscountAmount, DiscountType discountType, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, String customCode, Long customSerialNo, com.pars.financial.entity.Batch batch) {
+    private DiscountCode issueDiscountCode(int percentage, long validityPeriod, long maxDiscountAmount, long minimumBillAmount, int usageLimit, long constantDiscountAmount, DiscountType discountType, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, String customCode, Long customSerialNo, DiscountCodeType type, String phoneNumber, com.pars.financial.entity.Batch batch) {
         logger.debug("Issuing new discount code with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}, minimumBillAmount: {}, usageLimit: {}, constantDiscountAmount: {}, discountType: {}, companyId: {}, storeLimited: {}, allowedStoreIds: {}, itemCategoryLimited: {}, allowedItemCategoryIds: {}, customCode: {}, customSerialNo: {}", 
             percentage, validityPeriod, maxDiscountAmount, minimumBillAmount, usageLimit, constantDiscountAmount, discountType, companyId, storeLimited, allowedStoreIds, itemCategoryLimited, allowedItemCategoryIds, customCode, customSerialNo);
         var code = new DiscountCode();
@@ -132,18 +138,59 @@ public class DiscountCodeService {
             logger.debug("Assigned discount code to company: {}", company.get().getName());
         }
         
+        // Set type (default to GENERAL if not provided)
+        if (type != null) {
+            code.setType(type);
+        } else {
+            code.setType(DiscountCodeType.GENERAL);
+        }
+        
+        // Handle customer assignment for PERSONAL type
+        if (code.getType() == DiscountCodeType.PERSONAL) {
+            if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+                logger.error("Phone number is required for PERSONAL discount code type");
+                throw new ValidationException(ErrorCodes.INVALID_REQUEST, "Phone number is required when type is PERSONAL");
+            }
+            
+            // Check if customer exists, if not create one
+            Customer customer = customerRepository.findByPrimaryPhoneNumber(phoneNumber);
+            if (customer == null) {
+                logger.info("Customer not found for phone number: {}, creating new customer", phoneNumber);
+                customer = customerService.createCustomer(phoneNumber);
+            } else {
+                logger.debug("Found existing customer with ID: {} for phone number: {}", customer.getId(), phoneNumber);
+            }
+            code.setCustomer(customer);
+        } else {
+            // For GENERAL type, ignore phone number if provided
+            if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
+                logger.warn("Phone number provided for GENERAL discount code type, ignoring it");
+            }
+            code.setCustomer(null);
+        }
+        
         // Set batch reference if provided
         if (batch != null) {
             code.setBatch(batch);
         }
         
-        logger.debug("Created discount code: {}", code.getCode());
+        logger.debug("Created discount code: {} with type: {}", code.getCode(), code.getType());
         return code;
     }
 
     public DiscountCodeDto generate(DiscountCodeIssueRequest dto) {
-        logger.info("Generating new discount code with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}, minimumBillAmount: {}, usageLimit: {}, constantDiscountAmount: {}, discountType: {}, companyId: {}, storeLimited: {}, allowedStoreIds: {}, itemCategoryLimited: {}, allowedItemCategoryIds: {}, customCode: {}, customSerialNo: {}", 
-            dto.percentage, dto.remainingValidityPeriod, dto.maxDiscountAmount, dto.minimumBillAmount, dto.usageLimit, dto.constantDiscountAmount, dto.discountType, dto.companyId, (long) dto.allowedStoreIds.size() > 0, dto.allowedStoreIds, dto.itemCategoryLimited, dto.allowedItemCategoryIds, dto.code, dto.serialNo);
+        logger.info("Generating new discount code with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}, minimumBillAmount: {}, usageLimit: {}, constantDiscountAmount: {}, discountType: {}, companyId: {}, storeLimited: {}, allowedStoreIds: {}, itemCategoryLimited: {}, allowedItemCategoryIds: {}, customCode: {}, customSerialNo: {}, type: {}, phoneNumber: {}", 
+            dto.percentage, dto.remainingValidityPeriod, dto.maxDiscountAmount, dto.minimumBillAmount, dto.usageLimit, dto.constantDiscountAmount, dto.discountType, dto.companyId, (long) dto.allowedStoreIds.size() > 0, dto.allowedStoreIds, dto.itemCategoryLimited, dto.allowedItemCategoryIds, dto.code, dto.serialNo, dto.type, dto.phoneNumber);
+        
+        // Validate type and phoneNumber
+        DiscountCodeType type = dto.type != null ? dto.type : DiscountCodeType.GENERAL;
+        if (type == DiscountCodeType.PERSONAL) {
+            if (dto.phoneNumber == null || dto.phoneNumber.trim().isEmpty()) {
+                logger.error("Phone number is required for PERSONAL discount code type");
+                throw new ValidationException(ErrorCodes.INVALID_REQUEST, "Phone number is required when type is PERSONAL");
+            }
+        }
+        // For GENERAL type, phone number is ignored if provided
         
         // Check if both code and serialNo are provided simultaneously and count is 1
         boolean hasCustomCode = dto.code != null && !dto.code.trim().isEmpty();
@@ -168,17 +215,25 @@ public class DiscountCodeService {
             dto.serialNo = null;
         }
         
-        var discountCode = issueDiscountCode(dto.percentage, dto.remainingValidityPeriod, dto.maxDiscountAmount, dto.minimumBillAmount, dto.usageLimit, dto.constantDiscountAmount, dto.discountType, dto.companyId, (long) dto.allowedStoreIds.size() > 0, dto.allowedStoreIds, dto.itemCategoryLimited, dto.allowedItemCategoryIds, dto.code, dto.serialNo);
+        var discountCode = issueDiscountCode(dto.percentage, dto.remainingValidityPeriod, dto.maxDiscountAmount, dto.minimumBillAmount, dto.usageLimit, dto.constantDiscountAmount, dto.discountType, dto.companyId, (long) dto.allowedStoreIds.size() > 0, dto.allowedStoreIds, dto.itemCategoryLimited, dto.allowedItemCategoryIds, dto.code, dto.serialNo, type, dto.phoneNumber);
         var savedCode = codeRepository.save(discountCode);
-        logger.info("Generated discount code: {}", savedCode.getCode());
+        logger.info("Generated discount code: {} with type: {}", savedCode.getCode(), savedCode.getType());
         return mapper.getFrom(savedCode);
     }
 
     public List<DiscountCodeDto> generateList(DiscountCodeIssueRequest request) {
         request.storeLimited = !request.allowedStoreIds.isEmpty();
         request.itemCategoryLimited = !request.allowedItemCategoryIds.isEmpty();
-        logger.info("Generating {} discount codes with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}, minimumBillAmount: {}, usageLimit: {}, constantDiscountAmount: {}, discountType: {}, companyId: {}, storeLimited: {}, allowedStoreIds: {}, itemCategoryLimited: {}, allowedItemCategoryIds: {}, customCode: {}, customSerialNo: {}", 
-            request.count, request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount, request.usageLimit, request.constantDiscountAmount, request.discountType, request.companyId, request.storeLimited, request.allowedStoreIds, request.itemCategoryLimited, request.allowedItemCategoryIds, request.code, request.serialNo);
+        logger.info("Generating {} discount codes with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}, minimumBillAmount: {}, usageLimit: {}, constantDiscountAmount: {}, discountType: {}, companyId: {}, storeLimited: {}, allowedStoreIds: {}, itemCategoryLimited: {}, allowedItemCategoryIds: {}, customCode: {}, customSerialNo: {}, type: {}, phoneNumber: {}", 
+            request.count, request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount, request.usageLimit, request.constantDiscountAmount, request.discountType, request.companyId, request.storeLimited, request.allowedStoreIds, request.itemCategoryLimited, request.allowedItemCategoryIds, request.code, request.serialNo, request.type, request.phoneNumber);
+        
+        // Validate type - PERSONAL type is not allowed in list generation
+        DiscountCodeType type = request.type != null ? request.type : DiscountCodeType.GENERAL;
+        if (type == DiscountCodeType.PERSONAL) {
+            logger.error("PERSONAL discount codes can only be created using single code creation endpoint, not in lists");
+            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "PERSONAL discount codes can only be created one at a time using the single code creation endpoint");
+        }
+        // For GENERAL type, phone number is ignored if provided
         
         // Check if both code and serialNo are provided simultaneously and count is 1
         boolean hasCustomCode = request.code != null && !request.code.trim().isEmpty();
@@ -205,11 +260,11 @@ public class DiscountCodeService {
         
         var ls = new ArrayList<DiscountCode>();
         for (var i = 0; i < request.count; i++) {
-            var discountCode = issueDiscountCode(request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount, request.usageLimit, request.constantDiscountAmount, request.discountType, request.companyId, request.storeLimited, request.allowedStoreIds, request.itemCategoryLimited, request.allowedItemCategoryIds, request.code, request.serialNo);
+            var discountCode = issueDiscountCode(request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount, request.usageLimit, request.constantDiscountAmount, request.discountType, request.companyId, request.storeLimited, request.allowedStoreIds, request.itemCategoryLimited, request.allowedItemCategoryIds, request.code, request.serialNo, type, request.phoneNumber);
             ls.add(discountCode);
         }
         var savedCodes = codeRepository.saveAll(ls);
-        logger.info("Generated {} discount codes successfully", request.count);
+        logger.info("Generated {} discount codes successfully with type: {}", request.count, type);
         return mapper.getFrom(savedCodes);
     }
 
@@ -218,6 +273,14 @@ public class DiscountCodeService {
         request.itemCategoryLimited = !request.allowedItemCategoryIds.isEmpty();
         logger.info("Generating {} discount codes with request: {} for batch: {}", request.count, request, batch.getBatchNumber());
         
+        // Validate type - PERSONAL type is not allowed in list generation (including batch creation)
+        DiscountCodeType type = request.type != null ? request.type : DiscountCodeType.GENERAL;
+        if (type == DiscountCodeType.PERSONAL) {
+            logger.error("PERSONAL discount codes can only be created using single code creation endpoint, not in lists or batches");
+            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "PERSONAL discount codes can only be created one at a time using the single code creation endpoint");
+        }
+        // For GENERAL type, phone number is ignored if provided
+        
         // Check if both code and serialNo are provided simultaneously and count is 1
         boolean hasCustomCode = request.code != null && !request.code.trim().isEmpty();
         boolean hasCustomSerialNo = request.serialNo != null;
@@ -243,11 +306,11 @@ public class DiscountCodeService {
         
         var ls = new ArrayList<DiscountCode>();
         for (var i = 0; i < request.count; i++) {
-            var discountCode = issueDiscountCode(request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount, request.usageLimit, request.constantDiscountAmount, request.discountType, request.companyId, request.storeLimited, request.allowedStoreIds, request.itemCategoryLimited, request.allowedItemCategoryIds, request.code, request.serialNo, batch);
+            var discountCode = issueDiscountCode(request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount, request.usageLimit, request.constantDiscountAmount, request.discountType, request.companyId, request.storeLimited, request.allowedStoreIds, request.itemCategoryLimited, request.allowedItemCategoryIds, request.code, request.serialNo, type, request.phoneNumber, batch);
             ls.add(discountCode);
         }
         var savedCodes = codeRepository.saveAll(ls);
-        logger.info("Generated {} discount codes successfully for batch: {}", request.count, batch.getBatchNumber());
+        logger.info("Generated {} discount codes successfully for batch: {} with type: {}", request.count, batch.getBatchNumber(), type);
         return mapper.getFrom(savedCodes);
     }
 
