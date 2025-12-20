@@ -94,6 +94,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/discountcode/personal/*").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN", "COMPANY_USER", "STORE_USER")
                         .requestMatchers("/api/v1/discountcode/*").hasAnyRole("ADMIN","API_USER", "SUPERADMIN", "COMPANY_USER")
                         .requestMatchers("/api/v1/giftcard/all").hasAnyRole("ADMIN", "SUPERADMIN")
+                        .requestMatchers("/api/v1/giftcard/customer/*").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN", "COMPANY_USER", "STORE_USER")
                         .requestMatchers("/api/v1/giftcard/company/*").hasAnyRole("ADMIN", "SUPERADMIN", "COMPANY_USER")
                         .requestMatchers("/api/v1/giftcard/transaction").hasAnyRole("API_USER", "SUPERADMIN")
                         .requestMatchers("/api/v1/giftcard/transaction/company/*").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN", "COMPANY_USER")

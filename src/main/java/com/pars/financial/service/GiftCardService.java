@@ -969,6 +969,113 @@ public class GiftCardService {
         GiftCard savedGiftCard = giftCardRepository.save(giftCard);
         return giftCardMapper.getFrom(savedGiftCard);
     }
+
+    /**
+     * Get gift cards for a customer by phone number with RBAC checks
+     * @param user the current user making the request
+     * @param phoneNumber the phone number of the customer
+     * @return list of gift cards for the customer
+     * @throws ValidationException if customer not found or user doesn't have access
+     */
+    @Transactional(readOnly = true)
+    public List<GiftCardDto> getGiftCardsByPhoneNumber(User user, String phoneNumber) {
+        logger.info("Fetching gift cards for phone number: {} by user: {} with role: {}", 
+                   phoneNumber, user.getUsername(), user.getRole().getName());
+        
+        // Validate phone number
+        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+            logger.error("Phone number is required");
+            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "Phone number is required");
+        }
+        
+        // Find customer by phone number
+        Customer customer = customerRepository.findByPrimaryPhoneNumber(phoneNumber.trim());
+        if (customer == null) {
+            logger.warn("Customer not found for phone number: {}", phoneNumber);
+            throw new ValidationException(ErrorCodes.CUSTOMER_NOT_FOUND, "Customer not found for phone number: " + phoneNumber);
+        }
+        
+        // Get all gift cards for the customer first
+        List<GiftCard> giftCards = giftCardRepository.findByCustomer(customer);
+        
+        // RBAC check: determine if user has access and filter gift cards based on role
+        String roleName = user.getRole().getName();
+        List<GiftCard> accessibleGiftCards = new java.util.ArrayList<>();
+        
+        switch (roleName) {
+            case "SUPERADMIN":
+            case "ADMIN":
+            case "API_USER":
+                // These roles have full access to all gift cards
+                accessibleGiftCards = giftCards;
+                logger.debug("User {} has full access (role: {})", user.getUsername(), roleName);
+                break;
+                
+            case "COMPANY_USER":
+                // Access based on company matching: user's company must match gift card's company
+                // OR user is requesting their own gift cards
+                if (phoneNumber.equals(user.getMobilePhoneNumber())) {
+                    // User can always view their own gift cards
+                    accessibleGiftCards = giftCards;
+                    logger.debug("COMPANY_USER {} viewing own gift cards", user.getUsername());
+                } else if (user.getCompany() != null) {
+                    // Filter gift cards where company matches user's company
+                    accessibleGiftCards = giftCards.stream()
+                        .filter(gc -> gc.getCompany() != null && 
+                                     gc.getCompany().getId().equals(user.getCompany().getId()))
+                        .collect(java.util.stream.Collectors.toList());
+                    logger.debug("COMPANY_USER {} access check: {} gift cards accessible from company {}", 
+                               user.getUsername(), accessibleGiftCards.size(), user.getCompany().getId());
+                } else {
+                    logger.warn("COMPANY_USER {} has no company assigned", user.getUsername());
+                }
+                break;
+                
+            case "STORE_USER":
+                // Access based on store's company matching: gift card's company must match user's store's company
+                // OR user is requesting their own gift cards
+                if (phoneNumber.equals(user.getMobilePhoneNumber())) {
+                    // User can always view their own gift cards
+                    accessibleGiftCards = giftCards;
+                    logger.debug("STORE_USER {} viewing own gift cards", user.getUsername());
+                } else if (user.getStore() != null && user.getStore().getCompany() != null) {
+                    // Filter gift cards where company matches user's store's company
+                    Long userCompanyId = user.getStore().getCompany().getId();
+                    accessibleGiftCards = giftCards.stream()
+                        .filter(gc -> gc.getCompany() != null && 
+                                     gc.getCompany().getId().equals(userCompanyId))
+                        .collect(java.util.stream.Collectors.toList());
+                    logger.debug("STORE_USER {} access check: {} gift cards accessible from store's company {}", 
+                               user.getUsername(), accessibleGiftCards.size(), userCompanyId);
+                } else {
+                    logger.warn("STORE_USER {} has no store or company assigned", user.getUsername());
+                }
+                break;
+                
+            default:
+                // For other roles, only allow if user is requesting their own gift cards
+                if (phoneNumber.equals(user.getMobilePhoneNumber())) {
+                    accessibleGiftCards = giftCards;
+                    logger.debug("User {} with role {} viewing own gift cards", user.getUsername(), roleName);
+                } else {
+                    logger.debug("User {} with role {} does not have access", user.getUsername(), roleName);
+                }
+                break;
+        }
+        
+        // Check if user has any access
+        if (accessibleGiftCards.isEmpty() && !phoneNumber.equals(user.getMobilePhoneNumber())) {
+            logger.warn("User {} with role {} does not have access to gift cards for phone number: {}", 
+                       user.getUsername(), roleName, phoneNumber);
+            throw new ValidationException(ErrorCodes.FORBIDDEN, "You do not have access to view gift cards for this phone number");
+        }
+        
+        giftCards = accessibleGiftCards;
+        
+        logger.info("Found {} gift cards for customer with phone number: {}", giftCards.size(), phoneNumber);
+        
+        return giftCardMapper.getFrom(giftCards);
+    }
 }
 
 

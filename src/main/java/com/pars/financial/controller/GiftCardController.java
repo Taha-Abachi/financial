@@ -8,12 +8,15 @@ import com.pars.financial.dto.PagedResponse;
 import com.pars.financial.dto.StoreLimitationRequest;
 import com.pars.financial.service.GiftCardService;
 import com.pars.financial.utils.ApiUserUtil;
+import com.pars.financial.exception.ValidationException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.constraints.Pattern;
 
 import java.util.List;
 
@@ -528,6 +531,46 @@ public class GiftCardController {
             logger.error("Error unblocking gift card {}: {}", serialNo, e.getMessage(), e);
             response.status = -1;
             response.message = "Failed to unblock gift card: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @GetMapping("/customer/{phoneNumber}")
+    public ResponseEntity<GenericResponse<List<GiftCardDto>>> getGiftCardsByPhoneNumber(
+            @PathVariable("phoneNumber") @Pattern(regexp = "^\\d{11}$") String phoneNumber) {
+        logger.info("GET /api/v1/giftcard/customer/{} called", phoneNumber);
+        var response = new GenericResponse<List<GiftCardDto>>();
+
+        try {
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+
+            List<GiftCardDto> giftCards = giftCardService.getGiftCardsByPhoneNumber(
+                userResult.user, phoneNumber);
+            
+            response.data = giftCards;
+            response.status = 200;
+            response.message = "Gift cards retrieved successfully";
+            
+            logger.info("Successfully retrieved {} gift cards for phone number: {}", 
+                       giftCards.size(), phoneNumber);
+            return ResponseEntity.ok(response);
+
+        } catch (ValidationException e) {
+            logger.warn("Validation error retrieving gift cards for phone number {}: {}", 
+                       phoneNumber, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (Exception e) {
+            logger.error("Error retrieving gift cards for phone number {}: {}", 
+                        phoneNumber, e.getMessage(), e);
+            response.status = -1;
+            response.message = "Failed to retrieve gift cards: " + e.getMessage();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
