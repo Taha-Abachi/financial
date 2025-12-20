@@ -836,4 +836,111 @@ public class DiscountCodeService {
         return mapper.getFrom(savedDiscountCode);
     }
 
+    /**
+     * Get personal discount codes for a customer by phone number with RBAC checks
+     * @param user the current user making the request
+     * @param phoneNumber the phone number of the customer
+     * @return list of personal discount codes for the customer
+     * @throws ValidationException if customer not found or user doesn't have access
+     */
+    @Transactional(readOnly = true)
+    public List<DiscountCodeDto> getPersonalDiscountCodesByPhoneNumber(User user, String phoneNumber) {
+        logger.info("Fetching personal discount codes for phone number: {} by user: {} with role: {}", 
+                   phoneNumber, user.getUsername(), user.getRole().getName());
+        
+        // Validate phone number
+        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+            logger.error("Phone number is required");
+            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "Phone number is required");
+        }
+        
+        // Find customer by phone number
+        Customer customer = customerRepository.findByPrimaryPhoneNumber(phoneNumber.trim());
+        if (customer == null) {
+            logger.warn("Customer not found for phone number: {}", phoneNumber);
+            throw new ValidationException(ErrorCodes.CUSTOMER_NOT_FOUND, "Customer not found for phone number: " + phoneNumber);
+        }
+        
+        // Get personal discount codes for the customer first
+        List<DiscountCode> personalCodes = codeRepository.findByCustomerAndType(customer, DiscountCodeType.PERSONAL);
+        
+        // RBAC check: determine if user has access and filter codes based on role
+        String roleName = user.getRole().getName();
+        List<DiscountCode> accessibleCodes = new java.util.ArrayList<>();
+        
+        switch (roleName) {
+            case "SUPERADMIN":
+            case "ADMIN":
+            case "API_USER":
+                // These roles have full access to all codes
+                accessibleCodes = personalCodes;
+                logger.debug("User {} has full access (role: {})", user.getUsername(), roleName);
+                break;
+                
+            case "COMPANY_USER":
+                // Access based on company matching: user's company must match discount code's company
+                // OR user is requesting their own codes
+                if (phoneNumber.equals(user.getMobilePhoneNumber())) {
+                    // User can always view their own codes
+                    accessibleCodes = personalCodes;
+                    logger.debug("COMPANY_USER {} viewing own codes", user.getUsername());
+                } else if (user.getCompany() != null) {
+                    // Filter codes where company matches user's company
+                    accessibleCodes = personalCodes.stream()
+                        .filter(code -> code.getCompany() != null && 
+                                      code.getCompany().getId().equals(user.getCompany().getId()))
+                        .collect(java.util.stream.Collectors.toList());
+                    logger.debug("COMPANY_USER {} access check: {} codes accessible from company {}", 
+                               user.getUsername(), accessibleCodes.size(), user.getCompany().getId());
+                } else {
+                    logger.warn("COMPANY_USER {} has no company assigned", user.getUsername());
+                }
+                break;
+                
+            case "STORE_USER":
+                // Access based on store's company matching: discount code's company must match user's store's company
+                // OR user is requesting their own codes
+                if (phoneNumber.equals(user.getMobilePhoneNumber())) {
+                    // User can always view their own codes
+                    accessibleCodes = personalCodes;
+                    logger.debug("STORE_USER {} viewing own codes", user.getUsername());
+                } else if (user.getStore() != null && user.getStore().getCompany() != null) {
+                    // Filter codes where company matches user's store's company
+                    Long userCompanyId = user.getStore().getCompany().getId();
+                    accessibleCodes = personalCodes.stream()
+                        .filter(code -> code.getCompany() != null && 
+                                      code.getCompany().getId().equals(userCompanyId))
+                        .collect(java.util.stream.Collectors.toList());
+                    logger.debug("STORE_USER {} access check: {} codes accessible from store's company {}", 
+                               user.getUsername(), accessibleCodes.size(), userCompanyId);
+                } else {
+                    logger.warn("STORE_USER {} has no store or company assigned", user.getUsername());
+                }
+                break;
+                
+            default:
+                // For other roles, only allow if user is requesting their own codes
+                if (phoneNumber.equals(user.getMobilePhoneNumber())) {
+                    accessibleCodes = personalCodes;
+                    logger.debug("User {} with role {} viewing own codes", user.getUsername(), roleName);
+                } else {
+                    logger.debug("User {} with role {} does not have access", user.getUsername(), roleName);
+                }
+                break;
+        }
+        
+        // Check if user has any access
+        if (accessibleCodes.isEmpty() && !phoneNumber.equals(user.getMobilePhoneNumber())) {
+            logger.warn("User {} with role {} does not have access to personal discount codes for phone number: {}", 
+                       user.getUsername(), roleName, phoneNumber);
+            throw new ValidationException(ErrorCodes.FORBIDDEN, "You do not have access to view personal discount codes for this phone number");
+        }
+        
+        personalCodes = accessibleCodes;
+        
+        logger.info("Found {} personal discount codes for customer with phone number: {}", personalCodes.size(), phoneNumber);
+        
+        return mapper.getFrom(personalCodes);
+    }
+
 }

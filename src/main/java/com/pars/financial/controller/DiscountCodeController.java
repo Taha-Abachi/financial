@@ -24,6 +24,9 @@ import com.pars.financial.dto.PagedResponse;
 import com.pars.financial.dto.StoreLimitationRequest;
 import com.pars.financial.service.DiscountCodeService;
 import com.pars.financial.utils.ApiUserUtil;
+
+import jakarta.validation.constraints.Pattern;
+
 import com.pars.financial.exception.ValidationException;
 
 @RestController
@@ -307,6 +310,46 @@ public class DiscountCodeController {
             logger.error("Error unblocking discount code {}: {}", code, e.getMessage(), e);
             response.status = -1;
             response.message = "Failed to unblock discount code: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @GetMapping("/personal/{phoneNumber}")
+    public ResponseEntity<GenericResponse<List<DiscountCodeDto>>> getPersonalDiscountCodesByPhoneNumber(
+            @PathVariable("phoneNumber") @Pattern(regexp = "^\\d{11}$") String phoneNumber) {
+        logger.info("GET /api/v1/discountcode/personal/{} called", phoneNumber);
+        var response = new GenericResponse<List<DiscountCodeDto>>();
+
+        try {
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+
+            List<DiscountCodeDto> personalCodes = codeService.getPersonalDiscountCodesByPhoneNumber(
+                userResult.user, phoneNumber);
+            
+            response.data = personalCodes;
+            response.status = 200;
+            response.message = "Personal discount codes retrieved successfully";
+            
+            logger.info("Successfully retrieved {} personal discount codes for phone number: {}", 
+                       personalCodes.size(), phoneNumber);
+            return ResponseEntity.ok(response);
+
+        } catch (ValidationException e) {
+            logger.warn("Validation error retrieving personal discount codes for phone number {}: {}", 
+                       phoneNumber, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (Exception e) {
+            logger.error("Error retrieving personal discount codes for phone number {}: {}", 
+                        phoneNumber, e.getMessage(), e);
+            response.status = -1;
+            response.message = "Failed to retrieve personal discount codes: " + e.getMessage();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
