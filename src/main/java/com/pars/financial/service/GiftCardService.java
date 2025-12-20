@@ -946,6 +946,17 @@ public class GiftCardService {
             throw new GiftCardNotFoundException("Gift Card Not Found with serial No: " + serialNo);
         }
 
+        // RBAC check: COMPANY_USER and STORE_USER can only block/unblock gift cards from their company
+        String roleName = currentUser.getRole().getName();
+        if (!roleName.equals("SUPERADMIN") && !roleName.equals("ADMIN") && !roleName.equals("API_USER")) {
+            GiftCardDto dto = giftCardMapper.getFrom(giftCard);
+            if (!hasAccessToGiftCard(currentUser, dto)) {
+                logger.warn("User {} with role {} does not have access to block/unblock gift card {}", 
+                           currentUser.getUsername(), roleName, serialNo);
+                throw new ValidationException(ErrorCodes.FORBIDDEN, "You do not have access to block/unblock this gift card");
+            }
+        }
+
         if (block) {
             if (giftCard.isBlocked()) {
                 logger.warn("Gift card {} is already blocked", serialNo);
@@ -987,6 +998,24 @@ public class GiftCardService {
         if (giftCard == null) {
             logger.warn("Gift card not found with serialNo: {}", serialNo);
             throw new GiftCardNotFoundException("Gift Card Not Found with serial No: " + serialNo);
+        }
+
+        // Check if gift card is blocked - cannot activate/deactivate if blocked
+        if (giftCard.isBlocked()) {
+            logger.warn("Cannot {} blocked gift card: {}", activate ? "activate" : "deactivate", serialNo);
+            throw new ValidationException(ErrorCodes.GIFT_CARD_INVALID, 
+                "Cannot " + (activate ? "activate" : "deactivate") + " a blocked gift card. Please unblock it first.");
+        }
+
+        // RBAC check: COMPANY_USER and STORE_USER can only activate/deactivate gift cards from their company
+        String roleName = currentUser.getRole().getName();
+        if (!roleName.equals("SUPERADMIN") && !roleName.equals("ADMIN") && !roleName.equals("API_USER")) {
+            GiftCardDto dto = giftCardMapper.getFrom(giftCard);
+            if (!hasAccessToGiftCard(currentUser, dto)) {
+                logger.warn("User {} with role {} does not have access to activate/deactivate gift card {}", 
+                           currentUser.getUsername(), roleName, serialNo);
+                throw new ValidationException(ErrorCodes.FORBIDDEN, "You do not have access to activate/deactivate this gift card");
+            }
         }
 
         if (activate) {

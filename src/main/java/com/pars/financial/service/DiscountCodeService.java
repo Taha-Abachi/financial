@@ -830,6 +830,17 @@ public class DiscountCodeService {
             throw new ValidationException(ErrorCodes.DISCOUNT_CODE_NOT_FOUND, "Discount code not found: " + code);
         }
 
+        // RBAC check: COMPANY_USER and STORE_USER can only block/unblock codes from their company
+        String roleName = currentUser.getRole().getName();
+        if (!roleName.equals("SUPERADMIN") && !roleName.equals("ADMIN") && !roleName.equals("API_USER")) {
+            DiscountCodeDto dto = mapper.getFrom(discountCode);
+            if (!hasAccessToDiscountCode(currentUser, dto)) {
+                logger.warn("User {} with role {} does not have access to block/unblock discount code {}", 
+                           currentUser.getUsername(), roleName, code);
+                throw new ValidationException(ErrorCodes.FORBIDDEN, "You do not have access to block/unblock this discount code");
+            }
+        }
+
         if (block) {
             if (discountCode.isBlocked()) {
                 logger.warn("Discount code {} is already blocked", code);
@@ -871,6 +882,24 @@ public class DiscountCodeService {
         if (discountCode == null) {
             logger.warn("Discount code not found: {}", code);
             throw new ValidationException(ErrorCodes.DISCOUNT_CODE_NOT_FOUND, "Discount code not found: " + code);
+        }
+
+        // Check if discount code is blocked - cannot activate/deactivate if blocked
+        if (discountCode.isBlocked()) {
+            logger.warn("Cannot {} blocked discount code: {}", activate ? "activate" : "deactivate", code);
+            throw new ValidationException(ErrorCodes.DISCOUNT_CODE_INVALID, 
+                "Cannot " + (activate ? "activate" : "deactivate") + " a blocked discount code. Please unblock it first.");
+        }
+
+        // RBAC check: COMPANY_USER and STORE_USER can only activate/deactivate codes from their company
+        String roleName = currentUser.getRole().getName();
+        if (!roleName.equals("SUPERADMIN") && !roleName.equals("ADMIN") && !roleName.equals("API_USER")) {
+            DiscountCodeDto dto = mapper.getFrom(discountCode);
+            if (!hasAccessToDiscountCode(currentUser, dto)) {
+                logger.warn("User {} with role {} does not have access to activate/deactivate discount code {}", 
+                           currentUser.getUsername(), roleName, code);
+                throw new ValidationException(ErrorCodes.FORBIDDEN, "You do not have access to activate/deactivate this discount code");
+            }
         }
 
         if (activate) {
