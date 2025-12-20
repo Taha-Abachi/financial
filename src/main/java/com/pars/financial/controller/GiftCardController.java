@@ -35,9 +35,11 @@ public class GiftCardController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) Long companyId,
-            @RequestParam(required = false) Long storeId) {
-        logger.info("GET /api/v1/giftcard/all called with pagination - page: {}, size: {}, companyId: {}, storeId: {}", 
-                   page, size, companyId, storeId);
+            @RequestParam(required = false) Long storeId,
+            @RequestParam(required = false, defaultValue = "id") String sortBy,
+            @RequestParam(required = false, defaultValue = "ASC") String sortDir) {
+        logger.info("GET /api/v1/giftcard/all called with pagination - page: {}, size: {}, companyId: {}, storeId: {}, sortBy: {}, sortDir: {}", 
+                   page, size, companyId, storeId, sortBy, sortDir);
         
         var response = new GenericResponse<PagedResponse<GiftCardDto>>();
         
@@ -52,7 +54,7 @@ public class GiftCardController {
             
             // Get gift cards with RBAC and filtering
             PagedResponse<GiftCardDto> pagedGiftCards = giftCardService.getGiftCardsForCurrentUserWithFiltering(
-                userResult.user, page, size, companyId, storeId);
+                userResult.user, page, size, companyId, storeId, sortBy, sortDir);
             
             if (pagedGiftCards.getContent() == null || pagedGiftCards.getContent().isEmpty()) {
                 logger.warn("Gift card list not found for user access level");

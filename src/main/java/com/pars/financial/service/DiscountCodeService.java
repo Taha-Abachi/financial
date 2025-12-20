@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -680,15 +681,32 @@ public class DiscountCodeService {
      * @return PagedResponse of discount codes
      */
     @Transactional(readOnly = true)
-    public PagedResponse<DiscountCodeDto> getDiscountCodesForCurrentUserWithFiltering(User user, int page, int size, Long companyId, Long storeId) {
-        logger.debug("Fetching discount codes for user: {} with role: {} - page: {}, size: {}, companyId: {}, storeId: {}",
-                    user.getUsername(), user.getRole().getName(), page, size, companyId, storeId);
+    public PagedResponse<DiscountCodeDto> getDiscountCodesForCurrentUserWithFiltering(User user, int page, int size, Long companyId, Long storeId, String sortBy, String sortDir) {
+        logger.debug("Fetching discount codes for user: {} with role: {} - page: {}, size: {}, companyId: {}, storeId: {}, sortBy: {}, sortDir: {}",
+                    user.getUsername(), user.getRole().getName(), page, size, companyId, storeId, sortBy, sortDir);
 
         if (page < 0) { page = 0; }
         if (size <= 0) { size = 10; }
         if (size > 100) { size = 100; }
 
-        Pageable pageable = PageRequest.of(page, size);
+        // Validate and set default sort field
+        if (sortBy == null || sortBy.trim().isEmpty()) {
+            sortBy = "id";
+        }
+        
+        // Validate sort direction
+        Sort.Direction direction = Sort.Direction.ASC;
+        if (sortDir != null && !sortDir.trim().isEmpty()) {
+            try {
+                direction = Sort.Direction.fromString(sortDir.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                logger.warn("Invalid sort direction: {}, using ASC", sortDir);
+                direction = Sort.Direction.ASC;
+            }
+        }
+
+        // Create Pageable with sorting
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<DiscountCode> discountCodePage;
 
         switch (user.getRole().getName()) {

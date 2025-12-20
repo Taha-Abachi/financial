@@ -27,6 +27,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -621,9 +622,9 @@ public class GiftCardService {
      * - STORE_USER: Only sees their store's company's gift cards
      */
     @Transactional(readOnly = true)
-    public PagedResponse<GiftCardDto> getGiftCardsForCurrentUserWithFiltering(User user, int page, int size, Long companyId, Long storeId) {
-        logger.debug("Fetching gift cards for user: {} with role: {} - page: {}, size: {}, companyId: {}, storeId: {}", 
-                    user.getUsername(), user.getRole().getName(), page, size, companyId, storeId);
+    public PagedResponse<GiftCardDto> getGiftCardsForCurrentUserWithFiltering(User user, int page, int size, Long companyId, Long storeId, String sortBy, String sortDir) {
+        logger.debug("Fetching gift cards for user: {} with role: {} - page: {}, size: {}, companyId: {}, storeId: {}, sortBy: {}, sortDir: {}", 
+                    user.getUsername(), user.getRole().getName(), page, size, companyId, storeId, sortBy, sortDir);
         
         // Validate pagination parameters
         if (page < 0) {
@@ -636,7 +637,24 @@ public class GiftCardService {
             size = 100; // Maximum page size
         }
         
-        Pageable pageable = PageRequest.of(page, size);
+        // Validate and set default sort field
+        if (sortBy == null || sortBy.trim().isEmpty()) {
+            sortBy = "id";
+        }
+        
+        // Validate sort direction
+        Sort.Direction direction = Sort.Direction.ASC;
+        if (sortDir != null && !sortDir.trim().isEmpty()) {
+            try {
+                direction = Sort.Direction.fromString(sortDir.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                logger.warn("Invalid sort direction: {}, using ASC", sortDir);
+                direction = Sort.Direction.ASC;
+            }
+        }
+
+        // Create Pageable with sorting
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<GiftCard> giftCardPage;
         
         // Role-based data filtering

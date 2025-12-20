@@ -21,7 +21,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/api/v1/giftcard/all?page={{page}}&size={{size}}&companyId={{companyId}}&storeId={{storeId}}",
+							"raw": "{{baseUrl}}/api/v1/giftcard/all?page={{page}}&size={{size}}&companyId={{companyId}}&storeId={{storeId}}&sortBy={{sortBy}}&sortDir={{sortDir}}",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -51,10 +51,20 @@
 									"key": "storeId",
 									"value": "{{storeId}}",
 									"description": "Filter by store ID (optional, SUPERADMIN only)"
+								},
+								{
+									"key": "sortBy",
+									"value": "{{sortBy}}",
+									"description": "Field to sort by (optional, default: 'id'). Valid fields: id, serialNo, identifier, expiryDate, balance, etc."
+								},
+								{
+									"key": "sortDir",
+									"value": "{{sortDir}}",
+									"description": "Sort direction (optional, default: 'ASC'). Valid values: ASC, DESC"
 								}
 							]
 						},
-						"description": "Get a list of gift cards with pagination and RBAC filtering. SUPERADMIN can filter by companyId and/or storeId. COMPANY_USER sees only their company's gift cards. STORE_USER sees only their store's company gift cards."
+						"description": "Get a list of gift cards with pagination, sorting, and RBAC filtering. SUPERADMIN can filter by companyId and/or storeId. COMPANY_USER sees only their company's gift cards. STORE_USER sees only their store's company gift cards. Supports optional sorting by any field (default: id) in ASC or DESC order."
 					},
 					"response": [
 						{
@@ -2049,6 +2059,18 @@
 			"value": "2024-01-31",
 			"type": "string",
 			"description": "End date for settlement report (format: yyyy-MM-dd)"
+		},
+		{
+			"key": "sortBy",
+			"value": "id",
+			"type": "string",
+			"description": "Field to sort by (default: 'id'). Valid fields: id, serialNo, identifier, expiryDate, balance, etc."
+		},
+		{
+			"key": "sortDir",
+			"value": "ASC",
+			"type": "string",
+			"description": "Sort direction (default: 'ASC'). Valid values: ASC, DESC"
 		}
 	]
 }

@@ -46,9 +46,11 @@ public class DiscountCodeController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) Long companyId,
-            @RequestParam(required = false) Long storeId) {
-        logger.info("GET /api/v1/discountcode/all called with pagination - page: {}, size: {}, companyId: {}, storeId: {}",
-                   page, size, companyId, storeId);
+            @RequestParam(required = false) Long storeId,
+            @RequestParam(required = false, defaultValue = "id") String sortBy,
+            @RequestParam(required = false, defaultValue = "ASC") String sortDir) {
+        logger.info("GET /api/v1/discountcode/all called with pagination - page: {}, size: {}, companyId: {}, storeId: {}, sortBy: {}, sortDir: {}",
+                   page, size, companyId, storeId, sortBy, sortDir);
 
         var response = new GenericResponse<PagedResponse<DiscountCodeDto>>();
 
@@ -61,7 +63,7 @@ public class DiscountCodeController {
             }
 
             PagedResponse<DiscountCodeDto> pagedDiscountCodes = codeService.getDiscountCodesForCurrentUserWithFiltering(
-                userResult.user, page, size, companyId, storeId);
+                userResult.user, page, size, companyId, storeId, sortBy, sortDir);
 
             if (pagedDiscountCodes.getContent() == null || pagedDiscountCodes.getContent().isEmpty()) {
                 logger.warn("Discount code list not found for user access level");
