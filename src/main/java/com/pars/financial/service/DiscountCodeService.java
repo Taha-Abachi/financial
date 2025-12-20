@@ -855,6 +855,45 @@ public class DiscountCodeService {
     }
 
     /**
+     * Deactivate or activate a discount code by code
+     * @param code the discount code
+     * @param activate true to activate, false to deactivate
+     * @return the updated discount code DTO
+     * @throws ValidationException if discount code not found or already in the requested state
+     */
+    @Transactional
+    public DiscountCodeDto activateDiscountCode(String code, boolean activate) {
+        logger.info("{} discount code: {}", activate ? "Activating" : "Deactivating", code);
+        
+        User currentUser = securityContextService.getCurrentUserOrThrow();
+        
+        DiscountCode discountCode = codeRepository.findByCode(code.toUpperCase());
+        if (discountCode == null) {
+            logger.warn("Discount code not found: {}", code);
+            throw new ValidationException(ErrorCodes.DISCOUNT_CODE_NOT_FOUND, "Discount code not found: " + code);
+        }
+
+        if (activate) {
+            if (discountCode.isActive()) {
+                logger.warn("Discount code {} is already active", code);
+                throw new ValidationException(ErrorCodes.DISCOUNT_CODE_INVALID, "Discount code is already active");
+            }
+            discountCode.setActive(true);
+            logger.info("Discount code {} activated by user {}", code, currentUser.getUsername());
+        } else {
+            if (!discountCode.isActive()) {
+                logger.warn("Discount code {} is already inactive", code);
+                throw new ValidationException(ErrorCodes.DISCOUNT_CODE_INVALID, "Discount code is already inactive");
+            }
+            discountCode.setActive(false);
+            logger.info("Discount code {} deactivated by user {}", code, currentUser.getUsername());
+        }
+
+        DiscountCode savedDiscountCode = codeRepository.save(discountCode);
+        return mapper.getFrom(savedDiscountCode);
+    }
+
+    /**
      * Get personal discount codes for a customer by phone number with RBAC checks
      * @param user the current user making the request
      * @param phoneNumber the phone number of the customer

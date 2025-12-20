@@ -102,11 +102,15 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/giftcard/report/company/*").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN", "COMPANY_USER")
                         .requestMatchers("/api/v1/giftcard/block/*").hasAnyRole("ADMIN", "SUPERADMIN")
                         .requestMatchers("/api/v1/giftcard/unblock/*").hasAnyRole("ADMIN", "SUPERADMIN")
+                        .requestMatchers("/api/v1/giftcard/activate/*").hasAnyRole("ADMIN", "SUPERADMIN")
+                        .requestMatchers("/api/v1/giftcard/deactivate/*").hasAnyRole("ADMIN", "SUPERADMIN")
                         // Settlement report endpoints - accessible to COMPANY_USER, ADMIN, and SUPERADMIN
                         .requestMatchers("/api/v1/settlement/report").hasAnyRole("COMPANY_USER", "ADMIN", "SUPERADMIN")
                         .requestMatchers("/api/v1/giftcard/*").hasAnyRole("ADMIN","API_USER", "SUPERADMIN", "COMPANY_USER")
                         .requestMatchers("/api/v1/discountcode/block/*").hasAnyRole("ADMIN", "SUPERADMIN")
                         .requestMatchers("/api/v1/discountcode/unblock/*").hasAnyRole("ADMIN", "SUPERADMIN")
+                        .requestMatchers("/api/v1/discountcode/activate/*").hasAnyRole("ADMIN", "SUPERADMIN")
+                        .requestMatchers("/api/v1/discountcode/deactivate/*").hasAnyRole("ADMIN", "SUPERADMIN")
                         .requestMatchers("/api/v1/giftcard/identifier/*").hasAnyRole("ADMIN","API_USER", "SUPERADMIN", "COMPANY_USER")
                         .requestMatchers("/api/v1/giftcard/transaction/checkStatus/").hasAnyRole("ADMIN", "API_USER", "SUPERADMIN")
                         // Item Category endpoints - POST, PUT, DELETE operations restricted to SUPERADMIN only

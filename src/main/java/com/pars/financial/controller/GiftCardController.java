@@ -574,4 +574,94 @@ public class GiftCardController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+    @PutMapping("/deactivate/{serialNo}")
+    public ResponseEntity<GenericResponse<GiftCardDto>> deactivateGiftCard(
+            @PathVariable String serialNo) {
+        logger.info("PUT /api/v1/giftcard/deactivate/{} called", serialNo);
+        var response = new GenericResponse<GiftCardDto>();
+
+        try {
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+
+            GiftCardDto giftCard = giftCardService.activateGiftCard(serialNo, false);
+            response.data = giftCard;
+            response.status = 200;
+            response.message = "Gift card deactivated successfully";
+
+            logger.info("Successfully deactivated gift card: {}", serialNo);
+            return ResponseEntity.ok(response);
+
+        } catch (com.pars.financial.exception.GiftCardNotFoundException e) {
+            logger.warn("Gift card not found: {}", serialNo);
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (com.pars.financial.exception.ValidationException e) {
+            logger.warn("Validation error deactivating gift card {}: {}", serialNo, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error deactivating gift card {}: {}", serialNo, e.getMessage());
+            response.status = 401;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        } catch (Exception e) {
+            logger.error("Error deactivating gift card {}: {}", serialNo, e.getMessage(), e);
+            response.status = -1;
+            response.message = "Failed to deactivate gift card: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PutMapping("/activate/{serialNo}")
+    public ResponseEntity<GenericResponse<GiftCardDto>> activateGiftCard(
+            @PathVariable String serialNo) {
+        logger.info("PUT /api/v1/giftcard/activate/{} called", serialNo);
+        var response = new GenericResponse<GiftCardDto>();
+
+        try {
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+
+            GiftCardDto giftCard = giftCardService.activateGiftCard(serialNo, true);
+            response.data = giftCard;
+            response.status = 200;
+            response.message = "Gift card activated successfully";
+
+            logger.info("Successfully activated gift card: {}", serialNo);
+            return ResponseEntity.ok(response);
+
+        } catch (com.pars.financial.exception.GiftCardNotFoundException e) {
+            logger.warn("Gift card not found: {}", serialNo);
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (com.pars.financial.exception.ValidationException e) {
+            logger.warn("Validation error activating gift card {}: {}", serialNo, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error activating gift card {}: {}", serialNo, e.getMessage());
+            response.status = 401;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        } catch (Exception e) {
+            logger.error("Error activating gift card {}: {}", serialNo, e.getMessage(), e);
+            response.status = -1;
+            response.message = "Failed to activate gift card: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
 }

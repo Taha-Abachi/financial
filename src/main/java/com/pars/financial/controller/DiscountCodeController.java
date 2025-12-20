@@ -316,6 +316,86 @@ public class DiscountCodeController {
         }
     }
 
+    @PutMapping("/deactivate/{code}")
+    public ResponseEntity<GenericResponse<DiscountCodeDto>> deactivateDiscountCode(
+            @PathVariable String code) {
+        logger.info("PUT /api/v1/discountcode/deactivate/{} called", code);
+        var response = new GenericResponse<DiscountCodeDto>();
+
+        try {
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+
+            DiscountCodeDto discountCode = codeService.activateDiscountCode(code, false);
+            response.data = discountCode;
+            response.status = 200;
+            response.message = "Discount code deactivated successfully";
+
+            logger.info("Successfully deactivated discount code: {}", code);
+            return ResponseEntity.ok(response);
+
+        } catch (ValidationException e) {
+            logger.warn("Validation error deactivating discount code {}: {}", code, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error deactivating discount code {}: {}", code, e.getMessage());
+            response.status = 401;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        } catch (Exception e) {
+            logger.error("Error deactivating discount code {}: {}", code, e.getMessage(), e);
+            response.status = -1;
+            response.message = "Failed to deactivate discount code: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PutMapping("/activate/{code}")
+    public ResponseEntity<GenericResponse<DiscountCodeDto>> activateDiscountCode(
+            @PathVariable String code) {
+        logger.info("PUT /api/v1/discountcode/activate/{} called", code);
+        var response = new GenericResponse<DiscountCodeDto>();
+
+        try {
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+
+            DiscountCodeDto discountCode = codeService.activateDiscountCode(code, true);
+            response.data = discountCode;
+            response.status = 200;
+            response.message = "Discount code activated successfully";
+
+            logger.info("Successfully activated discount code: {}", code);
+            return ResponseEntity.ok(response);
+
+        } catch (ValidationException e) {
+            logger.warn("Validation error activating discount code {}: {}", code, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error activating discount code {}: {}", code, e.getMessage());
+            response.status = 401;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        } catch (Exception e) {
+            logger.error("Error activating discount code {}: {}", code, e.getMessage(), e);
+            response.status = -1;
+            response.message = "Failed to activate discount code: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
     @GetMapping("/personal/{phoneNumber}")
     public ResponseEntity<GenericResponse<List<DiscountCodeDto>>> getPersonalDiscountCodesByPhoneNumber(
             @PathVariable("phoneNumber") @Pattern(regexp = "^\\d{11}$") String phoneNumber) {

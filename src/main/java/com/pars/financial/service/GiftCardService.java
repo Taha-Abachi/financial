@@ -971,6 +971,45 @@ public class GiftCardService {
     }
 
     /**
+     * Deactivate or activate a gift card by serial number
+     * @param serialNo the serial number of the gift card
+     * @param activate true to activate, false to deactivate
+     * @return the updated gift card DTO
+     * @throws GiftCardNotFoundException if gift card not found
+     */
+    @Transactional
+    public GiftCardDto activateGiftCard(String serialNo, boolean activate) {
+        logger.info("{} gift card with serialNo: {}", activate ? "Activating" : "Deactivating", serialNo);
+        
+        User currentUser = securityContextService.getCurrentUserOrThrow();
+        
+        GiftCard giftCard = giftCardRepository.findBySerialNo(serialNo);
+        if (giftCard == null) {
+            logger.warn("Gift card not found with serialNo: {}", serialNo);
+            throw new GiftCardNotFoundException("Gift Card Not Found with serial No: " + serialNo);
+        }
+
+        if (activate) {
+            if (giftCard.isActive()) {
+                logger.warn("Gift card {} is already active", serialNo);
+                throw new ValidationException(ErrorCodes.GIFT_CARD_INVALID, "Gift card is already active");
+            }
+            giftCard.setActive(true);
+            logger.info("Gift card {} activated by user {}", serialNo, currentUser.getUsername());
+        } else {
+            if (!giftCard.isActive()) {
+                logger.warn("Gift card {} is already inactive", serialNo);
+                throw new ValidationException(ErrorCodes.GIFT_CARD_INVALID, "Gift card is already inactive");
+            }
+            giftCard.setActive(false);
+            logger.info("Gift card {} deactivated by user {}", serialNo, currentUser.getUsername());
+        }
+
+        GiftCard savedGiftCard = giftCardRepository.save(giftCard);
+        return giftCardMapper.getFrom(savedGiftCard);
+    }
+
+    /**
      * Get gift cards for a customer by phone number with RBAC checks
      * @param user the current user making the request
      * @param phoneNumber the phone number of the customer
