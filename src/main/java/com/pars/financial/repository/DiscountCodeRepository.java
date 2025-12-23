@@ -17,6 +17,7 @@ import com.pars.financial.enums.DiscountCodeType;
 @Repository
 public interface DiscountCodeRepository extends JpaRepository<DiscountCode, Long> {
     public DiscountCode findByCode(String code);
+    public DiscountCode findBySerialNo(Long serialNo);
     public boolean existsByCode(String code);
     public boolean existsBySerialNo(Long serialNo);
     public java.util.List<DiscountCode> findByBatchId(Long batchId);

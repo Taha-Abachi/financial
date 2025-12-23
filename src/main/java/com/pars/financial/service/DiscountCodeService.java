@@ -408,6 +408,17 @@ public class DiscountCodeService {
         var discountCode = codeRepository.findByCode(code);
         if (discountCode == null) {
             logger.warn("Discount code not found: {}", code);
+            return null;
+        }
+        return mapper.getFrom(discountCode);
+    }
+
+    public DiscountCodeDto getDiscountCodeBySerialNo(Long serialNo) {
+        logger.debug("Fetching discount code by serial number: {}", serialNo);
+        var discountCode = codeRepository.findBySerialNo(serialNo);
+        if (discountCode == null) {
+            logger.warn("Discount code not found with serial number: {}", serialNo);
+            return null;
         }
         return mapper.getFrom(discountCode);
     }

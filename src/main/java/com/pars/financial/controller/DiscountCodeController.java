@@ -121,6 +121,47 @@ public class DiscountCodeController {
             response.message = "Error fetching discount code: " + e.getMessage();
             return ResponseEntity.ok(response);
         }
+        }
+
+    @GetMapping("/serial/{serialNo}")
+    public ResponseEntity<GenericResponse<DiscountCodeDto>> discountCodeBySerialNo(@PathVariable Long serialNo) {
+        logger.info("GET /api/v1/discountcode/serial/{} called", serialNo);
+        var response = new GenericResponse<DiscountCodeDto>();
+
+        try {
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+
+            var dto = codeService.getDiscountCodeBySerialNo(serialNo);
+            if (dto == null) {
+                logger.warn("Discount code not found for serial number {}", serialNo);
+                response.status = -1;
+                response.message = "Discount code not found";
+                return ResponseEntity.ok(response);
+            }
+
+            // Check RBAC access
+            if (!codeService.hasAccessToDiscountCode(userResult.user, dto)) {
+                logger.warn("User {} does not have access to discount code with serial number {}", userResult.user.getUsername(), serialNo);
+                response.status = 403;
+                response.message = "Access denied to this discount code";
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            response.data = dto;
+            response.message = "Discount code retrieved successfully";
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Error fetching discount code by serial number {}: {}", serialNo, e.getMessage());
+            response.status = -1;
+            response.message = "Error fetching discount code: " + e.getMessage();
+            return ResponseEntity.ok(response);
+        }
     }
 
     @PostMapping("/issue")
