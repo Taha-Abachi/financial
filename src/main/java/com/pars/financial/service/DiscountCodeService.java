@@ -8,6 +8,7 @@ import com.pars.financial.dto.DiscountCodeValidationResponse;
 import com.pars.financial.dto.PagedResponse;
 
 import com.pars.financial.entity.DiscountCode;
+import com.pars.financial.entity.Company;
 import com.pars.financial.enums.DiscountType;
 import com.pars.financial.constants.ErrorCodes;
 import com.pars.financial.exception.ValidationException;
@@ -128,16 +129,60 @@ public class DiscountCodeService {
             }
             code.setAllowedItemCategories(itemCategories);
         }
-        // Set company if companyId is provided
-        if (companyId != null) {
-            var company = companyRepository.findById(companyId);
-            if (company.isEmpty()) {
-                logger.warn("Company not found with ID: {}", companyId);
-                throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND);
-            }
-            code.setCompany(company.get());
-            logger.debug("Assigned discount code to company: {}", company.get().getName());
+        
+        // Set company with priority: batch company > request companyId > current user's company
+        Company companyToAssign = null;
+        
+        // Priority 1: If batch is provided, use batch's company
+        if (batch != null && batch.getCompany() != null) {
+            companyToAssign = batch.getCompany();
+            logger.debug("Using batch company: {} for discount code", companyToAssign.getName());
         }
+        // Priority 2: If companyId is provided in request, use it
+        else if (companyId != null) {
+            var companyOpt = companyRepository.findById(companyId);
+            if (companyOpt.isEmpty()) {
+                logger.warn("Company not found with ID: {}", companyId);
+                throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND, "Company not found with ID: " + companyId);
+            }
+            companyToAssign = companyOpt.get();
+            logger.debug("Using provided companyId: {} for discount code", companyToAssign.getName());
+        }
+        // Priority 3: Try to get from current user (for COMPANY_USER/STORE_USER)
+        else {
+            try {
+                User currentUser = securityContextService.getCurrentUserOrThrow();
+                String roleName = currentUser.getRole().getName();
+                
+                if ("COMPANY_USER".equals(roleName)) {
+                    if (currentUser.getCompany() != null) {
+                        companyToAssign = currentUser.getCompany();
+                        logger.debug("Using current user's company: {} for discount code", companyToAssign.getName());
+                    } else {
+                        logger.warn("COMPANY_USER {} has no company assigned", currentUser.getUsername());
+                    }
+                } else if ("STORE_USER".equals(roleName)) {
+                    if (currentUser.getStore() != null && currentUser.getStore().getCompany() != null) {
+                        companyToAssign = currentUser.getStore().getCompany();
+                        logger.debug("Using current user's store's company: {} for discount code", companyToAssign.getName());
+                    } else {
+                        logger.warn("STORE_USER {} has no store or company assigned", currentUser.getUsername());
+                    }
+                }
+            } catch (IllegalStateException e) {
+                // User not authenticated - will throw error below
+                logger.debug("No authenticated user found, cannot determine company from user");
+            }
+        }
+        
+        // Ensure company is set - throw error if still null
+        if (companyToAssign == null) {
+            logger.error("Cannot create discount code without company_id. Batch company, request companyId, and user company are all null or unavailable.");
+            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "Company ID is required. Please provide companyId in the request or ensure the batch has a company assigned.");
+        }
+        
+        code.setCompany(companyToAssign);
+        logger.debug("Assigned discount code to company: {} (ID: {})", companyToAssign.getName(), companyToAssign.getId());
         
         // Set type (defaults to GENERAL if null via setType method)
         code.setType(type);

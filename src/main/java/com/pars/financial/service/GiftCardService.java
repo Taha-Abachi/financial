@@ -4,6 +4,7 @@ import com.pars.financial.dto.GiftCardDto;
 import com.pars.financial.dto.GiftCardIssueRequest;
 import com.pars.financial.dto.GiftCardReportDto;
 import com.pars.financial.dto.PagedResponse;
+import com.pars.financial.entity.Company;
 import com.pars.financial.entity.Customer;
 import com.pars.financial.entity.GiftCard;
 import com.pars.financial.entity.Store;
@@ -75,24 +76,71 @@ public class GiftCardService {
         }
     }
 
-    private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod, long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds) {
+    private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds) {
         return issueGiftCard(realAmount, amount, validityPeriod, companyId, storeLimited, allowedStoreIds, itemCategoryLimited, allowedItemCategoryIds, null, GiftCardType.PHYSICAL);
     }
 
-    private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod, long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, com.pars.financial.entity.Batch batch) {
+    private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, com.pars.financial.entity.Batch batch) {
         return issueGiftCard(realAmount, amount, validityPeriod, companyId, storeLimited, allowedStoreIds, itemCategoryLimited, allowedItemCategoryIds, batch, GiftCardType.PHYSICAL);
     }
 
-    private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod, long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, com.pars.financial.entity.Batch batch, GiftCardType type) {
+    private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, com.pars.financial.entity.Batch batch, GiftCardType type) {
         logger.debug("Issuing new gift card with realAmount: {}, amount: {}, validityPeriod: {}, storeLimited: {}, itemCategoryLimited: {}", realAmount, amount, validityPeriod, storeLimited, itemCategoryLimited);
         validateRealAmount(realAmount);
-        var company = companyRepository.findById(companyId);
-        if(company.isEmpty()) {
-            logger.error("Company not found while Issuing new gift card with realAmount: {}, amount: {}, validityPeriod: {}", realAmount, amount, validityPeriod);
-            throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND);
+        
+        // Set company with priority: batch company > request companyId > current user's company
+        Company companyToAssign = null;
+        
+        // Priority 1: If batch is provided, use batch's company
+        if (batch != null && batch.getCompany() != null) {
+            companyToAssign = batch.getCompany();
+            logger.debug("Using batch company: {} for gift card", companyToAssign.getName());
         }
+        // Priority 2: If companyId is provided in request, use it
+        else if (companyId != null) {
+            var companyOpt = companyRepository.findById(companyId);
+            if (companyOpt.isEmpty()) {
+                logger.warn("Company not found with ID: {}", companyId);
+                throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND, "Company not found with ID: " + companyId);
+            }
+            companyToAssign = companyOpt.get();
+            logger.debug("Using provided companyId: {} for gift card", companyToAssign.getName());
+        }
+        // Priority 3: Try to get from current user (for COMPANY_USER/STORE_USER)
+        else {
+            try {
+                User currentUser = securityContextService.getCurrentUserOrThrow();
+                String roleName = currentUser.getRole().getName();
+                
+                if ("COMPANY_USER".equals(roleName)) {
+                    if (currentUser.getCompany() != null) {
+                        companyToAssign = currentUser.getCompany();
+                        logger.debug("Using current user's company: {} for gift card", companyToAssign.getName());
+                    } else {
+                        logger.warn("COMPANY_USER {} has no company assigned", currentUser.getUsername());
+                    }
+                } else if ("STORE_USER".equals(roleName)) {
+                    if (currentUser.getStore() != null && currentUser.getStore().getCompany() != null) {
+                        companyToAssign = currentUser.getStore().getCompany();
+                        logger.debug("Using current user's store's company: {} for gift card", companyToAssign.getName());
+                    } else {
+                        logger.warn("STORE_USER {} has no store or company assigned", currentUser.getUsername());
+                    }
+                }
+            } catch (IllegalStateException e) {
+                // User not authenticated - will throw error below
+                logger.debug("No authenticated user found, cannot determine company from user");
+            }
+        }
+        
+        // Ensure company is set - throw error if still null
+        if (companyToAssign == null) {
+            logger.error("Cannot create gift card without company_id. Batch company, request companyId, and user company are all null or unavailable.");
+            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "Company ID is required. Please provide companyId in the request or ensure the batch has a company assigned.");
+        }
+        
         var gc = new GiftCard();
-        gc.setCompany(company.get());
+        gc.setCompany(companyToAssign);
         gc.setIdentifier(ThreadLocalRandom.current().nextLong(10000000, 100000000));
 //        gc.setIdentifier(Long.parseLong(RandomStringGenerator.generateRandomNumericString(8)));
         gc.setSerialNo("GC" + RandomStringGenerator.generateRandomUppercaseStringWithNumbers(giftCardSerialNoLength - 2));
@@ -193,7 +241,7 @@ public class GiftCardService {
         return giftCardMapper.getFrom(gc);
     }
 
-    public GiftCardDto generateGiftCard(long realAmount, long amount, long validityPeriod, long companyId) {
+    public GiftCardDto generateGiftCard(long realAmount, long amount, long validityPeriod, Long companyId) {
         logger.info("Generating new gift card with realAmount: {}, amount: {}, validityPeriod: {}", realAmount, amount, validityPeriod);
         var giftCard = issueGiftCard(realAmount, amount, validityPeriod, companyId, false, new ArrayList<>(), false, new ArrayList<>());
         var savedCard = giftCardRepository.save(giftCard);
