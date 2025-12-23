@@ -234,34 +234,39 @@ public class DiscountCodeService {
         }
         // For GENERAL type, phone number is ignored if provided
         
-        // Validate: if custom code is provided, count must be exactly 1
+        // Check if custom code or serialNo are provided
         boolean hasCustomCode = dto.code != null && !dto.code.trim().isEmpty();
-        if (hasCustomCode && dto.count != 1) {
-            logger.error("When providing a custom discount code, count must be exactly 1. Provided count: {}", dto.count);
-            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "When providing a custom discount code, count must be exactly 1");
+        boolean hasCustomSerialNo = dto.serialNo != null;
+        
+        // If either custom code or serialNo is provided, count must be exactly 1
+        if ((hasCustomCode || hasCustomSerialNo) && dto.count != 1) {
+            logger.error("When providing a custom discount code or serial number, count must be exactly 1. Provided count: {}", dto.count);
+            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "When providing a custom discount code or serial number, count must be exactly 1");
         }
         
-        // Check if both code and serialNo are provided simultaneously and count is 1
-        boolean hasCustomSerialNo = dto.serialNo != null;
-        boolean isSingleCode = dto.count == 1;
-        
-        if (hasCustomCode && hasCustomSerialNo && isSingleCode) {
-            // Check if the provided code and serialNo are not already in the database
+        // Validate uniqueness if custom values are provided
+        if (hasCustomCode) {
             if (codeRepository.existsByCode(dto.code)) {
                 logger.warn("Discount code already exists: {}", dto.code);
                 throw new ValidationException(ErrorCodes.DISCOUNT_CODE_ALREADY_EXISTS);
             }
+            logger.info("Using provided custom code: {}", dto.code);
+        }
+        
+        if (hasCustomSerialNo) {
             if (codeRepository.existsBySerialNo(dto.serialNo)) {
                 logger.warn("Serial number already exists: {}", dto.serialNo);
                 throw new ValidationException(ErrorCodes.SERIAL_NUMBER_ALREADY_EXISTS);
             }
-            logger.info("Using provided custom code: {} and serial number: {}", dto.code, dto.serialNo);
-        } else if (hasCustomCode || hasCustomSerialNo) {
-            // If only one of them is provided, or count is not 1, ignore custom values and generate random
-            logger.warn("Both code and serialNo must be provided simultaneously and count must be 1 to use custom values. Generating random values instead.");
-            dto.code = null;
-            dto.serialNo = null;
+            logger.info("Using provided custom serial number: {}", dto.serialNo);
         }
+        
+        // If both are provided, log that both are being used
+        if (hasCustomCode && hasCustomSerialNo) {
+            logger.info("Using provided custom code: {} and serial number: {}", dto.code, dto.serialNo);
+        }
+        
+        // Note: If only one is provided, the other will be generated randomly in issueDiscountCode method
         
         var discountCode = issueDiscountCode(dto.percentage, dto.remainingValidityPeriod, dto.maxDiscountAmount, dto.minimumBillAmount, dto.usageLimit, dto.constantDiscountAmount, dto.discountType, dto.companyId, (long) dto.allowedStoreIds.size() > 0, dto.allowedStoreIds, dto.itemCategoryLimited, dto.allowedItemCategoryIds, dto.code, dto.serialNo, type, dto.phoneNumber);
         var savedCode = codeRepository.save(discountCode);
@@ -283,34 +288,39 @@ public class DiscountCodeService {
         }
         // For GENERAL type, phone number is ignored if provided
         
-        // Validate: if custom code is provided, count must be exactly 1
+        // Check if custom code or serialNo are provided
         boolean hasCustomCode = request.code != null && !request.code.trim().isEmpty();
-        if (hasCustomCode && request.count != 1) {
-            logger.error("When providing a custom discount code, count must be exactly 1. Provided count: {}", request.count);
-            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "When providing a custom discount code, count must be exactly 1");
+        boolean hasCustomSerialNo = request.serialNo != null;
+        
+        // If either custom code or serialNo is provided, count must be exactly 1
+        if ((hasCustomCode || hasCustomSerialNo) && request.count != 1) {
+            logger.error("When providing a custom discount code or serial number, count must be exactly 1. Provided count: {}", request.count);
+            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "When providing a custom discount code or serial number, count must be exactly 1");
         }
         
-        // Check if both code and serialNo are provided simultaneously and count is 1
-        boolean hasCustomSerialNo = request.serialNo != null;
-        boolean isSingleCode = request.count == 1;
-        
-        if (hasCustomCode && hasCustomSerialNo && isSingleCode) {
-            // Check if the provided code and serialNo are not already in the database
+        // Validate uniqueness if custom values are provided
+        if (hasCustomCode) {
             if (codeRepository.existsByCode(request.code)) {
                 logger.warn("Discount code already exists: {}", request.code);
                 throw new ValidationException(ErrorCodes.DISCOUNT_CODE_ALREADY_EXISTS);
             }
+            logger.info("Using provided custom code: {}", request.code);
+        }
+        
+        if (hasCustomSerialNo) {
             if (codeRepository.existsBySerialNo(request.serialNo)) {
                 logger.warn("Serial number already exists: {}", request.serialNo);
                 throw new ValidationException(ErrorCodes.SERIAL_NUMBER_ALREADY_EXISTS);
             }
-            logger.info("Using provided custom code: {} and serial number: {}", request.code, request.serialNo);
-        } else if (hasCustomCode || hasCustomSerialNo) {
-            // If only one of them is provided, or count is not 1, ignore custom values and generate random
-            logger.warn("Both code and serialNo must be provided simultaneously and count must be 1 to use custom values. Generating random values instead.");
-            request.code = null;
-            request.serialNo = null;
+            logger.info("Using provided custom serial number: {}", request.serialNo);
         }
+        
+        // If both are provided, log that both are being used
+        if (hasCustomCode && hasCustomSerialNo) {
+            logger.info("Using provided custom code: {} and serial number: {}", request.code, request.serialNo);
+        }
+        
+        // Note: If only one is provided, the other will be generated randomly in issueDiscountCode method
         
         var ls = new ArrayList<DiscountCode>();
         for (var i = 0; i < request.count; i++) {
@@ -335,34 +345,39 @@ public class DiscountCodeService {
         }
         // For GENERAL type, phone number is ignored if provided
         
-        // Validate: if custom code is provided, count must be exactly 1
+        // Check if custom code or serialNo are provided
         boolean hasCustomCode = request.code != null && !request.code.trim().isEmpty();
-        if (hasCustomCode && request.count != 1) {
-            logger.error("When providing a custom discount code, count must be exactly 1. Provided count: {}", request.count);
-            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "When providing a custom discount code, count must be exactly 1");
+        boolean hasCustomSerialNo = request.serialNo != null && request.serialNo > 0;
+        
+        // If either custom code or serialNo is provided, count must be exactly 1
+        if ((hasCustomCode || hasCustomSerialNo) && request.count != 1) {
+            logger.error("When providing a custom discount code or serial number, count must be exactly 1. Provided count: {}", request.count);
+            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "When providing a custom discount code or serial number, count must be exactly 1");
         }
         
-        // Check if both code and serialNo are provided simultaneously and count is 1
-        boolean hasCustomSerialNo = request.serialNo != null;
-        boolean isSingleCode = request.count == 1;
-        
-        if (hasCustomCode && hasCustomSerialNo && isSingleCode) {
-            // Check if the provided code and serialNo are not already in the database
+        // Validate uniqueness if custom values are provided
+        if (hasCustomCode) {
             if (codeRepository.existsByCode(request.code)) {
                 logger.warn("Discount code already exists: {}", request.code);
                 throw new ValidationException(ErrorCodes.DISCOUNT_CODE_ALREADY_EXISTS);
             }
+            logger.info("Using provided custom code: {}", request.code);
+        }
+        
+        if (hasCustomSerialNo) {
             if (codeRepository.existsBySerialNo(request.serialNo)) {
                 logger.warn("Serial number already exists: {}", request.serialNo);
                 throw new ValidationException(ErrorCodes.SERIAL_NUMBER_ALREADY_EXISTS);
             }
-            logger.info("Using provided custom code: {} and serial number: {}", request.code, request.serialNo);
-        } else if (hasCustomCode || hasCustomSerialNo) {
-            // If only one of them is provided, or count is not 1, ignore custom values and generate random
-            logger.warn("Both code and serialNo must be provided simultaneously and count must be 1 to use custom values. Generating random values instead.");
-            request.code = null;
-            request.serialNo = null;
+            logger.info("Using provided custom serial number: {}", request.serialNo);
         }
+        
+        // If both are provided, log that both are being used
+        if (hasCustomCode && hasCustomSerialNo) {
+            logger.info("Using provided custom code: {} and serial number: {}", request.code, request.serialNo);
+        }
+        
+        // Note: If only one is provided, the other will be generated randomly in issueDiscountCode method
         
         var ls = new ArrayList<DiscountCode>();
         for (var i = 0; i < request.count; i++) {
