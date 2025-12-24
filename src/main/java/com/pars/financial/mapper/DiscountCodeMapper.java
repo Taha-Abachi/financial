@@ -31,6 +31,7 @@ public class DiscountCodeMapper {
         DiscountCodeDto dto = new DiscountCodeDto();
         dto.code = code.getCode();
         dto.serialNo = code.getSerialNo();
+        dto.title = code.getTitle();
         var valDays = code.getExpiryDate().toEpochDay() - code.getIssueDate().toLocalDate().toEpochDay();
         dto.remainingValidityPeriod = valDays >= 0 ? valDays : 0;
         dto.maxDiscountAmount = code.getMaxDiscountAmount();

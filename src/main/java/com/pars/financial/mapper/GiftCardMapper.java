@@ -31,6 +31,7 @@ public class GiftCardMapper {
         }
         GiftCardDto dto = new GiftCardDto();
         dto.serialNo = gc.getSerialNo();
+        dto.title = gc.getTitle();
         dto.balance = gc.getBalance();
         var valDays = gc.getExpiryDate().toEpochDay() - gc.getIssueDate().toEpochDay();
         dto.remainingValidityPeriod = valDays <=0 ? 0 : valDays;

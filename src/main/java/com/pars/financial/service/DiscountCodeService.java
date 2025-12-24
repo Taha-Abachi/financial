@@ -70,11 +70,11 @@ public class DiscountCodeService {
         this.customerService = customerService;
     }
 
-    private DiscountCode issueDiscountCode(int percentage, long validityPeriod, long maxDiscountAmount, long minimumBillAmount, int usageLimit, long constantDiscountAmount, DiscountType discountType, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, String customCode, Long customSerialNo, DiscountCodeType type, String phoneNumber) {
-        return issueDiscountCode(percentage, validityPeriod, maxDiscountAmount, minimumBillAmount, usageLimit, constantDiscountAmount, discountType, companyId, storeLimited, allowedStoreIds, itemCategoryLimited, allowedItemCategoryIds, customCode, customSerialNo, type, phoneNumber, null);
+    private DiscountCode issueDiscountCode(int percentage, long validityPeriod, long maxDiscountAmount, long minimumBillAmount, int usageLimit, long constantDiscountAmount, DiscountType discountType, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, String customCode, Long customSerialNo, DiscountCodeType type, String phoneNumber, String title) {
+        return issueDiscountCode(percentage, validityPeriod, maxDiscountAmount, minimumBillAmount, usageLimit, constantDiscountAmount, discountType, companyId, storeLimited, allowedStoreIds, itemCategoryLimited, allowedItemCategoryIds, customCode, customSerialNo, type, phoneNumber, title, null);
     }
 
-    private DiscountCode issueDiscountCode(int percentage, long validityPeriod, long maxDiscountAmount, long minimumBillAmount, int usageLimit, long constantDiscountAmount, DiscountType discountType, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, String customCode, Long customSerialNo, DiscountCodeType type, String phoneNumber, com.pars.financial.entity.Batch batch) {
+    private DiscountCode issueDiscountCode(int percentage, long validityPeriod, long maxDiscountAmount, long minimumBillAmount, int usageLimit, long constantDiscountAmount, DiscountType discountType, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, String customCode, Long customSerialNo, DiscountCodeType type, String phoneNumber, String title, com.pars.financial.entity.Batch batch) {
         logger.debug("Issuing new discount code with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}, minimumBillAmount: {}, usageLimit: {}, constantDiscountAmount: {}, discountType: {}, companyId: {}, storeLimited: {}, allowedStoreIds: {}, itemCategoryLimited: {}, allowedItemCategoryIds: {}, customCode: {}, customSerialNo: {}", 
             percentage, validityPeriod, maxDiscountAmount, minimumBillAmount, usageLimit, constantDiscountAmount, discountType, companyId, storeLimited, allowedStoreIds, itemCategoryLimited, allowedItemCategoryIds, customCode, customSerialNo);
         var code = new DiscountCode();
@@ -94,6 +94,9 @@ public class DiscountCodeService {
         } else {
             code.setSerialNo(ThreadLocalRandom.current().nextLong(10000000, 100000000));
         }
+        
+        // Set title
+        code.setTitle(title);
         
         code.setPercentage(percentage);
         code.setMaxDiscountAmount(maxDiscountAmount);
@@ -268,7 +271,7 @@ public class DiscountCodeService {
         
         // Note: If only one is provided, the other will be generated randomly in issueDiscountCode method
         
-        var discountCode = issueDiscountCode(dto.percentage, dto.remainingValidityPeriod, dto.maxDiscountAmount, dto.minimumBillAmount, dto.usageLimit, dto.constantDiscountAmount, dto.discountType, dto.companyId, (long) dto.allowedStoreIds.size() > 0, dto.allowedStoreIds, dto.itemCategoryLimited, dto.allowedItemCategoryIds, dto.code, dto.serialNo, type, dto.phoneNumber);
+        var discountCode = issueDiscountCode(dto.percentage, dto.remainingValidityPeriod, dto.maxDiscountAmount, dto.minimumBillAmount, dto.usageLimit, dto.constantDiscountAmount, dto.discountType, dto.companyId, (long) dto.allowedStoreIds.size() > 0, dto.allowedStoreIds, dto.itemCategoryLimited, dto.allowedItemCategoryIds, dto.code, dto.serialNo, type, dto.phoneNumber, dto.title);
         var savedCode = codeRepository.save(discountCode);
         logger.info("Generated discount code: {} with type: {}", savedCode.getCode(), savedCode.getType());
         return mapper.getFrom(savedCode);
@@ -324,7 +327,7 @@ public class DiscountCodeService {
         
         var ls = new ArrayList<DiscountCode>();
         for (var i = 0; i < request.count; i++) {
-            var discountCode = issueDiscountCode(request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount, request.usageLimit, request.constantDiscountAmount, request.discountType, request.companyId, request.storeLimited, request.allowedStoreIds, request.itemCategoryLimited, request.allowedItemCategoryIds, request.code, request.serialNo, type, request.phoneNumber);
+            var discountCode = issueDiscountCode(request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount, request.usageLimit, request.constantDiscountAmount, request.discountType, request.companyId, request.storeLimited, request.allowedStoreIds, request.itemCategoryLimited, request.allowedItemCategoryIds, request.code, request.serialNo, type, request.phoneNumber, request.title);
             ls.add(discountCode);
         }
         var savedCodes = codeRepository.saveAll(ls);
@@ -381,7 +384,7 @@ public class DiscountCodeService {
         
         var ls = new ArrayList<DiscountCode>();
         for (var i = 0; i < request.count; i++) {
-            var discountCode = issueDiscountCode(request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount, request.usageLimit, request.constantDiscountAmount, request.discountType, request.companyId, request.storeLimited, request.allowedStoreIds, request.itemCategoryLimited, request.allowedItemCategoryIds, request.code, request.serialNo, type, request.phoneNumber, batch);
+            var discountCode = issueDiscountCode(request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount, request.usageLimit, request.constantDiscountAmount, request.discountType, request.companyId, request.storeLimited, request.allowedStoreIds, request.itemCategoryLimited, request.allowedItemCategoryIds, request.code, request.serialNo, type, request.phoneNumber, request.title, batch);
             ls.add(discountCode);
         }
         var savedCodes = codeRepository.saveAll(ls);

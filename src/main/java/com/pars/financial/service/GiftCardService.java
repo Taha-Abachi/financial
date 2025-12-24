@@ -76,15 +76,15 @@ public class GiftCardService {
         }
     }
 
-    private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds) {
-        return issueGiftCard(realAmount, amount, validityPeriod, companyId, storeLimited, allowedStoreIds, itemCategoryLimited, allowedItemCategoryIds, null, GiftCardType.PHYSICAL);
+    private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, String title) {
+        return issueGiftCard(realAmount, amount, validityPeriod, companyId, storeLimited, allowedStoreIds, itemCategoryLimited, allowedItemCategoryIds, title, null, GiftCardType.PHYSICAL);
     }
 
-    private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, com.pars.financial.entity.Batch batch) {
-        return issueGiftCard(realAmount, amount, validityPeriod, companyId, storeLimited, allowedStoreIds, itemCategoryLimited, allowedItemCategoryIds, batch, GiftCardType.PHYSICAL);
+    private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, String title, com.pars.financial.entity.Batch batch) {
+        return issueGiftCard(realAmount, amount, validityPeriod, companyId, storeLimited, allowedStoreIds, itemCategoryLimited, allowedItemCategoryIds, title, batch, GiftCardType.PHYSICAL);
     }
 
-    private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, com.pars.financial.entity.Batch batch, GiftCardType type) {
+    private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, String title, com.pars.financial.entity.Batch batch, GiftCardType type) {
         logger.debug("Issuing new gift card with realAmount: {}, amount: {}, validityPeriod: {}, storeLimited: {}, itemCategoryLimited: {}", realAmount, amount, validityPeriod, storeLimited, itemCategoryLimited);
         validateRealAmount(realAmount);
         
@@ -144,6 +144,7 @@ public class GiftCardService {
         gc.setIdentifier(ThreadLocalRandom.current().nextLong(10000000, 100000000));
 //        gc.setIdentifier(Long.parseLong(RandomStringGenerator.generateRandomNumericString(8)));
         gc.setSerialNo("GC" + RandomStringGenerator.generateRandomUppercaseStringWithNumbers(giftCardSerialNoLength - 2));
+        gc.setTitle(title);
         gc.setInitialAmount(amount);
         gc.setRealAmount(realAmount);
         gc.setBalance(amount);
@@ -243,7 +244,7 @@ public class GiftCardService {
 
     public GiftCardDto generateGiftCard(long realAmount, long amount, long validityPeriod, Long companyId) {
         logger.info("Generating new gift card with realAmount: {}, amount: {}, validityPeriod: {}", realAmount, amount, validityPeriod);
-        var giftCard = issueGiftCard(realAmount, amount, validityPeriod, companyId, false, new ArrayList<>(), false, new ArrayList<>());
+        var giftCard = issueGiftCard(realAmount, amount, validityPeriod, companyId, false, new ArrayList<>(), false, new ArrayList<>(), "");
         var savedCard = giftCardRepository.save(giftCard);
         logger.info("Generated gift card with serialNo: {}", savedCard.getSerialNo());
         return giftCardMapper.getFrom(savedCard);
@@ -253,7 +254,8 @@ public class GiftCardService {
         logger.info("Generating new gift card with request: {}", request);
         var giftCard = issueGiftCard(request.getRealAmount(), request.getBalance(), request.getRemainingValidityPeriod(), 
                                    request.getCompanyId(), request.isStoreLimited(), request.getAllowedStoreIds(), 
-                                   request.isItemCategoryLimited(), request.getAllowedItemCategoryIds(), null, 
+                                   request.isItemCategoryLimited(), request.getAllowedItemCategoryIds(), 
+                                   request.getTitle() != null ? request.getTitle() : "", null, 
                                    request.getType() != null ? request.getType() : GiftCardType.PHYSICAL);
         var savedCard = giftCardRepository.save(giftCard);
         logger.info("Generated gift card with serialNo: {}", savedCard.getSerialNo());
@@ -264,7 +266,7 @@ public class GiftCardService {
         logger.info("Generating {} gift cards with realAmount: {}, amount: {}, validityPeriod: {}", count, realAmount, amount, validityPeriod);
         var ls = new ArrayList<GiftCard>();
         for (var i = 0; i < count; i++) {
-            ls.add(issueGiftCard(realAmount, amount, validityPeriod, companyId, false, new ArrayList<>(), false, new ArrayList<>()));
+            ls.add(issueGiftCard(realAmount, amount, validityPeriod, companyId, false, new ArrayList<>(), false, new ArrayList<>(), ""));
         }
         var savedCards = giftCardRepository.saveAll(ls);
         logger.info("Generated {} gift cards successfully", count);
@@ -278,7 +280,8 @@ public class GiftCardService {
         for (var i = 0; i < request.getCount(); i++) {
             ls.add(issueGiftCard(request.getRealAmount(), request.getBalance(), request.getRemainingValidityPeriod(), 
                                 request.getCompanyId(), request.isStoreLimited(), request.getAllowedStoreIds(), 
-                                request.isItemCategoryLimited(), request.getAllowedItemCategoryIds(), null, cardType));
+                                request.isItemCategoryLimited(), request.getAllowedItemCategoryIds(), 
+                                request.getTitle() != null ? request.getTitle() : "", null, cardType));
         }
         var savedCards = giftCardRepository.saveAll(ls);
         logger.info("Generated {} gift cards successfully", request.getCount());
@@ -291,8 +294,9 @@ public class GiftCardService {
         GiftCardType cardType = request.getType() != null ? request.getType() : GiftCardType.PHYSICAL;
         for (var i = 0; i < request.getCount(); i++) {
             ls.add(issueGiftCard(request.getRealAmount(), request.getBalance(), request.getRemainingValidityPeriod(), 
-                                request.getCompanyId(), request.isStoreLimited(), request.getAllowedStoreIds(), 
-                                request.isItemCategoryLimited(), request.getAllowedItemCategoryIds(), batch, cardType));
+                                request.getCompanyId(), request.isStoreLimited(), request.getAllowedStoreIds(),
+                                request.isItemCategoryLimited(), request.getAllowedItemCategoryIds(), 
+                                request.getTitle() != null ? request.getTitle() : "", batch, cardType));
         }
         var savedCards = giftCardRepository.saveAll(ls);
         logger.info("Generated {} gift cards successfully for batch: {}", request.getCount(), batch.getBatchNumber());

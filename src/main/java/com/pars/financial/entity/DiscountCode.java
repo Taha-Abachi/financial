@@ -37,6 +37,9 @@ public class DiscountCode {
     @Column(columnDefinition = "varchar(20)")
     private String code;
     private Long serialNo;
+    
+    @Column(columnDefinition = "varchar(255) DEFAULT ''")
+    private String title = "";
     private int percentage;
     private long maxDiscountAmount = Long.MAX_VALUE;
     private long minimumBillAmount = 0;
@@ -136,6 +139,14 @@ public class DiscountCode {
 
     public void setSerialNo(Long serialNo) {
         this.serialNo = serialNo;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title != null ? title : "";
     }
 
     public int getPercentage() {

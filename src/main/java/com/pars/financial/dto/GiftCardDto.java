@@ -9,6 +9,7 @@ import com.pars.financial.enums.GiftCardType;
 
 public class GiftCardDto {
     public String serialNo;
+    public String title;
     public long balance;
     public long realAmount;
     public long initialAmount;

@@ -140,7 +140,7 @@
 								}
 							],
 							"cookie": [],
-							"body": ""
+							"body": "{\n    \"status\": 0,\n    \"message\": \"Gift card retrieved successfully\",\n    \"data\": {\n        \"serialNo\": \"GC12345678\",\n        \"title\": \"Holiday Gift Card\",\n        \"balance\": 1000,\n        \"realAmount\": 1000,\n        \"initialAmount\": 1000,\n        \"remainingValidityPeriod\": 30,\n        \"expiryDate\": \"2024-12-31\",\n        \"isActive\": true,\n        \"isBlocked\": false,\n        \"isAnonymous\": false,\n        \"identifier\": 12345678,\n        \"companyId\": 1,\n        \"storeLimited\": true,\n        \"itemCategoryLimited\": false,\n        \"allowedStores\": [\n            {\n                \"id\": 1,\n                \"name\": \"Store 1\",\n                \"address\": \"123 Main St\",\n                \"phone\": \"09123456789\",\n                \"ownershipType\": \"OWNED\",\n                \"locationType\": \"PHYSICAL\",\n                \"company\": {\n                    \"id\": 1,\n                    \"name\": \"Company Name\"\n                }\n            }\n        ],\n        \"allowedItemCategories\": [],\n        \"type\": \"PHYSICAL\"\n    }\n}"
 						}
 					]
 				},
@@ -236,7 +236,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"realAmount\": 1000,\n    \"balance\": 1000,\n    \"remainingValidityPeriod\": 30,\n    \"type\": \"PHYSICAL\",\n    \"storeLimited\": false,\n    \"allowedStoreIds\": [],\n    \"itemCategoryLimited\": false,\n    \"allowedItemCategoryIds\": []\n}"
+							"raw": "{\n    \"title\": \"Holiday Gift Card\",\n    \"realAmount\": 1000,\n    \"balance\": 1000,\n    \"remainingValidityPeriod\": 30,\n    \"type\": \"PHYSICAL\",\n    \"storeLimited\": false,\n    \"allowedStoreIds\": [],\n    \"itemCategoryLimited\": false,\n    \"allowedItemCategoryIds\": []\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/giftcard/issue",
@@ -298,7 +298,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"realAmount\": 1000,\n    \"balance\": 1000,\n    \"remainingValidityPeriod\": 30,\n    \"count\": 5,\n    \"type\": \"PHYSICAL\",\n    \"storeLimited\": false,\n    \"allowedStoreIds\": [],\n    \"itemCategoryLimited\": false,\n    \"allowedItemCategoryIds\": []\n}"
+							"raw": "{\n    \"title\": \"Bulk Gift Cards\",\n    \"realAmount\": 1000,\n    \"balance\": 1000,\n    \"remainingValidityPeriod\": 30,\n    \"count\": 5,\n    \"type\": \"PHYSICAL\",\n    \"storeLimited\": false,\n    \"allowedStoreIds\": [],\n    \"itemCategoryLimited\": false,\n    \"allowedItemCategoryIds\": []\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/giftcard/issuelist",
@@ -850,7 +850,7 @@
 									}
 								],
 								"cookie": [],
-								"body": "{\n    \"status\": 0,\n    \"message\": \"Gift cards retrieved successfully\",\n    \"data\": [\n        {\n            \"id\": 1,\n            \"serialNo\": \"GC12345678\",\n            \"identifier\": 12345678,\n            \"initialAmount\": 100000,\n            \"realAmount\": 100000,\n            \"balance\": 50000,\n            \"isActive\": true,\n            \"blocked\": false,\n            \"expiryDate\": \"2024-12-31\",\n            \"customerId\": 1,\n            \"companyId\": 1,\n            \"type\": \"PHYSICAL\"\n        },\n        {\n            \"id\": 2,\n            \"serialNo\": \"GC87654321\",\n            \"identifier\": 87654321,\n            \"initialAmount\": 50000,\n            \"realAmount\": 50000,\n            \"balance\": 50000,\n            \"isActive\": true,\n            \"blocked\": false,\n            \"expiryDate\": \"2024-12-31\",\n            \"customerId\": 1,\n            \"companyId\": 1,\n            \"type\": \"PHYSICAL\"\n        }\n    ]\n}"
+								"body": "{\n    \"status\": 0,\n    \"message\": \"Gift cards retrieved successfully\",\n    \"data\": [\n        {\n            \"id\": 1,\n            \"serialNo\": \"GC12345678\",\n            \"title\": \"Customer Gift Card\",\n            \"identifier\": 12345678,\n            \"initialAmount\": 100000,\n            \"realAmount\": 100000,\n            \"balance\": 50000,\n            \"isActive\": true,\n            \"blocked\": false,\n            \"expiryDate\": \"2024-12-31\",\n            \"customerId\": 1,\n            \"companyId\": 1,\n            \"storeLimited\": false,\n            \"itemCategoryLimited\": false,\n            \"allowedStores\": [],\n            \"allowedItemCategories\": [],\n            \"type\": \"PHYSICAL\"\n        },\n        {\n            \"id\": 2,\n            \"serialNo\": \"GC87654321\",\n            \"title\": \"Premium Gift Card\",\n            \"identifier\": 87654321,\n            \"initialAmount\": 50000,\n            \"realAmount\": 50000,\n            \"balance\": 50000,\n            \"isActive\": true,\n            \"blocked\": false,\n            \"expiryDate\": \"2024-12-31\",\n            \"customerId\": 1,\n            \"companyId\": 1,\n            \"storeLimited\": true,\n            \"itemCategoryLimited\": false,\n            \"allowedStores\": [\n                {\n                    \"id\": 1,\n                    \"name\": \"Store 1\",\n                    \"address\": \"123 Main St\",\n                    \"phone\": \"09123456789\",\n                    \"ownershipType\": \"OWNED\",\n                    \"locationType\": \"PHYSICAL\",\n                    \"company\": {\n                        \"id\": 1,\n                        \"name\": \"Company Name\"\n                    }\n                }\n            ],\n            \"allowedItemCategories\": [],\n            \"type\": \"PHYSICAL\"\n        }\n    ]\n}"
 							},
 							{
 								"name": "Error - Customer Not Found",
@@ -1331,7 +1331,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"realAmount\": 1000,\n    \"balance\": 1000,\n    \"remainingValidityPeriod\": 30,\n    \"storeLimited\": true,\n    \"allowedStoreIds\": [1, 2, 3],\n    \"itemCategoryLimited\": true,\n    \"allowedItemCategoryIds\": [1, 2]\n}"
+									"raw": "{\n    \"title\": \"Limited Store Gift Card\",\n    \"realAmount\": 1000,\n    \"balance\": 1000,\n    \"remainingValidityPeriod\": 30,\n    \"storeLimited\": true,\n    \"allowedStoreIds\": [1, 2, 3],\n    \"itemCategoryLimited\": true,\n    \"allowedItemCategoryIds\": [1, 2]\n}"
 								},
 								"url": {
 									"raw": ""
@@ -1374,7 +1374,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"realAmount\": 1000,\n    \"balance\": 1000,\n    \"remainingValidityPeriod\": 30,\n    \"type\": \"DIGITAL\",\n    \"storeLimited\": false,\n    \"allowedStoreIds\": [],\n    \"itemCategoryLimited\": true,\n    \"allowedItemCategoryIds\": [1, 2, 3]\n}"
+							"raw": "{\n    \"title\": \"Digital Gift Card\",\n    \"realAmount\": 1000,\n    \"balance\": 1000,\n    \"remainingValidityPeriod\": 30,\n    \"type\": \"DIGITAL\",\n    \"storeLimited\": false,\n    \"allowedStoreIds\": [],\n    \"itemCategoryLimited\": true,\n    \"allowedItemCategoryIds\": [1, 2, 3]\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/giftcard/issue",

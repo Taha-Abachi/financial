@@ -10,6 +10,7 @@ import com.pars.financial.enums.DiscountCodeType;
 public class DiscountCodeDto {
     public String code;
     public Long serialNo;
+    public String title;
     public int percentage;
     public long maxDiscountAmount;
     public long minimumBillAmount;

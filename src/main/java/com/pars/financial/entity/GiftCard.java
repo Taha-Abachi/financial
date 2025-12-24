@@ -38,6 +38,9 @@ public class GiftCard {
     @Column(columnDefinition = "varchar(20)")
     private String serialNo;
     private Long identifier;
+    
+    @Column(columnDefinition = "varchar(255) DEFAULT ''")
+    private String title = "";
 
     @NotNull(message = "Real amount cannot be null")
     @Min(value = 1, message = "Real amount must be greater than 0")
@@ -147,6 +150,14 @@ public class GiftCard {
 
     public void setSerialNo(String serialNo) {
         this.serialNo = serialNo;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title != null ? title : "";
     }
 
     public long getInitialAmount() {

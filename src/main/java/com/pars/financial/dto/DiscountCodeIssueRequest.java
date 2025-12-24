@@ -6,6 +6,7 @@ import com.pars.financial.enums.DiscountCodeType;
 public class DiscountCodeIssueRequest {
     public String code;
     public Long serialNo;
+    public String title;
     public int count;
     public int percentage;
     public long remainingValidityPeriod;
