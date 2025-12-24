@@ -21,6 +21,8 @@ public class GiftCardDto {
     public Long companyId;
     public boolean storeLimited;
     public boolean itemCategoryLimited;
+    public java.util.List<StoreDto> allowedStores;
+    public java.util.List<ItemCategoryDto> allowedItemCategories;
     public Long batchId;
     public String batchNumber;
     public GiftCardType type;

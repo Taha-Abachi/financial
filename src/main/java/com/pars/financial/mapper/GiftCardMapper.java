@@ -2,10 +2,13 @@ package com.pars.financial.mapper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Component;
 
 import com.pars.financial.dto.GiftCardDto;
+import com.pars.financial.dto.ItemCategoryDto;
+import com.pars.financial.dto.StoreDto;
 import com.pars.financial.entity.GiftCard;
 import com.pars.financial.entity.GiftCardTransaction;
 import com.pars.financial.enums.TransactionType;
@@ -14,9 +17,11 @@ import com.pars.financial.enums.TransactionType;
 public class GiftCardMapper {
 
     private final GiftCardTransactionMapper giftCardTransactionMapper;
+    private final StoreMapper storeMapper;
 
-    public GiftCardMapper(GiftCardTransactionMapper giftCardTransactionMapper) {
+    public GiftCardMapper(GiftCardTransactionMapper giftCardTransactionMapper, StoreMapper storeMapper) {
         this.giftCardTransactionMapper = giftCardTransactionMapper;
+        this.storeMapper = storeMapper;
     }
 
 
@@ -42,6 +47,24 @@ public class GiftCardMapper {
         }
         dto.storeLimited = gc.isStoreLimited();
         dto.itemCategoryLimited = gc.isItemCategoryLimited();
+        
+        // Map allowed stores
+        if (gc.getAllowedStores() != null && !gc.getAllowedStores().isEmpty()) {
+            dto.allowedStores = gc.getAllowedStores().stream()
+                    .map(storeMapper::getFrom)
+                    .collect(Collectors.toList());
+        } else {
+            dto.allowedStores = new ArrayList<>();
+        }
+        
+        // Map allowed item categories
+        if (gc.getAllowedItemCategories() != null && !gc.getAllowedItemCategories().isEmpty()) {
+            dto.allowedItemCategories = gc.getAllowedItemCategories().stream()
+                    .map(ItemCategoryDto::fromEntity)
+                    .collect(Collectors.toList());
+        } else {
+            dto.allowedItemCategories = new ArrayList<>();
+        }
         
         // Map batch information
         var batch = gc.getBatch();
