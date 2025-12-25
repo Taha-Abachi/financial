@@ -111,7 +111,7 @@ production-deploy:
   script:
     - |
       ssh -o StrictHostKeyChecking=no $DEPLOY_USER@192.168.15.12 "
-        echo \"$CI_REGISTRY_PASSWORD\" | docker login http://192.168.15.3:5000 -u \"$CI_REGISTRY_USER\" --password-stdin && \
+        echo \"$CI_REGISTRY_PASSWORD_prod\" | docker login http://192.168.15.3:5000 -u \"$CI_REGISTRY_USER\" --password-stdin && \
         docker pull $IMAGE_NAME_prod:$CI_COMMIT_SHORT_SHA && \
         if [ \$(docker ps -a -q -f name=^/$CONTAINER_NAME\$) ]; then
           docker stop $CONTAINER_NAME && docker rm $CONTAINER_NAME
