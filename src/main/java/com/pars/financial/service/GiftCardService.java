@@ -4,6 +4,7 @@ import com.pars.financial.dto.GiftCardDto;
 import com.pars.financial.dto.GiftCardIssueRequest;
 import com.pars.financial.dto.GiftCardReportDto;
 import com.pars.financial.dto.PagedResponse;
+import com.pars.financial.entity.Company;
 import com.pars.financial.entity.Customer;
 import com.pars.financial.entity.GiftCard;
 import com.pars.financial.entity.Store;
@@ -27,6 +28,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -74,27 +76,75 @@ public class GiftCardService {
         }
     }
 
-    private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod, long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds) {
-        return issueGiftCard(realAmount, amount, validityPeriod, companyId, storeLimited, allowedStoreIds, itemCategoryLimited, allowedItemCategoryIds, null, GiftCardType.PHYSICAL);
+    private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, String title) {
+        return issueGiftCard(realAmount, amount, validityPeriod, companyId, storeLimited, allowedStoreIds, itemCategoryLimited, allowedItemCategoryIds, title, null, GiftCardType.PHYSICAL);
     }
 
-    private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod, long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, com.pars.financial.entity.Batch batch) {
-        return issueGiftCard(realAmount, amount, validityPeriod, companyId, storeLimited, allowedStoreIds, itemCategoryLimited, allowedItemCategoryIds, batch, GiftCardType.PHYSICAL);
+    private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, String title, com.pars.financial.entity.Batch batch) {
+        return issueGiftCard(realAmount, amount, validityPeriod, companyId, storeLimited, allowedStoreIds, itemCategoryLimited, allowedItemCategoryIds, title, batch, GiftCardType.PHYSICAL);
     }
 
-    private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod, long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, com.pars.financial.entity.Batch batch, GiftCardType type) {
+    private GiftCard issueGiftCard(long realAmount, long amount, long validityPeriod, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, String title, com.pars.financial.entity.Batch batch, GiftCardType type) {
         logger.debug("Issuing new gift card with realAmount: {}, amount: {}, validityPeriod: {}, storeLimited: {}, itemCategoryLimited: {}", realAmount, amount, validityPeriod, storeLimited, itemCategoryLimited);
         validateRealAmount(realAmount);
-        var company = companyRepository.findById(companyId);
-        if(company.isEmpty()) {
-            logger.error("Company not found while Issuing new gift card with realAmount: {}, amount: {}, validityPeriod: {}", realAmount, amount, validityPeriod);
-            throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND);
+        
+        // Set company with priority: batch company > request companyId > current user's company
+        Company companyToAssign = null;
+        
+        // Priority 1: If batch is provided, use batch's company
+        if (batch != null && batch.getCompany() != null) {
+            companyToAssign = batch.getCompany();
+            logger.debug("Using batch company: {} for gift card", companyToAssign.getName());
         }
+        // Priority 2: If companyId is provided in request, use it
+        else if (companyId != null) {
+            var companyOpt = companyRepository.findById(companyId);
+            if (companyOpt.isEmpty()) {
+                logger.warn("Company not found with ID: {}", companyId);
+                throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND, "Company not found with ID: " + companyId);
+            }
+            companyToAssign = companyOpt.get();
+            logger.debug("Using provided companyId: {} for gift card", companyToAssign.getName());
+        }
+        // Priority 3: Try to get from current user (for COMPANY_USER/STORE_USER)
+        else {
+            try {
+                User currentUser = securityContextService.getCurrentUserOrThrow();
+                String roleName = currentUser.getRole().getName();
+                
+                if ("COMPANY_USER".equals(roleName)) {
+                    if (currentUser.getCompany() != null) {
+                        companyToAssign = currentUser.getCompany();
+                        logger.debug("Using current user's company: {} for gift card", companyToAssign.getName());
+                    } else {
+                        logger.warn("COMPANY_USER {} has no company assigned", currentUser.getUsername());
+                    }
+                } else if ("STORE_USER".equals(roleName)) {
+                    if (currentUser.getStore() != null && currentUser.getStore().getCompany() != null) {
+                        companyToAssign = currentUser.getStore().getCompany();
+                        logger.debug("Using current user's store's company: {} for gift card", companyToAssign.getName());
+                    } else {
+                        logger.warn("STORE_USER {} has no store or company assigned", currentUser.getUsername());
+                    }
+                }
+            } catch (IllegalStateException e) {
+                // User not authenticated - will throw error below
+                logger.debug("No authenticated user found, cannot determine company from user");
+            }
+        }
+        
+        // Ensure company is set - throw error if still null
+        if (companyToAssign == null) {
+            logger.error("Cannot create gift card without company_id. Batch company, request companyId, and user company are all null or unavailable.");
+            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "Company ID is required. Please provide companyId in the request or ensure the batch has a company assigned.");
+        }
+        
         var gc = new GiftCard();
-        gc.setCompany(company.get());
+        gc.setCompany(companyToAssign);
         gc.setIdentifier(ThreadLocalRandom.current().nextLong(10000000, 100000000));
 //        gc.setIdentifier(Long.parseLong(RandomStringGenerator.generateRandomNumericString(8)));
         gc.setSerialNo("GC" + RandomStringGenerator.generateRandomUppercaseStringWithNumbers(giftCardSerialNoLength - 2));
+        gc.setTitle(title);
         gc.setInitialAmount(amount);
         gc.setRealAmount(realAmount);
         gc.setBalance(amount);
@@ -192,9 +242,9 @@ public class GiftCardService {
         return giftCardMapper.getFrom(gc);
     }
 
-    public GiftCardDto generateGiftCard(long realAmount, long amount, long validityPeriod, long companyId) {
+    public GiftCardDto generateGiftCard(long realAmount, long amount, long validityPeriod, Long companyId) {
         logger.info("Generating new gift card with realAmount: {}, amount: {}, validityPeriod: {}", realAmount, amount, validityPeriod);
-        var giftCard = issueGiftCard(realAmount, amount, validityPeriod, companyId, false, new ArrayList<>(), false, new ArrayList<>());
+        var giftCard = issueGiftCard(realAmount, amount, validityPeriod, companyId, false, new ArrayList<>(), false, new ArrayList<>(), "");
         var savedCard = giftCardRepository.save(giftCard);
         logger.info("Generated gift card with serialNo: {}", savedCard.getSerialNo());
         return giftCardMapper.getFrom(savedCard);
@@ -204,7 +254,8 @@ public class GiftCardService {
         logger.info("Generating new gift card with request: {}", request);
         var giftCard = issueGiftCard(request.getRealAmount(), request.getBalance(), request.getRemainingValidityPeriod(), 
                                    request.getCompanyId(), request.isStoreLimited(), request.getAllowedStoreIds(), 
-                                   request.isItemCategoryLimited(), request.getAllowedItemCategoryIds(), null, 
+                                   request.isItemCategoryLimited(), request.getAllowedItemCategoryIds(), 
+                                   request.getTitle() != null ? request.getTitle() : "", null, 
                                    request.getType() != null ? request.getType() : GiftCardType.PHYSICAL);
         var savedCard = giftCardRepository.save(giftCard);
         logger.info("Generated gift card with serialNo: {}", savedCard.getSerialNo());
@@ -215,7 +266,7 @@ public class GiftCardService {
         logger.info("Generating {} gift cards with realAmount: {}, amount: {}, validityPeriod: {}", count, realAmount, amount, validityPeriod);
         var ls = new ArrayList<GiftCard>();
         for (var i = 0; i < count; i++) {
-            ls.add(issueGiftCard(realAmount, amount, validityPeriod, companyId, false, new ArrayList<>(), false, new ArrayList<>()));
+            ls.add(issueGiftCard(realAmount, amount, validityPeriod, companyId, false, new ArrayList<>(), false, new ArrayList<>(), ""));
         }
         var savedCards = giftCardRepository.saveAll(ls);
         logger.info("Generated {} gift cards successfully", count);
@@ -229,7 +280,8 @@ public class GiftCardService {
         for (var i = 0; i < request.getCount(); i++) {
             ls.add(issueGiftCard(request.getRealAmount(), request.getBalance(), request.getRemainingValidityPeriod(), 
                                 request.getCompanyId(), request.isStoreLimited(), request.getAllowedStoreIds(), 
-                                request.isItemCategoryLimited(), request.getAllowedItemCategoryIds(), null, cardType));
+                                request.isItemCategoryLimited(), request.getAllowedItemCategoryIds(), 
+                                request.getTitle() != null ? request.getTitle() : "", null, cardType));
         }
         var savedCards = giftCardRepository.saveAll(ls);
         logger.info("Generated {} gift cards successfully", request.getCount());
@@ -242,8 +294,9 @@ public class GiftCardService {
         GiftCardType cardType = request.getType() != null ? request.getType() : GiftCardType.PHYSICAL;
         for (var i = 0; i < request.getCount(); i++) {
             ls.add(issueGiftCard(request.getRealAmount(), request.getBalance(), request.getRemainingValidityPeriod(), 
-                                request.getCompanyId(), request.isStoreLimited(), request.getAllowedStoreIds(), 
-                                request.isItemCategoryLimited(), request.getAllowedItemCategoryIds(), batch, cardType));
+                                request.getCompanyId(), request.isStoreLimited(), request.getAllowedStoreIds(),
+                                request.isItemCategoryLimited(), request.getAllowedItemCategoryIds(), 
+                                request.getTitle() != null ? request.getTitle() : "", batch, cardType));
         }
         var savedCards = giftCardRepository.saveAll(ls);
         logger.info("Generated {} gift cards successfully for batch: {}", request.getCount(), batch.getBatchNumber());
@@ -621,9 +674,9 @@ public class GiftCardService {
      * - STORE_USER: Only sees their store's company's gift cards
      */
     @Transactional(readOnly = true)
-    public PagedResponse<GiftCardDto> getGiftCardsForCurrentUserWithFiltering(User user, int page, int size, Long companyId, Long storeId) {
-        logger.debug("Fetching gift cards for user: {} with role: {} - page: {}, size: {}, companyId: {}, storeId: {}", 
-                    user.getUsername(), user.getRole().getName(), page, size, companyId, storeId);
+    public PagedResponse<GiftCardDto> getGiftCardsForCurrentUserWithFiltering(User user, int page, int size, Long companyId, Long storeId, String sortBy, String sortDir) {
+        logger.debug("Fetching gift cards for user: {} with role: {} - page: {}, size: {}, companyId: {}, storeId: {}, sortBy: {}, sortDir: {}", 
+                    user.getUsername(), user.getRole().getName(), page, size, companyId, storeId, sortBy, sortDir);
         
         // Validate pagination parameters
         if (page < 0) {
@@ -636,7 +689,24 @@ public class GiftCardService {
             size = 100; // Maximum page size
         }
         
-        Pageable pageable = PageRequest.of(page, size);
+        // Validate and set default sort field
+        if (sortBy == null || sortBy.trim().isEmpty()) {
+            sortBy = "id";
+        }
+        
+        // Validate sort direction
+        Sort.Direction direction = Sort.Direction.ASC;
+        if (sortDir != null && !sortDir.trim().isEmpty()) {
+            try {
+                direction = Sort.Direction.fromString(sortDir.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                logger.warn("Invalid sort direction: {}, using ASC", sortDir);
+                direction = Sort.Direction.ASC;
+            }
+        }
+
+        // Create Pageable with sorting
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<GiftCard> giftCardPage;
         
         // Role-based data filtering
@@ -928,6 +998,17 @@ public class GiftCardService {
             throw new GiftCardNotFoundException("Gift Card Not Found with serial No: " + serialNo);
         }
 
+        // RBAC check: COMPANY_USER and STORE_USER can only block/unblock gift cards from their company
+        String roleName = currentUser.getRole().getName();
+        if (!roleName.equals("SUPERADMIN") && !roleName.equals("ADMIN") && !roleName.equals("API_USER")) {
+            GiftCardDto dto = giftCardMapper.getFrom(giftCard);
+            if (!hasAccessToGiftCard(currentUser, dto)) {
+                logger.warn("User {} with role {} does not have access to block/unblock gift card {}", 
+                           currentUser.getUsername(), roleName, serialNo);
+                throw new ValidationException(ErrorCodes.FORBIDDEN, "You do not have access to block/unblock this gift card");
+            }
+        }
+
         if (block) {
             if (giftCard.isBlocked()) {
                 logger.warn("Gift card {} is already blocked", serialNo);
@@ -950,6 +1031,170 @@ public class GiftCardService {
 
         GiftCard savedGiftCard = giftCardRepository.save(giftCard);
         return giftCardMapper.getFrom(savedGiftCard);
+    }
+
+    /**
+     * Deactivate or activate a gift card by serial number
+     * @param serialNo the serial number of the gift card
+     * @param activate true to activate, false to deactivate
+     * @return the updated gift card DTO
+     * @throws GiftCardNotFoundException if gift card not found
+     */
+    @Transactional
+    public GiftCardDto activateGiftCard(String serialNo, boolean activate) {
+        logger.info("{} gift card with serialNo: {}", activate ? "Activating" : "Deactivating", serialNo);
+        
+        User currentUser = securityContextService.getCurrentUserOrThrow();
+        
+        GiftCard giftCard = giftCardRepository.findBySerialNo(serialNo);
+        if (giftCard == null) {
+            logger.warn("Gift card not found with serialNo: {}", serialNo);
+            throw new GiftCardNotFoundException("Gift Card Not Found with serial No: " + serialNo);
+        }
+
+        // Check if gift card is blocked - cannot activate/deactivate if blocked
+        if (giftCard.isBlocked()) {
+            logger.warn("Cannot {} blocked gift card: {}", activate ? "activate" : "deactivate", serialNo);
+            throw new ValidationException(ErrorCodes.GIFT_CARD_INVALID, 
+                "Cannot " + (activate ? "activate" : "deactivate") + " a blocked gift card. Please unblock it first.");
+        }
+
+        // RBAC check: COMPANY_USER and STORE_USER can only activate/deactivate gift cards from their company
+        String roleName = currentUser.getRole().getName();
+        if (!roleName.equals("SUPERADMIN") && !roleName.equals("ADMIN") && !roleName.equals("API_USER")) {
+            GiftCardDto dto = giftCardMapper.getFrom(giftCard);
+            if (!hasAccessToGiftCard(currentUser, dto)) {
+                logger.warn("User {} with role {} does not have access to activate/deactivate gift card {}", 
+                           currentUser.getUsername(), roleName, serialNo);
+                throw new ValidationException(ErrorCodes.FORBIDDEN, "You do not have access to activate/deactivate this gift card");
+            }
+        }
+
+        if (activate) {
+            if (giftCard.isActive()) {
+                logger.warn("Gift card {} is already active", serialNo);
+                throw new ValidationException(ErrorCodes.GIFT_CARD_INVALID, "Gift card is already active");
+            }
+            giftCard.setActive(true);
+            logger.info("Gift card {} activated by user {}", serialNo, currentUser.getUsername());
+        } else {
+            if (!giftCard.isActive()) {
+                logger.warn("Gift card {} is already inactive", serialNo);
+                throw new ValidationException(ErrorCodes.GIFT_CARD_INVALID, "Gift card is already inactive");
+            }
+            giftCard.setActive(false);
+            logger.info("Gift card {} deactivated by user {}", serialNo, currentUser.getUsername());
+        }
+
+        GiftCard savedGiftCard = giftCardRepository.save(giftCard);
+        return giftCardMapper.getFrom(savedGiftCard);
+    }
+
+    /**
+     * Get gift cards for a customer by phone number with RBAC checks
+     * @param user the current user making the request
+     * @param phoneNumber the phone number of the customer
+     * @return list of gift cards for the customer
+     * @throws ValidationException if customer not found or user doesn't have access
+     */
+    @Transactional(readOnly = true)
+    public List<GiftCardDto> getGiftCardsByPhoneNumber(User user, String phoneNumber) {
+        logger.info("Fetching gift cards for phone number: {} by user: {} with role: {}", 
+                   phoneNumber, user.getUsername(), user.getRole().getName());
+        
+        // Validate phone number
+        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+            logger.error("Phone number is required");
+            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "Phone number is required");
+        }
+        
+        // Find customer by phone number
+        Customer customer = customerRepository.findByPrimaryPhoneNumber(phoneNumber.trim());
+        if (customer == null) {
+            logger.warn("Customer not found for phone number: {}", phoneNumber);
+            throw new ValidationException(ErrorCodes.CUSTOMER_NOT_FOUND, "Customer not found for phone number: " + phoneNumber);
+        }
+        
+        // Get all gift cards for the customer first
+        List<GiftCard> giftCards = giftCardRepository.findByCustomer(customer);
+        
+        // RBAC check: determine if user has access and filter gift cards based on role
+        String roleName = user.getRole().getName();
+        List<GiftCard> accessibleGiftCards = new java.util.ArrayList<>();
+        
+        switch (roleName) {
+            case "SUPERADMIN":
+            case "ADMIN":
+            case "API_USER":
+                // These roles have full access to all gift cards
+                accessibleGiftCards = giftCards;
+                logger.debug("User {} has full access (role: {})", user.getUsername(), roleName);
+                break;
+                
+            case "COMPANY_USER":
+                // Access based on company matching: user's company must match gift card's company
+                // OR user is requesting their own gift cards
+                if (phoneNumber.equals(user.getMobilePhoneNumber())) {
+                    // User can always view their own gift cards
+                    accessibleGiftCards = giftCards;
+                    logger.debug("COMPANY_USER {} viewing own gift cards", user.getUsername());
+                } else if (user.getCompany() != null) {
+                    // Filter gift cards where company matches user's company
+                    accessibleGiftCards = giftCards.stream()
+                        .filter(gc -> gc.getCompany() != null && 
+                                     gc.getCompany().getId().equals(user.getCompany().getId()))
+                        .collect(java.util.stream.Collectors.toList());
+                    logger.debug("COMPANY_USER {} access check: {} gift cards accessible from company {}", 
+                               user.getUsername(), accessibleGiftCards.size(), user.getCompany().getId());
+                } else {
+                    logger.warn("COMPANY_USER {} has no company assigned", user.getUsername());
+                }
+                break;
+                
+            case "STORE_USER":
+                // Access based on store's company matching: gift card's company must match user's store's company
+                // OR user is requesting their own gift cards
+                if (phoneNumber.equals(user.getMobilePhoneNumber())) {
+                    // User can always view their own gift cards
+                    accessibleGiftCards = giftCards;
+                    logger.debug("STORE_USER {} viewing own gift cards", user.getUsername());
+                } else if (user.getStore() != null && user.getStore().getCompany() != null) {
+                    // Filter gift cards where company matches user's store's company
+                    Long userCompanyId = user.getStore().getCompany().getId();
+                    accessibleGiftCards = giftCards.stream()
+                        .filter(gc -> gc.getCompany() != null && 
+                                     gc.getCompany().getId().equals(userCompanyId))
+                        .collect(java.util.stream.Collectors.toList());
+                    logger.debug("STORE_USER {} access check: {} gift cards accessible from store's company {}", 
+                               user.getUsername(), accessibleGiftCards.size(), userCompanyId);
+                } else {
+                    logger.warn("STORE_USER {} has no store or company assigned", user.getUsername());
+                }
+                break;
+                
+            default:
+                // For other roles, only allow if user is requesting their own gift cards
+                if (phoneNumber.equals(user.getMobilePhoneNumber())) {
+                    accessibleGiftCards = giftCards;
+                    logger.debug("User {} with role {} viewing own gift cards", user.getUsername(), roleName);
+                } else {
+                    logger.debug("User {} with role {} does not have access", user.getUsername(), roleName);
+                }
+                break;
+        }
+        
+        // Check if user has any access
+        if (accessibleGiftCards.isEmpty() && !phoneNumber.equals(user.getMobilePhoneNumber())) {
+            logger.warn("User {} with role {} does not have access to gift cards for phone number: {}", 
+                       user.getUsername(), roleName, phoneNumber);
+            throw new ValidationException(ErrorCodes.FORBIDDEN, "You do not have access to view gift cards for this phone number");
+        }
+        
+        giftCards = accessibleGiftCards;
+        
+        logger.info("Found {} gift cards for customer with phone number: {}", giftCards.size(), phoneNumber);
+        
+        return giftCardMapper.getFrom(giftCards);
     }
 }
 

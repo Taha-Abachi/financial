@@ -65,10 +65,13 @@ staging-deploy:
         docker run -d --name $CONTAINER_NAME --hostname $CONTAINER_NAME \
         -p 8082:8082 \
         -e PORT_NUMBER=8082 \
-        -e POSTGRES_DB=giftcard_staging \
-        -e POSTGRES_USER=taha \
-        -e POSTGRES_PASSWORD=m73MFiQO4rSnhnPl \
-        -e POSTGRES_HOST=192.168.0.211 \
+        -e DB_URL=jdbc:postgresql://${STAGE_DB_HOST}:5432/${STAGE_DB_NAME} \
+        -e DB_USER=${STAGE_DB_USER} \
+        -e DB_PASSWORD=${STAGE_DB_PASSWORD} \
+        -e DISCOUNT_CODE_LEN=${STAGE_DISCOUNT_CODE_LEN:-8} \
+        -e GIFTCARD_SERIAL_LEN=${STAGE_GIFTCARD_SERIAL_LEN:-8} \
+        -e API_KEY_ENCRYPTION_SECRET=${STAGE_API_KEY_ENCRYPTION_SECRET} \
+        -e CORS_ALLOWED_ORIGINS=${STAGE_CORS_ALLOWED_ORIGINS} \
         --network meta-net \
         --network-alias $CONTAINER_NAME \
         --restart unless-stopped \
@@ -99,7 +102,7 @@ prod-build-push:
 
 production-deploy:
   stage: production-deploy
-  image: 192.168.0.214:5000/alpine-cli:latest
+  image: 192.168.15.3:5000/alpine-cli:latest
   before_script:
     - mkdir -p ~/.ssh
     - echo "$DEPLOY_SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
@@ -107,8 +110,8 @@ production-deploy:
     - ssh-keyscan 192.168.15.12 >> ~/.ssh/known_hosts
   script:
     - |
-      ssh -o $DEPLOY_USER@192.168.15.12 "
-        echo \"$CI_REGISTRY_PASSWORD\" | docker login http://192.168.0.214:5000 -u \"$CI_REGISTRY_USER\" --password-stdin && \
+      ssh -o StrictHostKeyChecking=no $DEPLOY_USER@192.168.15.12 "
+        echo \"$CI_REGISTRY_PASSWORD\" | docker login http://192.168.15.3:5000 -u \"$CI_REGISTRY_USER\" --password-stdin && \
         docker pull $IMAGE_NAME_prod:$CI_COMMIT_SHORT_SHA && \
         if [ \$(docker ps -a -q -f name=^/$CONTAINER_NAME\$) ]; then
           docker stop $CONTAINER_NAME && docker rm $CONTAINER_NAME
@@ -116,10 +119,13 @@ production-deploy:
         docker run -d --name $CONTAINER_NAME --hostname $CONTAINER_NAME \
         -p 8082:8082 \
         -e PORT_NUMBER=8082 \
-        -e POSTGRES_DB=$PROD_DB \
-        -e POSTGRES_USER=$PROD_DB_USER \
-        -e POSTGRES_PASSWORD=$PROD_DB_PASS \
-        -e POSTGRES_HOST=$PROD_DB_HOST \
+        -e DB_URL=jdbc:postgresql://${PROD_DB_HOST}:5432/${PROD_DB_NAME} \
+        -e DB_USER=${PROD_DB_USER} \
+        -e DB_PASSWORD=${PROD_DB_PASSWORD} \
+        -e DISCOUNT_CODE_LEN=${PROD_DISCOUNT_CODE_LEN:-8} \
+        -e GIFTCARD_SERIAL_LEN=${PROD_GIFTCARD_SERIAL_LEN:-8} \
+        -e API_KEY_ENCRYPTION_SECRET=${PROD_API_KEY_ENCRYPTION_SECRET} \
+        -e CORS_ALLOWED_ORIGINS=${PROD_CORS_ALLOWED_ORIGINS} \
         --network meta-net \
         --network-alias $CONTAINER_NAME \
         --restart unless-stopped \

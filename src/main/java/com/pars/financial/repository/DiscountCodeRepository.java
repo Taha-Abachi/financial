@@ -11,14 +11,18 @@ import org.springframework.stereotype.Repository;
 
 import com.pars.financial.entity.DiscountCode;
 import com.pars.financial.entity.Company;
+import com.pars.financial.entity.Customer;
+import com.pars.financial.enums.DiscountCodeType;
 
 @Repository
 public interface DiscountCodeRepository extends JpaRepository<DiscountCode, Long> {
     public DiscountCode findByCode(String code);
+    public DiscountCode findBySerialNo(Long serialNo);
     public boolean existsByCode(String code);
     public boolean existsBySerialNo(Long serialNo);
     public java.util.List<DiscountCode> findByBatchId(Long batchId);
     public Page<DiscountCode> findByCompany(Company company, Pageable pageable);
+    public java.util.List<DiscountCode> findByCustomerAndType(Customer customer, DiscountCodeType type);
     
     // Statistics queries
     @Query("SELECT COUNT(d) FROM DiscountCode d")

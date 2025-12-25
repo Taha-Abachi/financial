@@ -9,6 +9,7 @@ services:
       - 8082:8082
     environment:
       - POSTGRES_DB=credit
+      - SPRING_PROFILES_ACTIVE=staging
     depends_on:
       - credit-db
     networks:

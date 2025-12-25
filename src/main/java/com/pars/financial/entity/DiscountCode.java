@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.pars.financial.enums.DiscountType;
+import com.pars.financial.enums.DiscountCodeType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -36,6 +37,9 @@ public class DiscountCode {
     @Column(columnDefinition = "varchar(20)")
     private String code;
     private Long serialNo;
+    
+    @Column(columnDefinition = "varchar(255) DEFAULT ''")
+    private String title = "";
     private int percentage;
     private long maxDiscountAmount = Long.MAX_VALUE;
     private long minimumBillAmount = 0;
@@ -97,6 +101,14 @@ public class DiscountCode {
     @JoinColumn(name = "batch_id")
     private Batch batch;
 
+    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "varchar(20) NOT NULL DEFAULT 'GENERAL'")
+    private DiscountCodeType type = DiscountCodeType.GENERAL;
+
+    @ManyToOne
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
+
     public void setId(Long id) {
         this.id = id;
     }
@@ -127,6 +139,14 @@ public class DiscountCode {
 
     public void setSerialNo(Long serialNo) {
         this.serialNo = serialNo;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title != null ? title : "";
     }
 
     public int getPercentage() {
@@ -295,6 +315,23 @@ public class DiscountCode {
 
     public void setBatch(Batch batch) {
         this.batch = batch;
+    }
+
+    public DiscountCodeType getType() {
+        return type;
+    }
+
+    public void setType(DiscountCodeType type) {
+        // Default to GENERAL if null is passed
+        this.type = type != null ? type : DiscountCodeType.GENERAL;
+    }
+
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
     }
 
     /**

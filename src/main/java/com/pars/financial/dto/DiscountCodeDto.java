@@ -5,10 +5,12 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 import com.pars.financial.enums.DiscountType;
+import com.pars.financial.enums.DiscountCodeType;
 
 public class DiscountCodeDto {
     public String code;
     public Long serialNo;
+    public String title;
     public int percentage;
     public long maxDiscountAmount;
     public long minimumBillAmount;
@@ -31,8 +33,12 @@ public class DiscountCodeDto {
     public Long companyId;
     public boolean storeLimited;
     public boolean itemCategoryLimited;
+    public java.util.List<StoreDto> allowedStores;
+    public java.util.List<ItemCategoryDto> allowedItemCategories;
     public Long batchId;
     public String batchNumber;
+    public DiscountCodeType type;
+    public Long customerId;
 
     public Long getBatchId() {
         return batchId;

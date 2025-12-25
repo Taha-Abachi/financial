@@ -71,9 +71,9 @@ public class CustomerController {
     @GetMapping("/list")
     public ResponseEntity<GenericResponse<PagedResponse<CustomerDto>>> getAllCustomers(
         @Parameter(description = "Page number (0-indexed)", required = false)
-        @RequestParam(defaultValue = "0") int page,
+        @RequestParam(value = "page", defaultValue = "0") int page,
         @Parameter(description = "Page size", required = false)
-        @RequestParam(defaultValue = "10") int size
+        @RequestParam(value = "size", defaultValue = "10") int size
     ) {
         logger.info("GET /api/v1/customer/list called with pagination - page: {}, size: {}", page, size);
         var response = new GenericResponse<PagedResponse<CustomerDto>>();

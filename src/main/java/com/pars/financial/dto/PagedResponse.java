@@ -60,6 +60,14 @@ public class PagedResponse<T> {
         this.totalElements = totalElements;
     }
 
+    /**
+     * Alias for totalElements - returns the total count of elements
+     * @return total count of elements
+     */
+    public long getTotalCount() {
+        return totalElements;
+    }
+
     public int getTotalPages() {
         return totalPages;
     }

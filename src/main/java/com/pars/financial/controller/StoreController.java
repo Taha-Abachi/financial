@@ -60,17 +60,34 @@ public class StoreController {
     public ResponseEntity<GenericResponse<PagedResponse<StoreDto>>> getStores(
             @RequestParam(value="page", defaultValue = "0", required = false) Integer page,
             @RequestParam(value="size", defaultValue = "10", required = false) Integer size,
-            @RequestParam(value="companyId", required = false) Long companyId) {
-        logger.info("GET /api/v1/store called with pagination - page: {}, size: {}, companyId: {}", page, size, companyId);
+            @RequestParam(value="companyId", required = false) Long companyId,
+            @RequestParam(value="ownershipType", required = false) String ownershipTypeStr) {
+        logger.info("GET /api/v1/store called with pagination - page: {}, size: {}, companyId: {}, ownershipType: {}", page, size, companyId, ownershipTypeStr);
         GenericResponse<PagedResponse<StoreDto>> genericResponseDto = new GenericResponse<>();
         int pageValue = (page != null) ? page : 0;
-        int sizeValue = (size != null) ? size : 10;    
+        int sizeValue = (size != null) ? size : 10;
+        
+        // Convert ownershipType string to enum
+        com.pars.financial.enums.OwnershipType ownershipType = null;
+        if (ownershipTypeStr != null && !ownershipTypeStr.isEmpty()) {
+            try {
+                ownershipType = com.pars.financial.enums.OwnershipType.valueOf(ownershipTypeStr.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                logger.warn("Invalid ownership type: {}. Valid values are: OWNED, FRANCHISE, THIRD_PARTY", ownershipTypeStr);
+                genericResponseDto.status = -1;
+                genericResponseDto.message = "Invalid ownership type: " + ownershipTypeStr + ". Valid values are: OWNED, FRANCHISE, THIRD_PARTY";
+                return ResponseEntity.badRequest().body(genericResponseDto);
+            }
+        }
+        
         try {
-            PagedResponse<StoreDto> pagedStores = storeService.getStoresForCurrentUser(pageValue, sizeValue, companyId);
+            PagedResponse<StoreDto> pagedStores = storeService.getStoresForCurrentUser(pageValue, sizeValue, companyId, ownershipType);
             logger.info("Found {} stores for current user (page {})", pagedStores.getContent().size(), pageValue);
             if (pagedStores.getContent() == null || pagedStores.getContent().isEmpty()) {
                 genericResponseDto.status = -1;
-                if (companyId != null) {
+                if (companyId != null && ownershipType != null) {
+                    genericResponseDto.message = "No stores found for company ID: " + companyId + " with ownership type: " + ownershipType;
+                } else if (companyId != null) {
                     genericResponseDto.message = "No stores found for company ID: " + companyId;
                 } else {
                     genericResponseDto.message = "No stores found for your access level";
@@ -82,7 +99,7 @@ public class StoreController {
                 return ResponseEntity.ok(genericResponseDto);
             }
         } catch (Exception e) {
-            logger.error("Error fetching stores with pagination: {}", e.getMessage());
+            logger.error("Error fetching stores with pagination: {}", e.getMessage(), e);
             genericResponseDto.status = -1;
             genericResponseDto.message = "Error fetching stores: " + e.getMessage();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(genericResponseDto);

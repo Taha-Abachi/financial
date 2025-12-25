@@ -7,18 +7,19 @@ public class GiftCardIssueRequest {
     private long realAmount;
     private long remainingValidityPeriod;
     private int count;
-    private long companyId = 0;
+    private String title;
+    private Long companyId;
     private boolean storeLimited = false;
     private java.util.List<Long> allowedStoreIds;
     private boolean itemCategoryLimited = false;
     private java.util.List<Long> allowedItemCategoryIds;
     private GiftCardType type = GiftCardType.PHYSICAL;
 
-    public long getCompanyId() {
+    public Long getCompanyId() {
         return companyId;
     }
 
-    public void setCompanyId(long companyId) {
+    public void setCompanyId(Long companyId) {
         this.companyId = companyId;
     }
 
@@ -87,5 +88,13 @@ public class GiftCardIssueRequest {
 
     public void setType(GiftCardType type) {
         this.type = type;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
     }
 }

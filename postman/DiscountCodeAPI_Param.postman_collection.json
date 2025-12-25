@@ -21,7 +21,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/api/v1/discountcode/all?page={{page}}&size={{size}}&companyId={{companyId}}&storeId={{storeId}}",
+							"raw": "{{baseUrl}}/api/v1/discountcode/all?page={{page}}&size={{size}}&companyId={{companyId}}&storeId={{storeId}}&sortBy={{sortBy}}&sortDir={{sortDir}}",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -51,10 +51,20 @@
 									"key": "storeId",
 									"value": "{{storeId}}",
 									"description": "Filter by store ID (optional, SUPERADMIN only)"
+								},
+								{
+									"key": "sortBy",
+									"value": "{{sortBy}}",
+									"description": "Field to sort by (optional, default: 'id'). Valid fields: id, code, serialNo, expiryDate, etc."
+								},
+								{
+									"key": "sortDir",
+									"value": "{{sortDir}}",
+									"description": "Sort direction (optional, default: 'ASC'). Valid values: ASC, DESC"
 								}
 							]
 						},
-						"description": "Get a list of discount codes with pagination and RBAC filtering. SUPERADMIN can filter by companyId and/or storeId. COMPANY_USER sees only their company's discount codes. STORE_USER sees only their store's company discount codes."
+						"description": "Get a list of discount codes with pagination, sorting, and RBAC filtering. SUPERADMIN can filter by companyId and/or storeId. COMPANY_USER sees only their company's discount codes. STORE_USER sees only their store's company discount codes. Supports optional sorting by any field (default: id) in ASC or DESC order."
 					},
 					"response": [
 						{
@@ -76,7 +86,7 @@
 								}
 							],
 							"cookie": [],
-							"body": "{\n    \"status\": 0,\n    \"message\": \"Success\",\n    \"data\": {\n        \"content\": [\n            {\n                \"id\": 1,\n                \"code\": \"SAVE20\",\n                \"serialNo\": 1001,\n                \"discountType\": \"PERCENTAGE\",\n                \"percentage\": 20.0,\n                \"constantDiscountAmount\": 0,\n                \"maxDiscountAmount\": 5000,\n                \"minimumBillAmount\": 10000,\n                \"usageLimit\": 100,\n                \"currentUsageCount\": 5,\n                \"isActive\": true,\n                \"used\": false,\n                \"expiryDate\": \"2024-12-31\",\n                \"storeLimited\": false,\n                \"itemCategoryLimited\": false\n            },\n            {\n                \"id\": 2,\n                \"code\": \"FLAT50\",\n                \"serialNo\": 1002,\n                \"discountType\": \"CONSTANT\",\n                \"percentage\": 0.0,\n                \"constantDiscountAmount\": 5000,\n                \"maxDiscountAmount\": 5000,\n                \"minimumBillAmount\": 20000,\n                \"usageLimit\": 50,\n                \"currentUsageCount\": 2,\n                \"isActive\": true,\n                \"used\": false,\n                \"expiryDate\": \"2024-12-31\",\n                \"storeLimited\": true,\n                \"itemCategoryLimited\": false\n            }\n        ],\n        \"page\": 0,\n        \"size\": 10,\n        \"totalElements\": 2,\n        \"totalPages\": 1,\n        \"first\": true,\n        \"last\": true,\n        \"hasNext\": false,\n        \"hasPrevious\": false\n    }\n}"
+							"body": "{\n    \"status\": 0,\n    \"message\": \"Success\",\n    \"data\": {\n        \"content\": [\n            {\n                \"id\": 1,\n                \"code\": \"SAVE20\",\n                \"serialNo\": 1001,\n                \"title\": \"Summer Sale Discount\",\n                \"discountType\": \"PERCENTAGE\",\n                \"percentage\": 20.0,\n                \"constantDiscountAmount\": 0,\n                \"maxDiscountAmount\": 5000,\n                \"minimumBillAmount\": 10000,\n                \"usageLimit\": 100,\n                \"currentUsageCount\": 5,\n                \"isActive\": true,\n                \"used\": false,\n                \"expiryDate\": \"2024-12-31\",\n                \"type\": \"GENERAL\",\n                \"customerId\": null,\n                \"storeLimited\": false,\n                \"itemCategoryLimited\": false,\n                \"allowedStores\": [],\n                \"allowedItemCategories\": []\n            },\n            {\n                \"id\": 2,\n                \"code\": \"FLAT50\",\n                \"serialNo\": 1002,\n                \"title\": \"Flat Discount Offer\",\n                \"discountType\": \"CONSTANT\",\n                \"percentage\": 0.0,\n                \"constantDiscountAmount\": 5000,\n                \"maxDiscountAmount\": 5000,\n                \"minimumBillAmount\": 20000,\n                \"usageLimit\": 50,\n                \"currentUsageCount\": 2,\n                \"isActive\": true,\n                \"used\": false,\n                \"expiryDate\": \"2024-12-31\",\n                \"type\": \"GENERAL\",\n                \"customerId\": null,\n                \"storeLimited\": true,\n                \"itemCategoryLimited\": false,\n                \"allowedStores\": [\n                    {\n                        \"id\": 1,\n                        \"name\": \"Store 1\",\n                        \"address\": \"123 Main St\",\n                        \"phone\": \"09123456789\",\n                        \"ownershipType\": \"OWNED\",\n                        \"locationType\": \"PHYSICAL\",\n                        \"company\": {\n                            \"id\": 1,\n                            \"name\": \"Company Name\"\n                        }\n                    }\n                ],\n                \"allowedItemCategories\": []\n            }\n        ],\n        \"page\": 0,\n        \"size\": 10,\n        \"totalElements\": 2,\n        \"totalPages\": 1,\n        \"first\": true,\n        \"last\": true,\n        \"hasNext\": false,\n        \"hasPrevious\": false\n    }\n}"
 						}
 					]
 				},
@@ -125,7 +135,104 @@
 								}
 							],
 							"cookie": [],
-							"body": ""
+							"body": "{\n    \"status\": 0,\n    \"message\": \"Discount code retrieved successfully\",\n    \"data\": {\n        \"code\": \"SAVE20\",\n        \"serialNo\": 1001,\n        \"title\": \"Summer Sale Discount\",\n        \"percentage\": 20,\n        \"maxDiscountAmount\": 5000,\n        \"minimumBillAmount\": 10000,\n        \"constantDiscountAmount\": 0,\n        \"discountType\": \"PERCENTAGE\",\n        \"usageLimit\": 100,\n        \"currentUsageCount\": 5,\n        \"used\": false,\n        \"active\": true,\n        \"isUsable\": true,\n        \"blocked\": false,\n        \"expireDate\": \"2024-12-31\",\n        \"type\": \"GENERAL\",\n        \"customerId\": null,\n        \"storeLimited\": true,\n        \"itemCategoryLimited\": false,\n        \"allowedStores\": [\n            {\n                \"id\": 1,\n                \"name\": \"Store 1\",\n                \"address\": \"123 Main St\",\n                \"phone\": \"09123456789\",\n                \"ownershipType\": \"OWNED\",\n                \"locationType\": \"PHYSICAL\",\n                \"company\": {\n                    \"id\": 1,\n                    \"name\": \"Company Name\"\n                }\n            }\n        ],\n        \"allowedItemCategories\": [],\n        \"companyId\": 1\n    }\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Personal Discount Codes by Phone Number",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{ADMIN_API_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discountcode/personal/{{phoneNumber}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"discountcode",
+								"personal",
+								"{{phoneNumber}}"
+							]
+						},
+						"description": "Get all personal discount codes for a customer by phone number. Access is controlled by RBAC:\n- SUPERADMIN, ADMIN, API_USER: Full access to all personal codes\n- COMPANY_USER: Can view codes generated by their company or their own codes\n- STORE_USER: Can view codes generated by their store's company or their own codes\n- Users can always view their own personal codes (when phoneNumber matches their mobilePhoneNumber)"
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": 0,\n    \"message\": \"Personal discount codes retrieved successfully\",\n    \"data\": [\n        {\n            \"code\": \"PERSONAL001\",\n            \"serialNo\": 1001,\n            \"title\": \"Personal Discount Code\",\n            \"percentage\": 15,\n            \"maxDiscountAmount\": 5000,\n            \"minimumBillAmount\": 1000,\n            \"constantDiscountAmount\": 0,\n            \"discountType\": \"PERCENTAGE\",\n            \"usageLimit\": 1,\n            \"currentUsageCount\": 0,\n            \"used\": false,\n            \"active\": true,\n            \"isUsable\": true,\n            \"blocked\": false,\n            \"expireDate\": \"2024-12-31\",\n            \"type\": \"PERSONAL\",\n            \"customerId\": 1,\n            \"storeLimited\": false,\n            \"itemCategoryLimited\": false,\n            \"allowedStores\": [],\n            \"allowedItemCategories\": [],\n            \"companyId\": 1\n        }\n    ]\n}"
+						},
+						{
+							"name": "Error - Customer Not Found",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": -1,\n    \"message\": \"Customer not found for phone number: 09123456789\",\n    \"data\": null\n}"
+						},
+						{
+							"name": "Error - Access Denied",
+							"originalRequest": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n    \"status\": -1,\n    \"message\": \"You do not have access to view personal discount codes for this phone number\",\n    \"data\": null\n}"
 						}
 					]
 				},
@@ -170,7 +277,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"percentage\": 10,\n    \"remainingValidityPeriod\": 30,\n    \"maxDiscountAmount\": 1000,\n    \"minimumBillAmount\": 500,\n    \"constantDiscountAmount\": 0,\n    \"discountType\": \"PERCENTAGE\",\n    \"usageLimit\": 1,\n    \"storeLimited\": false,\n    \"allowedStoreIds\": [],\n    \"itemCategoryLimited\": false,\n    \"allowedItemCategoryIds\": []\n}"
+							"raw": "{\n    \"title\": \"New Year Discount\",\n    \"percentage\": 10,\n    \"remainingValidityPeriod\": 30,\n    \"maxDiscountAmount\": 1000,\n    \"minimumBillAmount\": 500,\n    \"constantDiscountAmount\": 0,\n    \"discountType\": \"PERCENTAGE\",\n    \"usageLimit\": 1,\n    \"type\": \"GENERAL\",\n    \"storeLimited\": false,\n    \"allowedStoreIds\": [],\n    \"itemCategoryLimited\": false,\n    \"allowedItemCategoryIds\": []\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/discountcode/issue",
@@ -184,7 +291,7 @@
 								"issue"
 							]
 						},
-						"description": "Create a single discount code with random code and serial number"
+						"description": "Create a single GENERAL discount code with random code and serial number. For PERSONAL type, use the 'Issue Personal Discount Code' request."
 					},
 					"response": [
 						{
@@ -211,6 +318,116 @@
 							],
 							"cookie": [],
 							"body": ""
+						}
+					]
+				},
+				{
+					"name": "Issue Personal Discount Code",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"response is ok\",  ()=>{\r",
+									"    pm.response.to.have.status(200)\r",
+									"})\r",
+									"\r",
+									"var jsonData = pm.response.json();\r",
+									"\r",
+									"pm.environment.set(\"discountCode\", jsonData.data.code);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							},
+							{
+								"key": "x-api-key",
+								"value": "{{ADMIN_API_KEY}}",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"percentage\": 20,\n    \"remainingValidityPeriod\": 90,\n    \"maxDiscountAmount\": 5000,\n    \"minimumBillAmount\": 2000,\n    \"constantDiscountAmount\": 0,\n    \"discountType\": \"PERCENTAGE\",\n    \"usageLimit\": 1,\n    \"type\": \"PERSONAL\",\n    \"phoneNumber\": \"09123456789\",\n    \"storeLimited\": false,\n    \"allowedStoreIds\": [],\n    \"itemCategoryLimited\": false,\n    \"allowedItemCategoryIds\": []\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discountcode/issue",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"discountcode",
+								"issue"
+							]
+						},
+						"description": "Create a PERSONAL discount code for a specific customer. Phone number is required. If customer doesn't exist, it will be created automatically. PERSONAL codes can only be created one at a time (single code creation only, not in lists)."
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"percentage\": 20,\n    \"remainingValidityPeriod\": 90,\n    \"maxDiscountAmount\": 5000,\n    \"minimumBillAmount\": 2000,\n    \"constantDiscountAmount\": 0,\n    \"discountType\": \"PERCENTAGE\",\n    \"usageLimit\": 1,\n    \"type\": \"PERSONAL\",\n    \"phoneNumber\": \"09123456789\"\n}"
+								},
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": 1,\n  \"message\": \"Discount code generated successfully\",\n  \"data\": {\n    \"code\": \"DC12345678\",\n    \"serialNo\": 87654321,\n    \"type\": \"PERSONAL\",\n    \"customerId\": 123,\n    \"percentage\": 20,\n    \"remainingValidityPeriod\": 90,\n    \"maxDiscountAmount\": 5000,\n    \"minimumBillAmount\": 2000,\n    \"discountType\": \"PERCENTAGE\",\n    \"usageLimit\": 1,\n    \"currentUsageCount\": 0,\n    \"isActive\": true,\n    \"used\": false\n  }\n}"
+						},
+						{
+							"name": "Error - Missing Phone Number",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"type\": \"PERSONAL\",\n    \"percentage\": 20\n}"
+								},
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": -1,\n  \"message\": \"Invalid request: Phone number is required when type is PERSONAL\",\n  \"data\": null\n}"
 						}
 					]
 				},
@@ -255,7 +472,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"code\": \"CUSTOM123\",\n    \"serialNo\": 12345678,\n    \"percentage\": 15,\n    \"remainingValidityPeriod\": 60,\n    \"maxDiscountAmount\": 2000,\n    \"minimumBillAmount\": 1000,\n    \"constantDiscountAmount\": 0,\n    \"discountType\": \"PERCENTAGE\",\n    \"usageLimit\": 1,\n    \"storeLimited\": false,\n    \"allowedStoreIds\": [],\n    \"itemCategoryLimited\": false,\n    \"allowedItemCategoryIds\": []\n}"
+							"raw": "{\n    \"title\": \"Custom Discount Code\",\n    \"code\": \"CUSTOM123\",\n    \"serialNo\": 12345678,\n    \"percentage\": 15,\n    \"remainingValidityPeriod\": 60,\n    \"maxDiscountAmount\": 2000,\n    \"minimumBillAmount\": 1000,\n    \"constantDiscountAmount\": 0,\n    \"discountType\": \"PERCENTAGE\",\n    \"usageLimit\": 1,\n    \"type\": \"GENERAL\",\n    \"storeLimited\": false,\n    \"allowedStoreIds\": [],\n    \"itemCategoryLimited\": false,\n    \"allowedItemCategoryIds\": []\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/discountcode/issue",
@@ -269,7 +486,7 @@
 								"issue"
 							]
 						},
-						"description": "Create a single discount code with custom code and serial number. Both code and serialNo must be provided simultaneously and count must be 1."
+						"description": "Create a single GENERAL discount code with custom code and serial number. Both code and serialNo must be provided simultaneously and count must be 1."
 					},
 					"response": [
 						{
@@ -322,7 +539,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"count\": 5,\n    \"percentage\": 10,\n    \"remainingValidityPeriod\": 30,\n    \"maxDiscountAmount\": 1000,\n    \"minimumBillAmount\": 500,\n    \"constantDiscountAmount\": 0,\n    \"discountType\": \"PERCENTAGE\",\n    \"usageLimit\": 1,\n    \"storeLimited\": false,\n    \"allowedStoreIds\": [],\n    \"itemCategoryLimited\": false,\n    \"allowedItemCategoryIds\": []\n}"
+							"raw": "{\n    \"count\": 5,\n    \"percentage\": 10,\n    \"remainingValidityPeriod\": 30,\n    \"maxDiscountAmount\": 1000,\n    \"minimumBillAmount\": 500,\n    \"constantDiscountAmount\": 0,\n    \"discountType\": \"PERCENTAGE\",\n    \"usageLimit\": 1,\n    \"type\": \"GENERAL\",\n    \"storeLimited\": false,\n    \"allowedStoreIds\": [],\n    \"itemCategoryLimited\": false,\n    \"allowedItemCategoryIds\": []\n}"
 						},
 						"url": {
 							"raw": "{{baseUrl}}/api/v1/discountcode/issuelist",
@@ -336,7 +553,7 @@
 								"issuelist"
 							]
 						},
-						"description": "Create multiple discount codes at once. Note: Custom code and serialNo values are ignored when count > 1, random values are generated for each code."
+						"description": "Create multiple GENERAL discount codes at once. Note: PERSONAL type is not allowed in list creation - use single code creation endpoint for PERSONAL codes. Custom code and serialNo values are ignored when count > 1, random values are generated for each code."
 					},
 					"response": [
 						{
@@ -346,7 +563,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n    \"count\": 5,\n    \"percentage\": 10,\n    \"remainingValidityPeriod\": 30,\n    \"maxDiscountAmount\": 1000,\n    \"minimumBillAmount\": 500,\n    \"constantDiscountAmount\": 0,\n    \"discountType\": \"PERCENTAGE\",\n    \"usageLimit\": 1\n}"
+									"raw": "{\n    \"count\": 5,\n    \"percentage\": 10,\n    \"remainingValidityPeriod\": 30,\n    \"maxDiscountAmount\": 1000,\n    \"minimumBillAmount\": 500,\n    \"constantDiscountAmount\": 0,\n    \"discountType\": \"PERCENTAGE\",\n    \"usageLimit\": 1,\n    \"type\": \"GENERAL\"\n}"
 								},
 								"url": {
 									"raw": ""
@@ -363,6 +580,31 @@
 							],
 							"cookie": [],
 							"body": ""
+						},
+						{
+							"name": "Error - PERSONAL Type in List",
+							"originalRequest": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"count\": 5,\n    \"type\": \"PERSONAL\",\n    \"phoneNumber\": \"09123456789\",\n    \"percentage\": 10\n}"
+								},
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": -1,\n  \"message\": \"Invalid request: PERSONAL discount codes can only be created one at a time using the single code creation endpoint\",\n  \"data\": null\n}"
 						}
 					]
 				},
@@ -960,7 +1202,7 @@
 								"issuelist"
 							]
 						},
-						"description": "Custom code and serialNo with count > 1 - will generate random values for each code"
+						"description": "Custom code and serialNo with count > 1 - will generate random values for each code. Note: PERSONAL type is not allowed in list creation."
 					},
 					"response": [
 						{
@@ -1929,6 +2171,200 @@
 							"body": "{\n  \"status\": -1,\n  \"message\": \"Discount code not found: {{discountCode}}\",\n  \"data\": null\n}"
 						}
 					]
+				},
+				{
+					"name": "Deactivate Discount Code",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "X-API-KEY",
+								"value": "{{API_USER_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discountcode/deactivate/{{discountCode}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"discountcode",
+								"deactivate",
+								"{{discountCode}}"
+							]
+						},
+						"description": "Deactivate a discount code by code. Only accessible by ADMIN and SUPERADMIN. Sets the isActive field to false."
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						},
+						{
+							"name": "Error - Already Inactive",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": -1,\n  \"message\": \"Discount code is already inactive\",\n  \"data\": null\n}"
+						},
+						{
+							"name": "Error - Not Found",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": -1,\n  \"message\": \"Discount code not found: {{discountCode}}\",\n  \"data\": null\n}"
+						}
+					]
+				},
+				{
+					"name": "Activate Discount Code",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{accessToken}}",
+								"type": "text"
+							},
+							{
+								"key": "X-API-KEY",
+								"value": "{{API_USER_KEY}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/discountcode/activate/{{discountCode}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"discountcode",
+								"activate",
+								"{{discountCode}}"
+							]
+						},
+						"description": "Activate a discount code by code. Only accessible by ADMIN and SUPERADMIN. Sets the isActive field to true."
+					},
+					"response": [
+						{
+							"name": "Success Response",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": ""
+						},
+						{
+							"name": "Error - Already Active",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": -1,\n  \"message\": \"Discount code is already active\",\n  \"data\": null\n}"
+						},
+						{
+							"name": "Error - Not Found",
+							"originalRequest": {
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": ""
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"status\": -1,\n  \"message\": \"Discount code not found: {{discountCode}}\",\n  \"data\": null\n}"
+						}
+					]
 				}
 			]
 		}
@@ -1945,6 +2381,18 @@
 			"value": "1",
 			"type": "string",
 			"description": "Store ID for filtering (SUPERADMIN only)"
+		},
+		{
+			"key": "sortBy",
+			"value": "id",
+			"type": "string",
+			"description": "Field to sort by (default: 'id'). Valid fields: id, code, serialNo, expiryDate, etc."
+		},
+		{
+			"key": "sortDir",
+			"value": "ASC",
+			"type": "string",
+			"description": "Sort direction (default: 'ASC'). Valid values: ASC, DESC"
 		}
 	]
 }

@@ -61,6 +61,7 @@ public class StoreUserService {
                 
             case "SUPERADMIN":
             case "ADMIN":
+            case "API_USER":
                 return getAllTransactionSummary(user);
                 
             default:
@@ -289,22 +290,29 @@ public class StoreUserService {
         // Transactions are already filtered to confirmed debit transactions at repository level
         for (GiftCardTransaction transaction : transactions) {
             LocalDateTime trxDate = transaction.getTrxDate();
+            
+            // Skip transactions with null date
+            if (trxDate == null) {
+                logger.warn("Gift card transaction {} has null trxDate, skipping", transaction.getId());
+                continue;
+            }
+            
             BigDecimal amount = BigDecimal.valueOf(transaction.getAmount());
 
-            // Today
-            if (trxDate.isAfter(todayStart) && trxDate.isBefore(todayEnd)) {
+            // Today - include boundary values (>= todayStart and <= todayEnd)
+            if (!trxDate.isBefore(todayStart) && !trxDate.isAfter(todayEnd)) {
                 summary.setTodayTotal(summary.getTodayTotal().add(amount));
                 summary.setTodayTransactionCount(summary.getTodayTransactionCount() + 1);
             }
 
-            // Last 7 days
-            if (trxDate.isAfter(last7DaysStart) && trxDate.isBefore(todayEnd)) {
+            // Last 7 days - include boundary values (>= last7DaysStart and <= todayEnd)
+            if (!trxDate.isBefore(last7DaysStart) && !trxDate.isAfter(todayEnd)) {
                 summary.setLast7DaysTotal(summary.getLast7DaysTotal().add(amount));
                 summary.setLast7DaysTransactionCount(summary.getLast7DaysTransactionCount() + 1);
             }
 
-            // Last 30 days
-            if (trxDate.isAfter(last30DaysStart) && trxDate.isBefore(todayEnd)) {
+            // Last 30 days - include boundary values (>= last30DaysStart and <= todayEnd)
+            if (!trxDate.isBefore(last30DaysStart) && !trxDate.isAfter(todayEnd)) {
                 summary.setLast30DaysTotal(summary.getLast30DaysTotal().add(amount));
                 summary.setLast30DaysTransactionCount(summary.getLast30DaysTransactionCount() + 1);
             }
@@ -318,22 +326,29 @@ public class StoreUserService {
         // Transactions are already filtered to confirmed redeem transactions at repository level
         for (DiscountCodeTransaction transaction : transactions) {
             LocalDateTime trxDate = transaction.getTrxDate();
+            
+            // Skip transactions with null date
+            if (trxDate == null) {
+                logger.warn("Discount code transaction {} has null trxDate, skipping", transaction.getId());
+                continue;
+            }
+            
             BigDecimal discountAmount = BigDecimal.valueOf(transaction.getDiscountAmount());
 
-            // Today
-            if (trxDate.isAfter(todayStart) && trxDate.isBefore(todayEnd)) {
+            // Today - include boundary values (>= todayStart and <= todayEnd)
+            if (!trxDate.isBefore(todayStart) && !trxDate.isAfter(todayEnd)) {
                 summary.setTodayTotal(summary.getTodayTotal().add(discountAmount));
                 summary.setTodayTransactionCount(summary.getTodayTransactionCount() + 1);
             }
 
-            // Last 7 days
-            if (trxDate.isAfter(last7DaysStart) && trxDate.isBefore(todayEnd)) {
+            // Last 7 days - include boundary values (>= last7DaysStart and <= todayEnd)
+            if (!trxDate.isBefore(last7DaysStart) && !trxDate.isAfter(todayEnd)) {
                 summary.setLast7DaysTotal(summary.getLast7DaysTotal().add(discountAmount));
                 summary.setLast7DaysTransactionCount(summary.getLast7DaysTransactionCount() + 1);
             }
 
-            // Last 30 days
-            if (trxDate.isAfter(last30DaysStart) && trxDate.isBefore(todayEnd)) {
+            // Last 30 days - include boundary values (>= last30DaysStart and <= todayEnd)
+            if (!trxDate.isBefore(last30DaysStart) && !trxDate.isAfter(todayEnd)) {
                 summary.setLast30DaysTotal(summary.getLast30DaysTotal().add(discountAmount));
                 summary.setLast30DaysTransactionCount(summary.getLast30DaysTransactionCount() + 1);
             }

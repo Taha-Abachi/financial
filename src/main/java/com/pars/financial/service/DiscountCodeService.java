@@ -8,6 +8,7 @@ import com.pars.financial.dto.DiscountCodeValidationResponse;
 import com.pars.financial.dto.PagedResponse;
 
 import com.pars.financial.entity.DiscountCode;
+import com.pars.financial.entity.Company;
 import com.pars.financial.enums.DiscountType;
 import com.pars.financial.constants.ErrorCodes;
 import com.pars.financial.exception.ValidationException;
@@ -19,6 +20,8 @@ import com.pars.financial.repository.ItemCategoryRepository;
 import com.pars.financial.repository.StoreRepository;
 import com.pars.financial.repository.CustomerRepository;
 import com.pars.financial.entity.User;
+import com.pars.financial.entity.Customer;
+import com.pars.financial.enums.DiscountCodeType;
 import com.pars.financial.utils.RandomStringGenerator;
 
 import org.slf4j.Logger;
@@ -27,6 +30,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,24 +53,28 @@ public class DiscountCodeService {
     private final CompanyRepository companyRepository;
     private final StoreRepository storeRepository;
     private final ItemCategoryRepository itemCategoryRepository;
+    private final CustomerRepository customerRepository;
     private final DiscountCodeTransactionRepository discountCodeTransactionRepository;
     private final SecurityContextService securityContextService;
+    private final CustomerService customerService;
 
-    public DiscountCodeService(DiscountCodeRepository codeRepository, DiscountCodeMapper mapper, CompanyRepository companyRepository, StoreRepository storeRepository, ItemCategoryRepository itemCategoryRepository, CustomerRepository customerRepository, DiscountCodeTransactionRepository discountCodeTransactionRepository, SecurityContextService securityContextService) {
+    public DiscountCodeService(DiscountCodeRepository codeRepository, DiscountCodeMapper mapper, CompanyRepository companyRepository, StoreRepository storeRepository, ItemCategoryRepository itemCategoryRepository, CustomerRepository customerRepository, DiscountCodeTransactionRepository discountCodeTransactionRepository, SecurityContextService securityContextService, CustomerService customerService) {
         this.codeRepository = codeRepository;
         this.mapper = mapper;
         this.companyRepository = companyRepository;
         this.storeRepository = storeRepository;
         this.itemCategoryRepository = itemCategoryRepository;
+        this.customerRepository = customerRepository;
         this.discountCodeTransactionRepository = discountCodeTransactionRepository;
         this.securityContextService = securityContextService;
+        this.customerService = customerService;
     }
 
-    private DiscountCode issueDiscountCode(int percentage, long validityPeriod, long maxDiscountAmount, long minimumBillAmount, int usageLimit, long constantDiscountAmount, DiscountType discountType, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, String customCode, Long customSerialNo) {
-        return issueDiscountCode(percentage, validityPeriod, maxDiscountAmount, minimumBillAmount, usageLimit, constantDiscountAmount, discountType, companyId, storeLimited, allowedStoreIds, itemCategoryLimited, allowedItemCategoryIds, customCode, customSerialNo, null);
+    private DiscountCode issueDiscountCode(int percentage, long validityPeriod, long maxDiscountAmount, long minimumBillAmount, int usageLimit, long constantDiscountAmount, DiscountType discountType, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, String customCode, Long customSerialNo, DiscountCodeType type, String phoneNumber, String title) {
+        return issueDiscountCode(percentage, validityPeriod, maxDiscountAmount, minimumBillAmount, usageLimit, constantDiscountAmount, discountType, companyId, storeLimited, allowedStoreIds, itemCategoryLimited, allowedItemCategoryIds, customCode, customSerialNo, type, phoneNumber, title, null);
     }
 
-    private DiscountCode issueDiscountCode(int percentage, long validityPeriod, long maxDiscountAmount, long minimumBillAmount, int usageLimit, long constantDiscountAmount, DiscountType discountType, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, String customCode, Long customSerialNo, com.pars.financial.entity.Batch batch) {
+    private DiscountCode issueDiscountCode(int percentage, long validityPeriod, long maxDiscountAmount, long minimumBillAmount, int usageLimit, long constantDiscountAmount, DiscountType discountType, Long companyId, boolean storeLimited, java.util.List<Long> allowedStoreIds, boolean itemCategoryLimited, java.util.List<Long> allowedItemCategoryIds, String customCode, Long customSerialNo, DiscountCodeType type, String phoneNumber, String title, com.pars.financial.entity.Batch batch) {
         logger.debug("Issuing new discount code with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}, minimumBillAmount: {}, usageLimit: {}, constantDiscountAmount: {}, discountType: {}, companyId: {}, storeLimited: {}, allowedStoreIds: {}, itemCategoryLimited: {}, allowedItemCategoryIds: {}, customCode: {}, customSerialNo: {}", 
             percentage, validityPeriod, maxDiscountAmount, minimumBillAmount, usageLimit, constantDiscountAmount, discountType, companyId, storeLimited, allowedStoreIds, itemCategoryLimited, allowedItemCategoryIds, customCode, customSerialNo);
         var code = new DiscountCode();
@@ -86,6 +94,9 @@ public class DiscountCodeService {
         } else {
             code.setSerialNo(ThreadLocalRandom.current().nextLong(10000000, 100000000));
         }
+        
+        // Set title
+        code.setTitle(title);
         
         code.setPercentage(percentage);
         code.setMaxDiscountAmount(maxDiscountAmount);
@@ -121,15 +132,86 @@ public class DiscountCodeService {
             }
             code.setAllowedItemCategories(itemCategories);
         }
-        // Set company if companyId is provided
-        if (companyId != null) {
-            var company = companyRepository.findById(companyId);
-            if (company.isEmpty()) {
+        
+        // Set company with priority: batch company > request companyId > current user's company
+        Company companyToAssign = null;
+        
+        // Priority 1: If batch is provided, use batch's company
+        if (batch != null && batch.getCompany() != null) {
+            companyToAssign = batch.getCompany();
+            logger.debug("Using batch company: {} for discount code", companyToAssign.getName());
+        }
+        // Priority 2: If companyId is provided in request, use it
+        else if (companyId != null) {
+            var companyOpt = companyRepository.findById(companyId);
+            if (companyOpt.isEmpty()) {
                 logger.warn("Company not found with ID: {}", companyId);
-                throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND);
+                throw new ValidationException(ErrorCodes.COMPANY_NOT_FOUND, "Company not found with ID: " + companyId);
             }
-            code.setCompany(company.get());
-            logger.debug("Assigned discount code to company: {}", company.get().getName());
+            companyToAssign = companyOpt.get();
+            logger.debug("Using provided companyId: {} for discount code", companyToAssign.getName());
+        }
+        // Priority 3: Try to get from current user (for COMPANY_USER/STORE_USER)
+        else {
+            try {
+                User currentUser = securityContextService.getCurrentUserOrThrow();
+                String roleName = currentUser.getRole().getName();
+                
+                if ("COMPANY_USER".equals(roleName)) {
+                    if (currentUser.getCompany() != null) {
+                        companyToAssign = currentUser.getCompany();
+                        logger.debug("Using current user's company: {} for discount code", companyToAssign.getName());
+                    } else {
+                        logger.warn("COMPANY_USER {} has no company assigned", currentUser.getUsername());
+                    }
+                } else if ("STORE_USER".equals(roleName)) {
+                    if (currentUser.getStore() != null && currentUser.getStore().getCompany() != null) {
+                        companyToAssign = currentUser.getStore().getCompany();
+                        logger.debug("Using current user's store's company: {} for discount code", companyToAssign.getName());
+                    } else {
+                        logger.warn("STORE_USER {} has no store or company assigned", currentUser.getUsername());
+                    }
+                }
+            } catch (IllegalStateException e) {
+                // User not authenticated - will throw error below
+                logger.debug("No authenticated user found, cannot determine company from user");
+            }
+        }
+        
+        // Ensure company is set - throw error if still null
+        if (companyToAssign == null) {
+            logger.error("Cannot create discount code without company_id. Batch company, request companyId, and user company are all null or unavailable.");
+            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "Company ID is required. Please provide companyId in the request or ensure the batch has a company assigned.");
+        }
+        
+        code.setCompany(companyToAssign);
+        logger.debug("Assigned discount code to company: {} (ID: {})", companyToAssign.getName(), companyToAssign.getId());
+        
+        // Set type (defaults to GENERAL if null via setType method)
+        code.setType(type);
+        
+        // Handle customer assignment for PERSONAL type
+        if (code.getType() == DiscountCodeType.PERSONAL) {
+            if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+                logger.error("Phone number is required for PERSONAL discount code type");
+                throw new ValidationException(ErrorCodes.INVALID_REQUEST, "Phone number is required when type is PERSONAL");
+            }
+            
+            // Check if customer exists, if not create one
+            Customer customer = customerRepository.findByPrimaryPhoneNumber(phoneNumber);
+            if (customer == null) {
+                logger.info("Customer not found for phone number: {}, creating new customer", phoneNumber);
+                customer = customerService.createCustomer(phoneNumber);
+            } else {
+                logger.debug("Found existing customer with ID: {} for phone number: {}", customer.getId(), phoneNumber);
+            }
+            code.setCustomer(customer);
+        } else {
+            // For GENERAL type, ignore phone number if provided
+            if (phoneNumber != null && !phoneNumber.trim().isEmpty()) {
+                logger.warn("Phone number provided for GENERAL discount code type, ignoring it");
+            }
+            code.setCustomer(null);
         }
         
         // Set batch reference if provided
@@ -137,79 +219,119 @@ public class DiscountCodeService {
             code.setBatch(batch);
         }
         
-        logger.debug("Created discount code: {}", code.getCode());
+        logger.debug("Created discount code: {} with type: {}", code.getCode(), code.getType());
         return code;
     }
 
     public DiscountCodeDto generate(DiscountCodeIssueRequest dto) {
-        logger.info("Generating new discount code with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}, minimumBillAmount: {}, usageLimit: {}, constantDiscountAmount: {}, discountType: {}, companyId: {}, storeLimited: {}, allowedStoreIds: {}, itemCategoryLimited: {}, allowedItemCategoryIds: {}, customCode: {}, customSerialNo: {}", 
-            dto.percentage, dto.remainingValidityPeriod, dto.maxDiscountAmount, dto.minimumBillAmount, dto.usageLimit, dto.constantDiscountAmount, dto.discountType, dto.companyId, (long) dto.allowedStoreIds.size() > 0, dto.allowedStoreIds, dto.itemCategoryLimited, dto.allowedItemCategoryIds, dto.code, dto.serialNo);
+        logger.info("Generating new discount code with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}, minimumBillAmount: {}, usageLimit: {}, constantDiscountAmount: {}, discountType: {}, companyId: {}, storeLimited: {}, allowedStoreIds: {}, itemCategoryLimited: {}, allowedItemCategoryIds: {}, customCode: {}, customSerialNo: {}, type: {}, phoneNumber: {}", 
+            dto.percentage, dto.remainingValidityPeriod, dto.maxDiscountAmount, dto.minimumBillAmount, dto.usageLimit, dto.constantDiscountAmount, dto.discountType, dto.companyId, (long) dto.allowedStoreIds.size() > 0, dto.allowedStoreIds, dto.itemCategoryLimited, dto.allowedItemCategoryIds, dto.code, dto.serialNo, dto.type, dto.phoneNumber);
         
-        // Check if both code and serialNo are provided simultaneously and count is 1
+        // Validate type and phoneNumber
+        DiscountCodeType type = dto.type != null ? dto.type : DiscountCodeType.GENERAL;
+        if (type == DiscountCodeType.PERSONAL) {
+            if (dto.phoneNumber == null || dto.phoneNumber.trim().isEmpty()) {
+                logger.error("Phone number is required for PERSONAL discount code type");
+                throw new ValidationException(ErrorCodes.INVALID_REQUEST, "Phone number is required when type is PERSONAL");
+            }
+        }
+        // For GENERAL type, phone number is ignored if provided
+        
+        // Check if custom code or serialNo are provided
         boolean hasCustomCode = dto.code != null && !dto.code.trim().isEmpty();
         boolean hasCustomSerialNo = dto.serialNo != null;
-        boolean isSingleCode = dto.count <= 1;
         
-        if (hasCustomCode && hasCustomSerialNo && isSingleCode) {
-            // Check if the provided code and serialNo are not already in the database
+        // If either custom code or serialNo is provided, count must be exactly 1
+        if ((hasCustomCode || hasCustomSerialNo) && dto.count != 1) {
+            logger.error("When providing a custom discount code or serial number, count must be exactly 1. Provided count: {}", dto.count);
+            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "When providing a custom discount code or serial number, count must be exactly 1");
+        }
+        
+        // Validate uniqueness if custom values are provided
+        if (hasCustomCode) {
             if (codeRepository.existsByCode(dto.code)) {
                 logger.warn("Discount code already exists: {}", dto.code);
                 throw new ValidationException(ErrorCodes.DISCOUNT_CODE_ALREADY_EXISTS);
             }
+            logger.info("Using provided custom code: {}", dto.code);
+        }
+        
+        if (hasCustomSerialNo) {
             if (codeRepository.existsBySerialNo(dto.serialNo)) {
                 logger.warn("Serial number already exists: {}", dto.serialNo);
                 throw new ValidationException(ErrorCodes.SERIAL_NUMBER_ALREADY_EXISTS);
             }
-            logger.info("Using provided custom code: {} and serial number: {}", dto.code, dto.serialNo);
-        } else if (hasCustomCode || hasCustomSerialNo) {
-            // If only one of them is provided, or count is not 1, ignore custom values and generate random
-            logger.warn("Both code and serialNo must be provided simultaneously and count must be 1 to use custom values. Generating random values instead.");
-            dto.code = null;
-            dto.serialNo = null;
+            logger.info("Using provided custom serial number: {}", dto.serialNo);
         }
         
-        var discountCode = issueDiscountCode(dto.percentage, dto.remainingValidityPeriod, dto.maxDiscountAmount, dto.minimumBillAmount, dto.usageLimit, dto.constantDiscountAmount, dto.discountType, dto.companyId, (long) dto.allowedStoreIds.size() > 0, dto.allowedStoreIds, dto.itemCategoryLimited, dto.allowedItemCategoryIds, dto.code, dto.serialNo);
+        // If both are provided, log that both are being used
+        if (hasCustomCode && hasCustomSerialNo) {
+            logger.info("Using provided custom code: {} and serial number: {}", dto.code, dto.serialNo);
+        }
+        
+        // Note: If only one is provided, the other will be generated randomly in issueDiscountCode method
+        
+        var discountCode = issueDiscountCode(dto.percentage, dto.remainingValidityPeriod, dto.maxDiscountAmount, dto.minimumBillAmount, dto.usageLimit, dto.constantDiscountAmount, dto.discountType, dto.companyId, (long) dto.allowedStoreIds.size() > 0, dto.allowedStoreIds, dto.itemCategoryLimited, dto.allowedItemCategoryIds, dto.code, dto.serialNo, type, dto.phoneNumber, dto.title);
         var savedCode = codeRepository.save(discountCode);
-        logger.info("Generated discount code: {}", savedCode.getCode());
+        logger.info("Generated discount code: {} with type: {}", savedCode.getCode(), savedCode.getType());
         return mapper.getFrom(savedCode);
     }
 
     public List<DiscountCodeDto> generateList(DiscountCodeIssueRequest request) {
         request.storeLimited = !request.allowedStoreIds.isEmpty();
         request.itemCategoryLimited = !request.allowedItemCategoryIds.isEmpty();
-        logger.info("Generating {} discount codes with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}, minimumBillAmount: {}, usageLimit: {}, constantDiscountAmount: {}, discountType: {}, companyId: {}, storeLimited: {}, allowedStoreIds: {}, itemCategoryLimited: {}, allowedItemCategoryIds: {}, customCode: {}, customSerialNo: {}", 
-            request.count, request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount, request.usageLimit, request.constantDiscountAmount, request.discountType, request.companyId, request.storeLimited, request.allowedStoreIds, request.itemCategoryLimited, request.allowedItemCategoryIds, request.code, request.serialNo);
+        logger.info("Generating {} discount codes with percentage: {}, validityPeriod: {}, maxDiscountAmount: {}, minimumBillAmount: {}, usageLimit: {}, constantDiscountAmount: {}, discountType: {}, companyId: {}, storeLimited: {}, allowedStoreIds: {}, itemCategoryLimited: {}, allowedItemCategoryIds: {}, customCode: {}, customSerialNo: {}, type: {}, phoneNumber: {}", 
+            request.count, request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount, request.usageLimit, request.constantDiscountAmount, request.discountType, request.companyId, request.storeLimited, request.allowedStoreIds, request.itemCategoryLimited, request.allowedItemCategoryIds, request.code, request.serialNo, request.type, request.phoneNumber);
         
-        // Check if both code and serialNo are provided simultaneously and count is 1
+        // Validate type - PERSONAL type is not allowed in list generation
+        DiscountCodeType type = request.type != null ? request.type : DiscountCodeType.GENERAL;
+        if (type == DiscountCodeType.PERSONAL) {
+            logger.error("PERSONAL discount codes can only be created using single code creation endpoint, not in lists");
+            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "PERSONAL discount codes can only be created one at a time using the single code creation endpoint");
+        }
+        // For GENERAL type, phone number is ignored if provided
+        
+        // Check if custom code or serialNo are provided
         boolean hasCustomCode = request.code != null && !request.code.trim().isEmpty();
         boolean hasCustomSerialNo = request.serialNo != null;
-        boolean isSingleCode = request.count == 1;
         
-        if (hasCustomCode && hasCustomSerialNo && isSingleCode) {
-            // Check if the provided code and serialNo are not already in the database
+        // If either custom code or serialNo is provided, count must be exactly 1
+        if ((hasCustomCode || hasCustomSerialNo) && request.count != 1) {
+            logger.error("When providing a custom discount code or serial number, count must be exactly 1. Provided count: {}", request.count);
+            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "When providing a custom discount code or serial number, count must be exactly 1");
+        }
+        
+        // Validate uniqueness if custom values are provided
+        if (hasCustomCode) {
             if (codeRepository.existsByCode(request.code)) {
                 logger.warn("Discount code already exists: {}", request.code);
                 throw new ValidationException(ErrorCodes.DISCOUNT_CODE_ALREADY_EXISTS);
             }
+            logger.info("Using provided custom code: {}", request.code);
+        }
+        
+        if (hasCustomSerialNo) {
             if (codeRepository.existsBySerialNo(request.serialNo)) {
                 logger.warn("Serial number already exists: {}", request.serialNo);
                 throw new ValidationException(ErrorCodes.SERIAL_NUMBER_ALREADY_EXISTS);
             }
-            logger.info("Using provided custom code: {} and serial number: {}", request.code, request.serialNo);
-        } else if (hasCustomCode || hasCustomSerialNo) {
-            // If only one of them is provided, or count is not 1, ignore custom values and generate random
-            logger.warn("Both code and serialNo must be provided simultaneously and count must be 1 to use custom values. Generating random values instead.");
-            request.code = null;
-            request.serialNo = null;
+            logger.info("Using provided custom serial number: {}", request.serialNo);
         }
+        
+        // If both are provided, log that both are being used
+        if (hasCustomCode && hasCustomSerialNo) {
+            logger.info("Using provided custom code: {} and serial number: {}", request.code, request.serialNo);
+        }
+        
+        // Note: If only one is provided, the other will be generated randomly in issueDiscountCode method
         
         var ls = new ArrayList<DiscountCode>();
         for (var i = 0; i < request.count; i++) {
-            var discountCode = issueDiscountCode(request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount, request.usageLimit, request.constantDiscountAmount, request.discountType, request.companyId, request.storeLimited, request.allowedStoreIds, request.itemCategoryLimited, request.allowedItemCategoryIds, request.code, request.serialNo);
+            var discountCode = issueDiscountCode(request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount, request.usageLimit, request.constantDiscountAmount, request.discountType, request.companyId, request.storeLimited, request.allowedStoreIds, request.itemCategoryLimited, request.allowedItemCategoryIds, request.code, request.serialNo, type, request.phoneNumber, request.title);
             ls.add(discountCode);
         }
         var savedCodes = codeRepository.saveAll(ls);
-        logger.info("Generated {} discount codes successfully", request.count);
+        logger.info("Generated {} discount codes successfully with type: {}", request.count, type);
         return mapper.getFrom(savedCodes);
     }
 
@@ -218,36 +340,55 @@ public class DiscountCodeService {
         request.itemCategoryLimited = !request.allowedItemCategoryIds.isEmpty();
         logger.info("Generating {} discount codes with request: {} for batch: {}", request.count, request, batch.getBatchNumber());
         
-        // Check if both code and serialNo are provided simultaneously and count is 1
-        boolean hasCustomCode = request.code != null && !request.code.trim().isEmpty();
-        boolean hasCustomSerialNo = request.serialNo != null;
-        boolean isSingleCode = request.count == 1;
+        // Validate type - PERSONAL type is not allowed in list generation (including batch creation)
+        DiscountCodeType type = request.type != null ? request.type : DiscountCodeType.GENERAL;
+        if (type == DiscountCodeType.PERSONAL) {
+            logger.error("PERSONAL discount codes can only be created using single code creation endpoint, not in lists or batches");
+            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "PERSONAL discount codes can only be created one at a time using the single code creation endpoint");
+        }
+        // For GENERAL type, phone number is ignored if provided
         
-        if (hasCustomCode && hasCustomSerialNo && isSingleCode) {
-            // Check if the provided code and serialNo are not already in the database
+        // Check if custom code or serialNo are provided
+        boolean hasCustomCode = request.code != null && !request.code.trim().isEmpty();
+        boolean hasCustomSerialNo = request.serialNo != null && request.serialNo > 0;
+        
+        // If either custom code or serialNo is provided, count must be exactly 1
+        if ((hasCustomCode || hasCustomSerialNo) && request.count != 1) {
+            logger.error("When providing a custom discount code or serial number, count must be exactly 1. Provided count: {}", request.count);
+            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "When providing a custom discount code or serial number, count must be exactly 1");
+        }
+        
+        // Validate uniqueness if custom values are provided
+        if (hasCustomCode) {
             if (codeRepository.existsByCode(request.code)) {
                 logger.warn("Discount code already exists: {}", request.code);
                 throw new ValidationException(ErrorCodes.DISCOUNT_CODE_ALREADY_EXISTS);
             }
+            logger.info("Using provided custom code: {}", request.code);
+        }
+        
+        if (hasCustomSerialNo) {
             if (codeRepository.existsBySerialNo(request.serialNo)) {
                 logger.warn("Serial number already exists: {}", request.serialNo);
                 throw new ValidationException(ErrorCodes.SERIAL_NUMBER_ALREADY_EXISTS);
             }
-            logger.info("Using provided custom code: {} and serial number: {}", request.code, request.serialNo);
-        } else if (hasCustomCode || hasCustomSerialNo) {
-            // If only one of them is provided, or count is not 1, ignore custom values and generate random
-            logger.warn("Both code and serialNo must be provided simultaneously and count must be 1 to use custom values. Generating random values instead.");
-            request.code = null;
-            request.serialNo = null;
+            logger.info("Using provided custom serial number: {}", request.serialNo);
         }
+        
+        // If both are provided, log that both are being used
+        if (hasCustomCode && hasCustomSerialNo) {
+            logger.info("Using provided custom code: {} and serial number: {}", request.code, request.serialNo);
+        }
+        
+        // Note: If only one is provided, the other will be generated randomly in issueDiscountCode method
         
         var ls = new ArrayList<DiscountCode>();
         for (var i = 0; i < request.count; i++) {
-            var discountCode = issueDiscountCode(request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount, request.usageLimit, request.constantDiscountAmount, request.discountType, request.companyId, request.storeLimited, request.allowedStoreIds, request.itemCategoryLimited, request.allowedItemCategoryIds, request.code, request.serialNo, batch);
+            var discountCode = issueDiscountCode(request.percentage, request.remainingValidityPeriod, request.maxDiscountAmount, request.minimumBillAmount, request.usageLimit, request.constantDiscountAmount, request.discountType, request.companyId, request.storeLimited, request.allowedStoreIds, request.itemCategoryLimited, request.allowedItemCategoryIds, request.code, request.serialNo, type, request.phoneNumber, request.title, batch);
             ls.add(discountCode);
         }
         var savedCodes = codeRepository.saveAll(ls);
-        logger.info("Generated {} discount codes successfully for batch: {}", request.count, batch.getBatchNumber());
+        logger.info("Generated {} discount codes successfully for batch: {} with type: {}", request.count, batch.getBatchNumber(), type);
         return mapper.getFrom(savedCodes);
     }
 
@@ -285,6 +426,17 @@ public class DiscountCodeService {
         var discountCode = codeRepository.findByCode(code);
         if (discountCode == null) {
             logger.warn("Discount code not found: {}", code);
+            return null;
+        }
+        return mapper.getFrom(discountCode);
+    }
+
+    public DiscountCodeDto getDiscountCodeBySerialNo(Long serialNo) {
+        logger.debug("Fetching discount code by serial number: {}", serialNo);
+        var discountCode = codeRepository.findBySerialNo(serialNo);
+        if (discountCode == null) {
+            logger.warn("Discount code not found with serial number: {}", serialNo);
+            return null;
         }
         return mapper.getFrom(discountCode);
     }
@@ -603,15 +755,32 @@ public class DiscountCodeService {
      * @return PagedResponse of discount codes
      */
     @Transactional(readOnly = true)
-    public PagedResponse<DiscountCodeDto> getDiscountCodesForCurrentUserWithFiltering(User user, int page, int size, Long companyId, Long storeId) {
-        logger.debug("Fetching discount codes for user: {} with role: {} - page: {}, size: {}, companyId: {}, storeId: {}",
-                    user.getUsername(), user.getRole().getName(), page, size, companyId, storeId);
+    public PagedResponse<DiscountCodeDto> getDiscountCodesForCurrentUserWithFiltering(User user, int page, int size, Long companyId, Long storeId, String sortBy, String sortDir) {
+        logger.debug("Fetching discount codes for user: {} with role: {} - page: {}, size: {}, companyId: {}, storeId: {}, sortBy: {}, sortDir: {}",
+                    user.getUsername(), user.getRole().getName(), page, size, companyId, storeId, sortBy, sortDir);
 
         if (page < 0) { page = 0; }
         if (size <= 0) { size = 10; }
         if (size > 100) { size = 100; }
 
-        Pageable pageable = PageRequest.of(page, size);
+        // Validate and set default sort field
+        if (sortBy == null || sortBy.trim().isEmpty()) {
+            sortBy = "id";
+        }
+        
+        // Validate sort direction
+        Sort.Direction direction = Sort.Direction.ASC;
+        if (sortDir != null && !sortDir.trim().isEmpty()) {
+            try {
+                direction = Sort.Direction.fromString(sortDir.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                logger.warn("Invalid sort direction: {}, using ASC", sortDir);
+                direction = Sort.Direction.ASC;
+            }
+        }
+
+        // Create Pageable with sorting
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
         Page<DiscountCode> discountCodePage;
 
         switch (user.getRole().getName()) {
@@ -735,6 +904,17 @@ public class DiscountCodeService {
             throw new ValidationException(ErrorCodes.DISCOUNT_CODE_NOT_FOUND, "Discount code not found: " + code);
         }
 
+        // RBAC check: COMPANY_USER and STORE_USER can only block/unblock codes from their company
+        String roleName = currentUser.getRole().getName();
+        if (!roleName.equals("SUPERADMIN") && !roleName.equals("ADMIN") && !roleName.equals("API_USER")) {
+            DiscountCodeDto dto = mapper.getFrom(discountCode);
+            if (!hasAccessToDiscountCode(currentUser, dto)) {
+                logger.warn("User {} with role {} does not have access to block/unblock discount code {}", 
+                           currentUser.getUsername(), roleName, code);
+                throw new ValidationException(ErrorCodes.FORBIDDEN, "You do not have access to block/unblock this discount code");
+            }
+        }
+
         if (block) {
             if (discountCode.isBlocked()) {
                 logger.warn("Discount code {} is already blocked", code);
@@ -757,6 +937,170 @@ public class DiscountCodeService {
 
         DiscountCode savedDiscountCode = codeRepository.save(discountCode);
         return mapper.getFrom(savedDiscountCode);
+    }
+
+    /**
+     * Deactivate or activate a discount code by code
+     * @param code the discount code
+     * @param activate true to activate, false to deactivate
+     * @return the updated discount code DTO
+     * @throws ValidationException if discount code not found or already in the requested state
+     */
+    @Transactional
+    public DiscountCodeDto activateDiscountCode(String code, boolean activate) {
+        logger.info("{} discount code: {}", activate ? "Activating" : "Deactivating", code);
+        
+        User currentUser = securityContextService.getCurrentUserOrThrow();
+        
+        DiscountCode discountCode = codeRepository.findByCode(code.toUpperCase());
+        if (discountCode == null) {
+            logger.warn("Discount code not found: {}", code);
+            throw new ValidationException(ErrorCodes.DISCOUNT_CODE_NOT_FOUND, "Discount code not found: " + code);
+        }
+
+        // Check if discount code is blocked - cannot activate/deactivate if blocked
+        if (discountCode.isBlocked()) {
+            logger.warn("Cannot {} blocked discount code: {}", activate ? "activate" : "deactivate", code);
+            throw new ValidationException(ErrorCodes.DISCOUNT_CODE_INVALID, 
+                "Cannot " + (activate ? "activate" : "deactivate") + " a blocked discount code. Please unblock it first.");
+        }
+
+        // RBAC check: COMPANY_USER and STORE_USER can only activate/deactivate codes from their company
+        String roleName = currentUser.getRole().getName();
+        if (!roleName.equals("SUPERADMIN") && !roleName.equals("ADMIN") && !roleName.equals("API_USER")) {
+            DiscountCodeDto dto = mapper.getFrom(discountCode);
+            if (!hasAccessToDiscountCode(currentUser, dto)) {
+                logger.warn("User {} with role {} does not have access to activate/deactivate discount code {}", 
+                           currentUser.getUsername(), roleName, code);
+                throw new ValidationException(ErrorCodes.FORBIDDEN, "You do not have access to activate/deactivate this discount code");
+            }
+        }
+
+        if (activate) {
+            if (discountCode.isActive()) {
+                logger.warn("Discount code {} is already active", code);
+                throw new ValidationException(ErrorCodes.DISCOUNT_CODE_INVALID, "Discount code is already active");
+            }
+            discountCode.setActive(true);
+            logger.info("Discount code {} activated by user {}", code, currentUser.getUsername());
+        } else {
+            if (!discountCode.isActive()) {
+                logger.warn("Discount code {} is already inactive", code);
+                throw new ValidationException(ErrorCodes.DISCOUNT_CODE_INVALID, "Discount code is already inactive");
+            }
+            discountCode.setActive(false);
+            logger.info("Discount code {} deactivated by user {}", code, currentUser.getUsername());
+        }
+
+        DiscountCode savedDiscountCode = codeRepository.save(discountCode);
+        return mapper.getFrom(savedDiscountCode);
+    }
+
+    /**
+     * Get personal discount codes for a customer by phone number with RBAC checks
+     * @param user the current user making the request
+     * @param phoneNumber the phone number of the customer
+     * @return list of personal discount codes for the customer
+     * @throws ValidationException if customer not found or user doesn't have access
+     */
+    @Transactional(readOnly = true)
+    public List<DiscountCodeDto> getPersonalDiscountCodesByPhoneNumber(User user, String phoneNumber) {
+        logger.info("Fetching personal discount codes for phone number: {} by user: {} with role: {}", 
+                   phoneNumber, user.getUsername(), user.getRole().getName());
+        
+        // Validate phone number
+        if (phoneNumber == null || phoneNumber.trim().isEmpty()) {
+            logger.error("Phone number is required");
+            throw new ValidationException(ErrorCodes.INVALID_REQUEST, "Phone number is required");
+        }
+        
+        // Find customer by phone number
+        Customer customer = customerRepository.findByPrimaryPhoneNumber(phoneNumber.trim());
+        if (customer == null) {
+            logger.warn("Customer not found for phone number: {}", phoneNumber);
+            throw new ValidationException(ErrorCodes.CUSTOMER_NOT_FOUND, "Customer not found for phone number: " + phoneNumber);
+        }
+        
+        // Get personal discount codes for the customer first
+        List<DiscountCode> personalCodes = codeRepository.findByCustomerAndType(customer, DiscountCodeType.PERSONAL);
+        
+        // RBAC check: determine if user has access and filter codes based on role
+        String roleName = user.getRole().getName();
+        List<DiscountCode> accessibleCodes = new java.util.ArrayList<>();
+        
+        switch (roleName) {
+            case "SUPERADMIN":
+            case "ADMIN":
+            case "API_USER":
+                // These roles have full access to all codes
+                accessibleCodes = personalCodes;
+                logger.debug("User {} has full access (role: {})", user.getUsername(), roleName);
+                break;
+                
+            case "COMPANY_USER":
+                // Access based on company matching: user's company must match discount code's company
+                // OR user is requesting their own codes
+                if (phoneNumber.equals(user.getMobilePhoneNumber())) {
+                    // User can always view their own codes
+                    accessibleCodes = personalCodes;
+                    logger.debug("COMPANY_USER {} viewing own codes", user.getUsername());
+                } else if (user.getCompany() != null) {
+                    // Filter codes where company matches user's company
+                    accessibleCodes = personalCodes.stream()
+                        .filter(code -> code.getCompany() != null && 
+                                      code.getCompany().getId().equals(user.getCompany().getId()))
+                        .collect(java.util.stream.Collectors.toList());
+                    logger.debug("COMPANY_USER {} access check: {} codes accessible from company {}", 
+                               user.getUsername(), accessibleCodes.size(), user.getCompany().getId());
+                } else {
+                    logger.warn("COMPANY_USER {} has no company assigned", user.getUsername());
+                }
+                break;
+                
+            case "STORE_USER":
+                // Access based on store's company matching: discount code's company must match user's store's company
+                // OR user is requesting their own codes
+                if (phoneNumber.equals(user.getMobilePhoneNumber())) {
+                    // User can always view their own codes
+                    accessibleCodes = personalCodes;
+                    logger.debug("STORE_USER {} viewing own codes", user.getUsername());
+                } else if (user.getStore() != null && user.getStore().getCompany() != null) {
+                    // Filter codes where company matches user's store's company
+                    Long userCompanyId = user.getStore().getCompany().getId();
+                    accessibleCodes = personalCodes.stream()
+                        .filter(code -> code.getCompany() != null && 
+                                      code.getCompany().getId().equals(userCompanyId))
+                        .collect(java.util.stream.Collectors.toList());
+                    logger.debug("STORE_USER {} access check: {} codes accessible from store's company {}", 
+                               user.getUsername(), accessibleCodes.size(), userCompanyId);
+                } else {
+                    logger.warn("STORE_USER {} has no store or company assigned", user.getUsername());
+                }
+                break;
+                
+            default:
+                // For other roles, only allow if user is requesting their own codes
+                if (phoneNumber.equals(user.getMobilePhoneNumber())) {
+                    accessibleCodes = personalCodes;
+                    logger.debug("User {} with role {} viewing own codes", user.getUsername(), roleName);
+                } else {
+                    logger.debug("User {} with role {} does not have access", user.getUsername(), roleName);
+                }
+                break;
+        }
+        
+        // Check if user has any access
+        if (accessibleCodes.isEmpty() && !phoneNumber.equals(user.getMobilePhoneNumber())) {
+            logger.warn("User {} with role {} does not have access to personal discount codes for phone number: {}", 
+                       user.getUsername(), roleName, phoneNumber);
+            throw new ValidationException(ErrorCodes.FORBIDDEN, "You do not have access to view personal discount codes for this phone number");
+        }
+        
+        personalCodes = accessibleCodes;
+        
+        logger.info("Found {} personal discount codes for customer with phone number: {}", personalCodes.size(), phoneNumber);
+        
+        return mapper.getFrom(personalCodes);
     }
 
 }

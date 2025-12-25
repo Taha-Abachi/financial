@@ -1,0 +1,55 @@
+# Git files
+.git
+.gitignore
+.gitlab-ci.yml
+
+# Build artifacts (will be built inside Docker)
+build/
+.gradle/
+out/
+
+# IDE files
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+.settings/
+.classpath
+.project
+
+# Documentation
+*.md
+docs/
+
+# Scripts
+build-scripts/
+*.sh
+*.bat
+*.ps1
+
+# Test files
+src/test/
+
+# CI/CD
+.gitlab-ci.yml
+
+# Docker files (except Dockerfile)
+docker/*.yaml
+docker/*.bat
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+

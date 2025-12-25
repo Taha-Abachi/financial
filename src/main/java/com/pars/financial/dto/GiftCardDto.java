@@ -9,8 +9,10 @@ import com.pars.financial.enums.GiftCardType;
 
 public class GiftCardDto {
     public String serialNo;
+    public String title;
     public long balance;
     public long realAmount;
+    public long initialAmount;
     public long remainingValidityPeriod;
     public LocalDate expiryDate;
     public boolean isActive;
@@ -20,6 +22,8 @@ public class GiftCardDto {
     public Long companyId;
     public boolean storeLimited;
     public boolean itemCategoryLimited;
+    public java.util.List<StoreDto> allowedStores;
+    public java.util.List<ItemCategoryDto> allowedItemCategories;
     public Long batchId;
     public String batchNumber;
     public GiftCardType type;
@@ -43,6 +47,14 @@ public class GiftCardDto {
 
     public void setBalance(long balance) {
         this.balance = balance;
+    }
+
+    public long getInitialAmount() {
+        return initialAmount;
+    }
+
+    public void setInitialAmount(long initialAmount) {
+        this.initialAmount = initialAmount;
     }
 
     public long getRemainingValidityPeriod() {

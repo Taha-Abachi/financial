@@ -8,12 +8,15 @@ import com.pars.financial.dto.PagedResponse;
 import com.pars.financial.dto.StoreLimitationRequest;
 import com.pars.financial.service.GiftCardService;
 import com.pars.financial.utils.ApiUserUtil;
+import com.pars.financial.exception.ValidationException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.constraints.Pattern;
 
 import java.util.List;
 
@@ -35,9 +38,11 @@ public class GiftCardController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) Long companyId,
-            @RequestParam(required = false) Long storeId) {
-        logger.info("GET /api/v1/giftcard/all called with pagination - page: {}, size: {}, companyId: {}, storeId: {}", 
-                   page, size, companyId, storeId);
+            @RequestParam(required = false) Long storeId,
+            @RequestParam(required = false, defaultValue = "id") String sortBy,
+            @RequestParam(required = false, defaultValue = "ASC") String sortDir) {
+        logger.info("GET /api/v1/giftcard/all called with pagination - page: {}, size: {}, companyId: {}, storeId: {}, sortBy: {}, sortDir: {}", 
+                   page, size, companyId, storeId, sortBy, sortDir);
         
         var response = new GenericResponse<PagedResponse<GiftCardDto>>();
         
@@ -52,7 +57,7 @@ public class GiftCardController {
             
             // Get gift cards with RBAC and filtering
             PagedResponse<GiftCardDto> pagedGiftCards = giftCardService.getGiftCardsForCurrentUserWithFiltering(
-                userResult.user, page, size, companyId, storeId);
+                userResult.user, page, size, companyId, storeId, sortBy, sortDir);
             
             if (pagedGiftCards.getContent() == null || pagedGiftCards.getContent().isEmpty()) {
                 logger.warn("Gift card list not found for user access level");
@@ -526,6 +531,136 @@ public class GiftCardController {
             logger.error("Error unblocking gift card {}: {}", serialNo, e.getMessage(), e);
             response.status = -1;
             response.message = "Failed to unblock gift card: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @GetMapping("/customer/{phoneNumber}")
+    public ResponseEntity<GenericResponse<List<GiftCardDto>>> getGiftCardsByPhoneNumber(
+            @PathVariable("phoneNumber") @Pattern(regexp = "^\\d{11}$") String phoneNumber) {
+        logger.info("GET /api/v1/giftcard/customer/{} called", phoneNumber);
+        var response = new GenericResponse<List<GiftCardDto>>();
+
+        try {
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+
+            List<GiftCardDto> giftCards = giftCardService.getGiftCardsByPhoneNumber(
+                userResult.user, phoneNumber);
+            
+            response.data = giftCards;
+            response.status = 200;
+            response.message = "Gift cards retrieved successfully";
+            
+            logger.info("Successfully retrieved {} gift cards for phone number: {}", 
+                       giftCards.size(), phoneNumber);
+            return ResponseEntity.ok(response);
+
+        } catch (ValidationException e) {
+            logger.warn("Validation error retrieving gift cards for phone number {}: {}", 
+                       phoneNumber, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (Exception e) {
+            logger.error("Error retrieving gift cards for phone number {}: {}", 
+                        phoneNumber, e.getMessage(), e);
+            response.status = -1;
+            response.message = "Failed to retrieve gift cards: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PutMapping("/deactivate/{serialNo}")
+    public ResponseEntity<GenericResponse<GiftCardDto>> deactivateGiftCard(
+            @PathVariable String serialNo) {
+        logger.info("PUT /api/v1/giftcard/deactivate/{} called", serialNo);
+        var response = new GenericResponse<GiftCardDto>();
+
+        try {
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+
+            GiftCardDto giftCard = giftCardService.activateGiftCard(serialNo, false);
+            response.data = giftCard;
+            response.status = 200;
+            response.message = "Gift card deactivated successfully";
+
+            logger.info("Successfully deactivated gift card: {}", serialNo);
+            return ResponseEntity.ok(response);
+
+        } catch (com.pars.financial.exception.GiftCardNotFoundException e) {
+            logger.warn("Gift card not found: {}", serialNo);
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (com.pars.financial.exception.ValidationException e) {
+            logger.warn("Validation error deactivating gift card {}: {}", serialNo, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error deactivating gift card {}: {}", serialNo, e.getMessage());
+            response.status = 401;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        } catch (Exception e) {
+            logger.error("Error deactivating gift card {}: {}", serialNo, e.getMessage(), e);
+            response.status = -1;
+            response.message = "Failed to deactivate gift card: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PutMapping("/activate/{serialNo}")
+    public ResponseEntity<GenericResponse<GiftCardDto>> activateGiftCard(
+            @PathVariable String serialNo) {
+        logger.info("PUT /api/v1/giftcard/activate/{} called", serialNo);
+        var response = new GenericResponse<GiftCardDto>();
+
+        try {
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+
+            GiftCardDto giftCard = giftCardService.activateGiftCard(serialNo, true);
+            response.data = giftCard;
+            response.status = 200;
+            response.message = "Gift card activated successfully";
+
+            logger.info("Successfully activated gift card: {}", serialNo);
+            return ResponseEntity.ok(response);
+
+        } catch (com.pars.financial.exception.GiftCardNotFoundException e) {
+            logger.warn("Gift card not found: {}", serialNo);
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        } catch (com.pars.financial.exception.ValidationException e) {
+            logger.warn("Validation error activating gift card {}: {}", serialNo, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error activating gift card {}: {}", serialNo, e.getMessage());
+            response.status = 401;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        } catch (Exception e) {
+            logger.error("Error activating gift card {}: {}", serialNo, e.getMessage(), e);
+            response.status = -1;
+            response.message = "Failed to activate gift card: " + e.getMessage();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }

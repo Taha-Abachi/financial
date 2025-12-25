@@ -24,6 +24,9 @@ import com.pars.financial.dto.PagedResponse;
 import com.pars.financial.dto.StoreLimitationRequest;
 import com.pars.financial.service.DiscountCodeService;
 import com.pars.financial.utils.ApiUserUtil;
+
+import jakarta.validation.constraints.Pattern;
+
 import com.pars.financial.exception.ValidationException;
 
 @RestController
@@ -43,9 +46,11 @@ public class DiscountCodeController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) Long companyId,
-            @RequestParam(required = false) Long storeId) {
-        logger.info("GET /api/v1/discountcode/all called with pagination - page: {}, size: {}, companyId: {}, storeId: {}",
-                   page, size, companyId, storeId);
+            @RequestParam(required = false) Long storeId,
+            @RequestParam(required = false, defaultValue = "id") String sortBy,
+            @RequestParam(required = false, defaultValue = "ASC") String sortDir) {
+        logger.info("GET /api/v1/discountcode/all called with pagination - page: {}, size: {}, companyId: {}, storeId: {}, sortBy: {}, sortDir: {}",
+                   page, size, companyId, storeId, sortBy, sortDir);
 
         var response = new GenericResponse<PagedResponse<DiscountCodeDto>>();
 
@@ -58,7 +63,7 @@ public class DiscountCodeController {
             }
 
             PagedResponse<DiscountCodeDto> pagedDiscountCodes = codeService.getDiscountCodesForCurrentUserWithFiltering(
-                userResult.user, page, size, companyId, storeId);
+                userResult.user, page, size, companyId, storeId, sortBy, sortDir);
 
             if (pagedDiscountCodes.getContent() == null || pagedDiscountCodes.getContent().isEmpty()) {
                 logger.warn("Discount code list not found for user access level");
@@ -112,6 +117,47 @@ public class DiscountCodeController {
 
         } catch (Exception e) {
             logger.error("Error fetching discount code {}: {}", code, e.getMessage());
+            response.status = -1;
+            response.message = "Error fetching discount code: " + e.getMessage();
+            return ResponseEntity.ok(response);
+        }
+        }
+
+    @GetMapping("/serial/{serialNo}")
+    public ResponseEntity<GenericResponse<DiscountCodeDto>> discountCodeBySerialNo(@PathVariable Long serialNo) {
+        logger.info("GET /api/v1/discountcode/serial/{} called", serialNo);
+        var response = new GenericResponse<DiscountCodeDto>();
+
+        try {
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+
+            var dto = codeService.getDiscountCodeBySerialNo(serialNo);
+            if (dto == null) {
+                logger.warn("Discount code not found for serial number {}", serialNo);
+                response.status = -1;
+                response.message = "Discount code not found";
+                return ResponseEntity.ok(response);
+            }
+
+            // Check RBAC access
+            if (!codeService.hasAccessToDiscountCode(userResult.user, dto)) {
+                logger.warn("User {} does not have access to discount code with serial number {}", userResult.user.getUsername(), serialNo);
+                response.status = 403;
+                response.message = "Access denied to this discount code";
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+            }
+
+            response.data = dto;
+            response.message = "Discount code retrieved successfully";
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Error fetching discount code by serial number {}: {}", serialNo, e.getMessage());
             response.status = -1;
             response.message = "Error fetching discount code: " + e.getMessage();
             return ResponseEntity.ok(response);
@@ -307,6 +353,126 @@ public class DiscountCodeController {
             logger.error("Error unblocking discount code {}: {}", code, e.getMessage(), e);
             response.status = -1;
             response.message = "Failed to unblock discount code: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PutMapping("/deactivate/{code}")
+    public ResponseEntity<GenericResponse<DiscountCodeDto>> deactivateDiscountCode(
+            @PathVariable String code) {
+        logger.info("PUT /api/v1/discountcode/deactivate/{} called", code);
+        var response = new GenericResponse<DiscountCodeDto>();
+
+        try {
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+
+            DiscountCodeDto discountCode = codeService.activateDiscountCode(code, false);
+            response.data = discountCode;
+            response.status = 200;
+            response.message = "Discount code deactivated successfully";
+
+            logger.info("Successfully deactivated discount code: {}", code);
+            return ResponseEntity.ok(response);
+
+        } catch (ValidationException e) {
+            logger.warn("Validation error deactivating discount code {}: {}", code, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error deactivating discount code {}: {}", code, e.getMessage());
+            response.status = 401;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        } catch (Exception e) {
+            logger.error("Error deactivating discount code {}: {}", code, e.getMessage(), e);
+            response.status = -1;
+            response.message = "Failed to deactivate discount code: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PutMapping("/activate/{code}")
+    public ResponseEntity<GenericResponse<DiscountCodeDto>> activateDiscountCode(
+            @PathVariable String code) {
+        logger.info("PUT /api/v1/discountcode/activate/{} called", code);
+        var response = new GenericResponse<DiscountCodeDto>();
+
+        try {
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+
+            DiscountCodeDto discountCode = codeService.activateDiscountCode(code, true);
+            response.data = discountCode;
+            response.status = 200;
+            response.message = "Discount code activated successfully";
+
+            logger.info("Successfully activated discount code: {}", code);
+            return ResponseEntity.ok(response);
+
+        } catch (ValidationException e) {
+            logger.warn("Validation error activating discount code {}: {}", code, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (IllegalStateException e) {
+            logger.warn("Authentication error activating discount code {}: {}", code, e.getMessage());
+            response.status = 401;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        } catch (Exception e) {
+            logger.error("Error activating discount code {}: {}", code, e.getMessage(), e);
+            response.status = -1;
+            response.message = "Failed to activate discount code: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @GetMapping("/personal/{phoneNumber}")
+    public ResponseEntity<GenericResponse<List<DiscountCodeDto>>> getPersonalDiscountCodesByPhoneNumber(
+            @PathVariable("phoneNumber") @Pattern(regexp = "^\\d{11}$") String phoneNumber) {
+        logger.info("GET /api/v1/discountcode/personal/{} called", phoneNumber);
+        var response = new GenericResponse<List<DiscountCodeDto>>();
+
+        try {
+            ApiUserUtil.UserResult userResult = ApiUserUtil.getApiUserWithStatus(logger);
+            if (userResult.isError()) {
+                response.message = userResult.errorMessage;
+                response.status = 401;
+                return ResponseEntity.status(userResult.httpStatus).body(response);
+            }
+
+            List<DiscountCodeDto> personalCodes = codeService.getPersonalDiscountCodesByPhoneNumber(
+                userResult.user, phoneNumber);
+            
+            response.data = personalCodes;
+            response.status = 200;
+            response.message = "Personal discount codes retrieved successfully";
+            
+            logger.info("Successfully retrieved {} personal discount codes for phone number: {}", 
+                       personalCodes.size(), phoneNumber);
+            return ResponseEntity.ok(response);
+
+        } catch (ValidationException e) {
+            logger.warn("Validation error retrieving personal discount codes for phone number {}: {}", 
+                       phoneNumber, e.getMessage());
+            response.status = -1;
+            response.message = e.getMessage();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        } catch (Exception e) {
+            logger.error("Error retrieving personal discount codes for phone number {}: {}", 
+                        phoneNumber, e.getMessage(), e);
+            response.status = -1;
+            response.message = "Failed to retrieve personal discount codes: " + e.getMessage();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
