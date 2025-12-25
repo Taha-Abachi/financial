@@ -107,7 +107,7 @@ production-deploy:
     - mkdir -p ~/.ssh
     - echo "$DEPLOY_SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
     - chmod 600 ~/.ssh/id_rsa
-    - ssh-keyscan 192.168.15.7 >> ~/.ssh/known_hosts
+    - ssh-keyscan 192.168.15.12 >> ~/.ssh/known_hosts
   script:
     - |
       ssh -o StrictHostKeyChecking=no $DEPLOY_USER@192.168.15.12 "
