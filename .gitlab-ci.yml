@@ -119,7 +119,7 @@ production-deploy:
         docker run -d --name $CONTAINER_NAME --hostname $CONTAINER_NAME \
         -p 8082:8082 \
         -e PORT_NUMBER=8082 \
-        -e DB_URL=jdbc:postgresql://${PROD_DB_HOST}:5432/${PROD_DB_NAME} \
+        -e DB_URL=\"jdbc:postgresql://${PROD_DB_HOST}:5432/${PROD_DB_NAME}\" \
         -e DB_USER=${PROD_DB_USER} \
         -e DB_PASSWORD=${PROD_DB_PASSWORD} \
         -e DISCOUNT_CODE_LEN=${PROD_DISCOUNT_CODE_LEN:-8} \

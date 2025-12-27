@@ -43,6 +43,8 @@ dependencies {
 	//flyweb migration
 	implementation 'org.flywaydb:flyway-core'
 	implementation 'org.flywaydb:flyway-database-postgresql'
+	// PostgreSQL JDBC driver (uses Spring Boot's default version)
+	// Compatible with both SCRAM-SHA-256 (recommended) and MD5 authentication
 	runtimeOnly 'org.postgresql:postgresql'
 
 	// OpenAPI Documentation
